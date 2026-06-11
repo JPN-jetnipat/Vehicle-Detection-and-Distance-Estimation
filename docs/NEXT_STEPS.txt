@@ -1,0 +1,11 @@
+
+1. Create .venv
+2. Clone YOLOv5 repository
+3. Download KITTI dataset
+4. Implement convert_kitti_to_yolo.py
+5. Generate dataset split
+6. Train YOLOv5
+7. Obtain best.pt
+8. Implement calibration parser
+9. Integrate distance estimation
+10. Evaluate with MAE/RMSE

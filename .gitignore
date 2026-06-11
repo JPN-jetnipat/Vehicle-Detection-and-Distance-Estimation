@@ -1,0 +1,18 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# YOLO training outputs
+runs/
+
+# Model weights
+*.pt
+*.pth
+
+# Datasets
+dataset/
+datasets/
+
+# VS Code settings
+.vscode/
