@@ -13,6 +13,13 @@ runs/
 # Datasets
 dataset/
 datasets/
+dataset-upload-guide.md
 
 # VS Code settings
 .vscode/
+
+# MAC cache when zip file
+.DS_Store
+
+# The gitignore file itself
+.gitignore

@@ -1,5 +1,16 @@
 
 1. Create .venv
+
+Open VS Code, then:
+
+Open a terminal.
+Go to the project folder.
+Run conda deactivate until (base) is gone.
+Run source .venv/bin/activate.
+Check that which python points to the .venv/bin/python.
+Run your project commands normally.
+
+
 2. Clone YOLOv5 repository
 3. Download KITTI dataset
 4. Implement convert_kitti_to_yolo.py
