@@ -3,8 +3,13 @@
 __pycache__/
 *.pyc
 
-# YOLO training outputs
-runs/
+# Model weights
+*.pt
+*.pth
+
+# Allow trained model
+!yolov5/runs/train/**/weights/best.pt
+!yolov5/runs/train/**/weights/last.pt/
 
 # Model weights
 *.pt
