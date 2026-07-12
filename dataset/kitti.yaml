@@ -1,0 +1,21 @@
+path: ../dataset
+
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: Car
+  1: Van
+  2: Truck
+  3: Pedestrian
+  4: Person_sitting
+  5: Cyclist
+  6: Tram
+  7: Misc
+
+# Optional: only include these class names during training (order-insensitive)
+include:
+  - Car
+  - Truck
+  - Van

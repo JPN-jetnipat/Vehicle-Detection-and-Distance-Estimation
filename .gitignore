@@ -10,9 +10,13 @@ runs/
 *.pt
 *.pth
 
-# Datasets
-dataset/
-datasets/
+# Ignore all folders inside dataset
+dataset/*/
+
+# Keep files directly inside dataset
+!dataset/*.yaml
+!dataset/*.py
+dataset.zip
 
 # VS Code settings
 .vscode/
