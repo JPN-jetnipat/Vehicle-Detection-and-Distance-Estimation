@@ -21,5 +21,15 @@ dataset-upload-guide.md
 # MAC cache when zip file
 .DS_Store
 
-# The gitignore file itself
-.gitignore
+# our experiment outputs (checkpoints, logs, preds - regenerated, huge)
+runs_jepa/
+
+# training/console logs
+*.log
+nohup.out
+
+# converter eyeball-check images
+viz_out/
+
+# never ever commit an API key
+kaggle.json

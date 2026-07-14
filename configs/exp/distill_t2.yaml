@@ -1,0 +1,30 @@
+# Stage 2, T2 arm: distill OUR BDD-pretrained I-JEPA ViT-B/16 (stage 1) into yolov5s backbone.
+# Design + sign-off: docs/STAGE2_DISTILL_DESIGN.md (approved 2026-07-12).
+name: distill_t2
+project: runs_jepa/stage2
+teacher:
+  kind: t2_ijepa
+  kwargs:
+    checkpoint: runs_jepa/stage1/pretrain_t2/target_encoder_final.pt
+    arch: vit_base
+    patch_size: 16
+    image_size: 224
+model_yaml: yolov5/models/yolov5s.yaml
+nc: 3   # matches vehicle3 config (nc only shapes the unused head; backbone unaffected)
+train_list: splits/pretrain.txt           # 62,020 unlabeled train images; never val
+images_dir: dataset/raw/bdd100k/bdd100k/images/100k/train
+attr_index: dataset/yolo/attr_index.json
+loss: cosine            # fallback: smooth_l1
+epochs: 30
+batch_size: 128         # effective; micro_batch x grad-accum
+micro_batch: 64
+lr: 1.0e-3
+lr_floor: 1.0e-5
+warmup_epochs: 3
+weight_decay: 0.05
+amp_dtype: bf16         # fp16 on Kaggle P100, fp32 on CPU
+workers: 8
+seed: 0
+ckpt_every: 500
+probe_every: 5
+device: cuda:0

@@ -1,0 +1,31 @@
+# Stage 1: I-JEPA ViT-B/16 from scratch on unlabeled BDD100K train pool (T2 teacher).
+# Spec: brief section 6. Masking/EMA/WD per paper; LR linearly scaled to batch 256.
+# Schedule designed to extend 300 -> 600 epochs via auto-resume (just raise `epochs`).
+name: pretrain_t2
+project: runs_jepa/stage1
+arch: vit_base
+patch_size: 16
+image_size: 224
+pred_embed_dim: 384
+pred_depth: 6
+train_list: splits/pretrain.txt      # 62,020 train images; NEVER val
+images_dir: dataset/raw/bdd100k/bdd100k/images/100k/train
+attr_index: dataset/yolo/attr_index.json
+oversample:                          # multiplicative sampling weights (logged)
+  night: 2.0
+  dawn_dusk: 2.0
+  rainy: 2.0
+loss: l2            # brief/paper; official code used smooth_l1 (documented deviation switch)
+epochs: 300
+batch_size: 256     # effective
+micro_batch: 128
+warmup_epochs: 15
+wd: 0.04
+final_wd: 0.4
+final_lr: 1.0e-6
+ema: [0.996, 1.0]
+amp_dtype: bf16
+workers: 8
+seed: 0
+keep_every: 50
+device: cuda:0

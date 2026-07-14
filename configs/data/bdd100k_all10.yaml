@@ -1,0 +1,20 @@
+# PROVISIONAL data config - all 10 BDD100K detection classes.
+# FLAG 1 (docs/REPO_SURVEY.md): the friend's real class list lives in his
+# "Bdd10k_vehicle.yaml" (not yet recovered; name suggests a vehicle subset).
+# When it arrives: drop it into configs/data/, re-run the converter + splits
+# against it, and retire this file. Class ORDER here defines class ids.
+path: dataset/yolo          # dataset root (relative to repo root)
+train: splits/train_100.txt # overridden per label-fraction experiment
+val: splits/modelsel.txt    # model-selection split; BDD val ONLY for final scoring
+
+names:
+  0: car
+  1: bus
+  2: truck
+  3: person
+  4: rider
+  5: bike
+  6: motor
+  7: traffic light
+  8: traffic sign
+  9: train

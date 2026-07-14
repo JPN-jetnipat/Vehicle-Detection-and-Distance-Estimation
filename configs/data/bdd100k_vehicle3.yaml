@@ -1,0 +1,15 @@
+# CANONICAL data config — inherited from the friend's protocol (2026-07-13).
+# His bdd100k_vehicle.yaml lists 8 KITTI-legacy names, but his converter maps
+# only: car->0 ("Car"), bus->1 ("Van"), truck->2 ("Truck"). We keep his ids
+# EXACTLY (so his best.pt is directly comparable) but use the truthful BDD
+# category names. The 5 dead classes (Pedestrian, Person_sitting, Cyclist,
+# Tram, Misc) are dropped — they never received a single training box.
+# Supersedes configs/data/bdd100k_all10.yaml (kept for reference only).
+path: dataset/yolo
+train: splits/train_100.txt
+val: splits/modelsel.txt      # BDD val ONLY for final scoring
+
+names:
+  0: car     # friend's "Car"
+  1: bus     # friend's "Van"  (his converter maps BDD 'bus' here)
+  2: truck   # friend's "Truck"

@@ -1,0 +1,17 @@
+# Ablation arm: COCO-init baseline, 10% labels.
+# Fairness (brief section 7): T1/T2 arms must copy this file and change
+# ONLY `name` and `weights`. Everything else stays byte-identical.
+name: baseline_coco_10
+project: runs_jepa/stage3
+data_config: configs/data/bdd100k_vehicle3.yaml # friend's protocol: 3 vehicle classes (2026-07-13)
+train_list: splits/train_10.txt
+val_list: splits/modelsel.txt        # BDD val is NEVER used during training
+weights: yolov5s.pt                  # COCO-pretrained; yolov5s CONFIRMED from friend's best.pt
+model_cfg: ""                        # inferred from weights
+hyp: yolov5/data/hyps/hyp.scratch-low.yaml   # provisional until friend's recipe arrives
+imgsz: 640
+batch_size: 64   # friend's recipe
+epochs: 100      # friend's recipe
+seed: 0
+workers: 8
+device: 0
