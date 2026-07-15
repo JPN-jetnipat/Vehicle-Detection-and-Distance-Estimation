@@ -10,8 +10,10 @@ weights: weights/init_t1.pt          # distilled backbone + COCO neck/head (tool
 model_cfg: ""                        # inferred from weights
 hyp: yolov5/data/hyps/hyp.scratch-low.yaml   # provisional until friend's recipe arrives
 imgsz: 640
-batch_size: 64   # friend's recipe
+batch_size: 16   # per-step batch (staff RAM directive). YOLOv5 gradient-accumulates
+                 # to nominal batch 64 internally, so effective batch matches the
+                 # friend's recipe; loss scaling handled by yolov5 itself.
 epochs: 100      # friend's recipe
 seed: 0
-workers: 8
+workers: 2       # staff directive: shared 32 GB RAM server
 device: 0

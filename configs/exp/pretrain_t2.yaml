@@ -25,7 +25,7 @@ final_wd: 0.4
 final_lr: 1.0e-6
 ema: [0.996, 1.0]
 amp_dtype: bf16
-workers: 8
+workers: 2       # staff directive: shared 32 GB RAM server
 seed: 0
 keep_every: 50
 device: cuda:0

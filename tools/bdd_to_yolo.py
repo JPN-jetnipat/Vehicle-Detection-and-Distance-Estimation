@@ -9,7 +9,12 @@ in the stats). Images with zero kept boxes still get an EMPTY .txt file
 (YOLO treats them as background images) so every arm sees identical data.
 
 BDD100K images are uniformly 1280x720; we assume that and offer
---verify-sizes N to spot-check a random sample with PIL.
+--verify-sizes N to spot-check a sample with PIL.
+
+RAM: the train JSON is ~1.4 GB; json.load would spike to ~6-8 GB, which is
+unsafe on the shared 32 GB server. We therefore stream entries one at a time
+with ijson (in requirements.txt) - peak RAM stays ~tens of MB. Falls back to
+json.load (with a loud warning) only if ijson is missing.
 
 Usage (see RUNBOOK.md section 3):
   python tools/bdd_to_yolo.py \
@@ -22,6 +27,23 @@ import argparse, json, os, random, sys
 from pathlib import Path
 
 import yaml
+
+try:
+    import ijson
+except ImportError:
+    ijson = None
+
+
+def iter_entries(path):
+    """Yield top-level array elements one at a time (RAM-safe)."""
+    if ijson is not None:
+        with open(path, "rb") as f:
+            yield from ijson.items(f, "item")
+    else:
+        print("WARNING: ijson not installed - falling back to json.load "
+              "(needs ~6-8 GB RAM for the train JSON). pip install ijson", file=sys.stderr)
+        with open(path) as f:
+            yield from json.load(f)
 
 
 def load_names(data_config: str):
@@ -44,8 +66,9 @@ def convert(entry, name_to_id, img_w, img_h):
         if cid is None:
             skip_cat += 1
             continue
-        x1 = min(max(box["x1"], 0.0), img_w); x2 = min(max(box["x2"], 0.0), img_w)
-        y1 = min(max(box["y1"], 0.0), img_h); y2 = min(max(box["y2"], 0.0), img_h)
+        # float() also handles decimal.Decimal, which ijson yields for numbers
+        x1 = min(max(float(box["x1"]), 0.0), img_w); x2 = min(max(float(box["x2"]), 0.0), img_w)
+        y1 = min(max(float(box["y1"]), 0.0), img_h); y2 = min(max(float(box["y2"]), 0.0), img_h)
         if x2 - x1 < 1.0 or y2 - y1 < 1.0:
             degen += 1
             continue
@@ -74,27 +97,11 @@ def main():
     name_to_id = load_names(args.data_config)
     print(f"classes ({len(name_to_id)}): {list(name_to_id)}")
 
-    with open(args.labels_json) as f:
-        data = json.load(f)
-    print(f"{len(data)} entries in {args.labels_json}")
 
-    if args.verify_sizes:
+    sizes_to_check = args.verify_sizes
+    if sizes_to_check:
         from PIL import Image
         assert args.images_dir, "--verify-sizes requires --images-dir"
-        rng = random.Random(0)
-        sample = rng.sample(data, min(args.verify_sizes, len(data)))
-        bad = 0
-        for e in sample:
-            p = Path(args.images_dir) / e["name"]
-            if not p.exists():
-                continue
-            wh = Image.open(p).size
-            if wh != (args.img_width, args.img_height):
-                bad += 1
-                print(f"  SIZE MISMATCH {e['name']}: {wh}", file=sys.stderr)
-        if bad:
-            sys.exit(f"FLAG: {bad} images differ from {args.img_width}x{args.img_height} - do not assume fixed size.")
-        print(f"size check ok on {len(sample)} sampled images")
 
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -102,7 +109,16 @@ def main():
               "boxes_degenerate": 0, "empty_label_files": 0}
     per_class = {n: 0 for n in name_to_id}
     id_to_name = {i: n for n, i in name_to_id.items()}
-    for e in data:
+    checked = 0
+    for e in iter_entries(args.labels_json):
+        if sizes_to_check and checked < sizes_to_check:
+            ip = Path(args.images_dir) / e["name"]
+            if ip.exists():
+                wh = Image.open(ip).size
+                if wh != (args.img_width, args.img_height):
+                    sys.exit(f"FLAG: {e['name']} is {wh}, not "
+                             f"{args.img_width}x{args.img_height} - do not assume fixed size.")
+                checked += 1
         lines, kept, skip, degen = convert(e, name_to_id, args.img_width, args.img_height)
         (out / (Path(e["name"]).stem + ".txt")).write_text("\n".join(lines) + ("\n" if lines else ""))
         totals["images"] += 1
@@ -113,6 +129,9 @@ def main():
             totals["empty_label_files"] += 1
         for ln in lines:
             per_class[id_to_name[int(ln.split()[0])]] += 1
+    if sizes_to_check:
+        print(f"size check ok on {checked} images")
+    print(f"{totals['images']} entries in {args.labels_json}")
     stats = {"args": vars(args), "totals": totals, "per_class": per_class}
     print(json.dumps(stats["totals"], indent=2))
     print(json.dumps(per_class, indent=2))

@@ -79,7 +79,7 @@ def main():
             "--project", str(REPO / project),
             "--name", name,
             "--exist-ok",
-            "--workers", str(cfg.get("workers", 8)),
+            "--workers", str(cfg.get("workers", 2)),
         ]
         if cfg.get("freeze"):
             cmd += ["--freeze", str(cfg["freeze"])]

@@ -6,10 +6,20 @@ JupyterLab terminal, unless marked `[mac]`. I (Claude) write scripts/configs;
 
 **Before launching ANY job:**
 ```bash
-nvidia-smi        # check who else is on the GPU + free VRAM; be a good citizen
-df -h ~           # disk headroom check before large downloads/extractions
+nvidia-smi        # who else is on the GPU + free VRAM
+free -h           # system RAM - the server has only 32 GB SHARED (crashed once already!)
+df -h ~           # disk headroom before large downloads/extractions
 ```
 Long jobs: always `tmux` or `nohup … &` — VPN/Jupyter sessions drop.
+
+**RAM rules (staff directive, 2026-07 — the server crashed on a 100k run):**
+- `workers: 2` everywhere (already the default in all our configs/scripts).
+- Detection training: per-step batch 16 (configs updated); YOLOv5 internally
+  accumulates gradients to nominal batch 64, so results stay comparable to
+  the friend's batch-64 recipe.
+- **NEVER pass `--cache` / `--cache ram`** to yolov5 train.py — it tries to
+  load the whole dataset into RAM. Our wrapper never does; don't add it by hand.
+- The converter + attr-index scripts stream the 1.4 GB JSON (ijson) — safe.
 
 ---
 
@@ -67,9 +77,8 @@ Class list: **RESOLVED (2026-07-13)** — canonical config is
 `configs/data/bdd100k_vehicle3.yaml` (3 vehicle classes: car/bus/truck, ids
 matching the friend's protocol). `bdd100k_all10.yaml` is reference-only.
 
-⚠️ Heads-up: the train label JSON is ~1.4 GB; the converter loads it whole
-(needs ~8 GB RAM — fine on the server). The attr-index script auto-streams
-for files >500 MB and needs almost no RAM.
+Both the converter and the attr-index script STREAM the 1.4 GB train JSON
+(peak RAM ~tens of MB) — safe for the shared 32 GB server.
 
 **3.1 Attribute index** (~2 min):
 ```bash
@@ -77,10 +86,11 @@ python tools/build_attr_index.py \
   --train-json dataset/raw/bdd100k_labels_release/bdd100k/labels/bdd100k_labels_images_train.json \
   --val-json   dataset/raw/bdd100k_labels_release/bdd100k/labels/bdd100k_labels_images_val.json \
   --out-prefix dataset/yolo/attr_index \
-  --expect-counts train=64520,val=10000    # FLAG 4: mirror has 64,520 train labels, not 69,863
+  --expect-counts train=69863,val=10000    # confirmed full official train set (FLAG 4 resolved 2026-07-14)
 ```
-If the counts differ from 64520/10000 on the server copy, STOP and flag it —
-the committed splits/ lists were generated from the 64,520-entry JSON.
+Confirmed 2026-07-14: server has the complete official set (69,863 train / 10,000
+val) — an earlier partial local copy had shown only 64,520; that's resolved.
+splits/ were regenerated against the full 69,863 (still seed 42).
 
 **3.2 Convert labels** (~3 min each):
 ```bash
@@ -92,9 +102,13 @@ python tools/bdd_to_yolo.py --labels-json dataset/raw/bdd100k_labels_release/bdd
   --stats-out dataset/yolo/convert_stats_val.json \
   --images-dir dataset/raw/bdd100k/bdd100k/images/100k/val --verify-sizes 50
 ```
-Val sanity numbers (verified locally, vehicle3 config): 10,000 images,
-108,345 boxes kept (car 102,504 / bus 1,597 / truck 4,244), 77,178 non-vehicle
-boxes skipped, 3 degenerate, 96 empty (background) label files.
+Val sanity numbers (vehicle3 config): 10,000 images, 108,345 boxes kept
+(car 102,504 / bus 1,597 / truck 4,244), 77,178 non-vehicle boxes skipped,
+3 degenerate, 96 empty (background) label files.
+Train sanity numbers (full 69,863, verified on server 2026-07-14): 754,807
+boxes kept (car 713,166 / bus 11,672 / truck 29,969), 47 degenerate, 606 empty
+label files. Splits: modelsel 2,500 / pool 67,363 (train_100 67,363, train_50
+33,682, train_25 16,841, train_10 6,736).
 
 **3.3 Materialize split lists + image symlinks**:
 ```bash
@@ -126,7 +140,7 @@ and upload via Jupyter):
 ls yolov5s.pt || wget https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5s.pt
 ```
 
-**4.2 Train** (A40: roughly 8–12 h for 100 epochs @ batch 64 / 640 px, ~14 GB
+**4.2 Train** (A40: roughly 9–14 h for 100 epochs @ per-step batch 16 / 640 px, ~6 GB
 VRAM — check `nvidia-smi` first; use tmux):
 ```bash
 nohup python tools/train_yolo.py --config configs/exp/baseline_coco_100.yaml > baseline_100.log 2>&1 &

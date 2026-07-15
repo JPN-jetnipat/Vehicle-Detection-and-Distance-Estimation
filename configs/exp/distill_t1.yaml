@@ -20,7 +20,7 @@ lr_floor: 1.0e-5
 warmup_epochs: 3
 weight_decay: 0.05
 amp_dtype: bf16         # fp16 on Kaggle P100, fp32 on CPU
-workers: 8
+workers: 2       # staff directive: shared 32 GB RAM server
 seed: 0
 ckpt_every: 500
 probe_every: 5

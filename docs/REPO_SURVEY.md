@@ -49,6 +49,18 @@ RUNBOOK's attr-index step hard-checks this count on the server and stops on mism
 Action for Kanade: when downloading on the server, if the Kaggle-CLI copy has the full
 69,863, tell me — splits must then be regenerated (same seed, one command).
 
+**FLAG 5 — GitHub remote is Public, not Private.**
+The brief (section 1, item 7) specifies "a private GitHub remote." The actual
+repo (`github.com/JPN-jetnipat/Vehicle-Detection-and-Distance-Estimation`) is
+set to **Public** — confirmed 2026-07-14 from the repo page badge. Anyone on
+the internet can currently read the full codebase (data itself is NOT
+exposed — `dataset/`, `runs_jepa/`, weights, and `kaggle.json` are all
+gitignored — but all source code, configs, and the design docs are visible).
+Not necessarily a problem for a class project, but it should be a conscious
+choice rather than a default. Action for Kanade/JPN: decide together whether
+to flip the repo to Private (Settings -> General -> Danger Zone -> Change
+visibility) or leave it Public; either is fine, just pick one deliberately.
+
 ## Reuse verdict
 
 Reusable: the vanilla `yolov5/` tree itself (train/val/detect), the upload guide, the partial local dataset for tests. Everything else in the brief's pipeline (converter, attribute index, splits, evaluator, all I-JEPA/distillation code) must be built new — which also keeps us cleanly separable from the DANN teammate: we only add files, never edit his.
