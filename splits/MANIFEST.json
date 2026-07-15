@@ -2,9 +2,9 @@
   "seed": 42,
   "modelsel_size": 2500,
   "counts": {
-    "train_total": 64520,
+    "train_total": 69863,
     "modelsel": 2500,
-    "pool": 62020,
+    "pool": 67363,
     "val_final": 10000
   }
 }
