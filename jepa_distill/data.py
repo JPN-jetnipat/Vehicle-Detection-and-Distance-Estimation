@@ -10,6 +10,16 @@ from torchvision import transforms
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD = (0.229, 0.224, 0.225)
 
+REPO = Path(__file__).resolve().parents[1]
+
+
+def _resolve(p):
+    """Resolve relative config paths against the repo root, not whatever
+    directory the terminal happens to be in - training is launched via
+    tmux/nohup where cwd is easy to lose track of."""
+    p = Path(p)
+    return p if p.is_absolute() else REPO / p
+
 
 def build_transform(train=True, size=224):
     if train:
@@ -31,8 +41,8 @@ class ImageListDataset(Dataset):
     """Reads an image list (names or relative paths, one per line)."""
 
     def __init__(self, list_file, images_dir, train=True, size=224, limit=0):
-        self.images_dir = Path(images_dir)
-        names = [Path(l.strip()).name for l in open(list_file) if l.strip()]
+        self.images_dir = _resolve(images_dir)
+        names = [Path(l.strip()).name for l in open(_resolve(list_file)) if l.strip()]
         if limit:
             names = names[:limit]
         self.names = names
