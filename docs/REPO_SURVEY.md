@@ -49,6 +49,20 @@ RUNBOOK's attr-index step hard-checks this count on the server and stops on mism
 Action for Kanade: when downloading on the server, if the Kaggle-CLI copy has the full
 69,863, tell me — splits must then be regenerated (same seed, one command).
 
+**Update 2026-07-19:** concretely hit during the Stage-2 (T1 distillation) smoke
+test — `jepa_distill` raised `FileNotFoundError` for an image
+(`00091078-cedbfea7.jpg`) listed in `splits/pretrain.txt` (derived from the
+label JSON) but absent from `dataset/raw/bdd100k/bdd100k/images/100k/train/`
+on the server. This is the JSON-vs-disk gap FLAG 4 already worried about, now
+showing up as an actual missing file, not just a suspicious total count.
+`jepa_distill/data.py` was hardened to skip missing files with a loud warning
+and to hard-stop if more than 1% of any image list is missing (rather than
+silently train on a shrunk dataset). Diagnostic requested from Kanade, not
+yet run: exact file count in the train images folder, and how many of
+`pretrain.txt`'s 62,020 names are missing from it (`comm -23` against a
+sorted `ls`). Val is independently confirmed complete — all 10,000 files
+loaded successfully during baseline val scoring.
+
 **FLAG 5 — GitHub remote is Public, not Private.**
 The brief (section 1, item 7) specifies "a private GitHub remote." The actual
 repo (`github.com/JPN-jetnipat/Vehicle-Detection-and-Distance-Estimation`) is
