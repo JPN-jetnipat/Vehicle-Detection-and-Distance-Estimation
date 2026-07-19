@@ -85,6 +85,8 @@ def load_preds(image_names, pred_dir, name_to_id, W, H, n_classes):
             continue
         found += 1
         for line in pf.read_text().splitlines():
+            if not line.strip():
+                continue  # blank line (e.g. a trailing newline in an empty-detections file)
             p = line.split()
             if len(p) != 6:
                 raise ValueError(f"{pf}: expected 'cls cx cy w h conf', got: {line}")
@@ -154,17 +156,40 @@ def main():
     for ci, cname in enumerate(names):
         results["per_class_overall"][cname] = evaluate_slice(gt_coco, dt_coco, all_ids, cat_id=ci)
 
+    # Per-class ground-truth instance counts, straight from the COCO object
+    # already built above (no re-reading label files needed). This is what
+    # powers the YOLOv5-style summary table printed below.
+    n_instances = {cname: len(gt_coco.getAnnIds(catIds=[ci])) for ci, cname in enumerate(names)}
+    results["per_class_instances"] = n_instances
+
+    n_total_images = results["n_images"]["overall"]
+    print(f"\n{'Class':>10} {'Images':>8} {'Instances':>10} {'mAP50':>8} {'mAP75':>8} {'mAP50-95':>10}")
+    o = results["slices"]["overall"]
+    print(f"{'all':>10} {n_total_images:>8} {sum(n_instances.values()):>10} "
+          f"{o['mAP50']:>8} {o['mAP75']:>8} {o['mAP50_95']:>10}")
+    for cname in names:
+        m = results["per_class_overall"][cname]
+        print(f"{cname:>10} {n_total_images:>8} {n_instances[cname]:>10} "
+              f"{m['mAP50']:>8} {m['mAP75']:>8} {m['mAP50_95']:>10}")
+    print("(note: no P/R columns - those are single-confidence-threshold numbers "
+          "YOLOv5 computes internally; mAP50/75/50-95 above integrate across all "
+          "thresholds, which is the metric the project brief actually asks for)")
+
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     meta = {"args": vars(args), "classes": names}
     out.with_suffix(".json").write_text(json.dumps({**meta, **results}, indent=2))
     with open(out.with_suffix(".csv"), "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["slice", "n_images", "mAP50", "mAP75", "mAP50_95"])
+        w.writerow(["row_type", "name", "n_images", "n_instances", "mAP50", "mAP75", "mAP50_95"])
         for sl, m in results["slices"].items():
             if m:
-                w.writerow([sl, results["n_images"][sl], m["mAP50"], m["mAP75"], m["mAP50_95"]])
-    print(f"wrote {out}.json and {out}.csv")
+                w.writerow(["slice", sl, results["n_images"][sl], "", m["mAP50"], m["mAP75"], m["mAP50_95"]])
+        for cname in names:
+            m = results["per_class_overall"][cname]
+            w.writerow(["class", cname, n_total_images, n_instances[cname],
+                        m["mAP50"], m["mAP75"], m["mAP50_95"]])
+    print(f"\nwrote {out}.json and {out}.csv")
 
 
 if __name__ == "__main__":
