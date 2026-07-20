@@ -15,8 +15,15 @@ Usage:
       --image-list splits/val_final.txt --images-root dataset/yolo \
       --out-dir runs_jepa/preds/baseline_coco_100_val --device 0
 """
-import argparse, sys
+import argparse, pathlib, sys
 from pathlib import Path
+
+# Checkpoints saved on Windows (e.g. the friend's best.pt) contain pickled
+# WindowsPath objects that cannot be instantiated on Linux and crash
+# torch.load. Aliasing to PosixPath fixes loading; harmless for our own
+# Linux-saved checkpoints.
+if sys.platform != "win32":
+    pathlib.WindowsPath = pathlib.PosixPath
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "yolov5"))

@@ -33,3 +33,8 @@ viz_out/
 
 # never ever commit an API key
 kaggle.json
+# HuggingFace checkpoints downloaded into weights/ - multi-GB, never commit
+*.safetensors
+
+# Jupyter autosave checkpoints (created in every dir opened via Jupyter)
+.ipynb_checkpoints/

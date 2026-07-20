@@ -53,8 +53,9 @@ def write_lists(names, stem, split_dir_repo, split_dir_yolo, img_subdir):
     Path(split_dir_repo).mkdir(parents=True, exist_ok=True)
     Path(split_dir_yolo).mkdir(parents=True, exist_ok=True)
     (Path(split_dir_repo) / f"{stem}.txt").write_text("\n".join(names) + "\n")
+    images_root = Path(split_dir_yolo).resolve().parent / "images"
     (Path(split_dir_yolo) / f"{stem}.txt").write_text(
-        "\n".join(f"./images/{img_subdir}/{n}" for n in names) + "\n")
+        "\n".join(str(images_root / img_subdir / n) for n in names) + "\n")
 
 
 def main():
