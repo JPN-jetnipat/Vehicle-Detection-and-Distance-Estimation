@@ -12,6 +12,37 @@ df -h ~           # disk headroom before large downloads/extractions
 ```
 Long jobs: always `tmux` or `nohup … &` — VPN/Jupyter sessions drop.
 
+**Night-shift protocol (professor's GPU-sharing policy, 2026-07):**
+Long jobs run OVERNIGHT and get announced in the GPU users' group line first.
+All our training scripts checkpoint continuously and auto-resume, so a 28-hour
+job becomes ~3 nightly chunks with zero lost work:
+
+```bash
+# EVENING (e.g. ~21:00) - announce in the group line, then:
+tmux attach -t train || tmux new -s train
+source .venv/bin/activate
+nvidia-smi && free -h
+nohup python tools/train_yolo.py --config configs/exp/<arm>.yaml > <arm>.log 2>&1 &
+# detach: Ctrl+b d
+
+# MORNING (e.g. ~08:00) - stop gracefully, freeing the GPU for the day:
+pgrep -af "yolov5/train.py"          # note the PID of the actual training process
+kill <PID>                            # plain kill = SIGTERM; NEVER kill -9
+pgrep -af train_yolo.py && kill <wrapper PID too, if still alive>
+nvidia-smi                            # confirm the GPU is free before logging off
+
+# NEXT EVENING - exact same launch command; the wrapper finds
+# runs_jepa/.../weights/last.pt and RESUMES automatically. Same for
+# jepa_pretrain/ and jepa_distill/ scripts (ckpt_latest.pt).
+```
+Cost of a stop: at most one epoch (~17 min for detection arms) since
+checkpoints are written every epoch (and every 500 iters in stage 1/2).
+Unplanned power cuts (aircon maintenance!) are survived the same way —
+just relaunch; never start a fresh run dir after a crash.
+Also: the 32 GB is a PER-JUPYTER-SESSION memory cap (auto-terminate on
+excess) — our workers-2 / batch-16 / streaming settings keep us far below it.
+Offload the 10% arms to Kaggle (appendix) to reduce A40 pressure further.
+
 **RAM rules (staff directive, 2026-07 — the server crashed on a 100k run):**
 - `workers: 2` everywhere (already the default in all our configs/scripts).
 - Detection training: per-step batch 16 (configs updated); YOLOv5 internally
