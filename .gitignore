@@ -3,14 +3,6 @@
 __pycache__/
 *.pyc
 
-# Model weights
-*.pt
-*.pth
-
-# Model weights
-*.pt
-*.pth
-
 # Ignore all folders inside dataset
 dataset/*/
 
