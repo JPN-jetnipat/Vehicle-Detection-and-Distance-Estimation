@@ -215,32 +215,48 @@ automatically (it prints how many).
 
 Design signed off 2026-07-12 (docs/STAGE2_DISTILL_DESIGN.md).
 
-**5.1 Teacher checkpoint** (~2.5 GB; if the server has no internet, run the
-same command on the Mac and upload the folder via Jupyter):
+**5.1 Teacher checkpoint — use Meta's ORIGINAL release (FLAG 5).**
+The HuggingFace conversion exports the *context* encoder; we need the *target*
+encoder, which only the original tar contains:
 ```bash
-huggingface-cli download facebook/ijepa_vith14_1k --local-dir weights/ijepa_vith14_1k
+df -h ~                                    # the tar is several GB
+wget https://dl.fbaipublicfiles.com/ijepa/IN1K-vit.h.14-300e.pth.tar -P weights/
+```
+(The HF download `weights/ijepa_vith14_1k` remains valid only for the archived
+context-encoder run `distill_t1`.)
+⚠️ FLAG 5: that HF checkpoint is the **context** encoder. For the
+brief-compliant **target** encoder, also fetch Meta's original checkpoint and
+use `configs/exp/distill_t1_target.yaml` (+ `t1t_distill_*.yaml` downstream):
+```bash
+wget -P weights/ https://dl.fbaipublicfiles.com/ijepa/IN1K-vit.h.14-300e.pth.tar
 ```
 
 **5.2 Smoke test the wiring** (~2 min, CPU or GPU — run before the real thing):
 ```bash
-python jepa_distill/train_distill.py --config configs/exp/distill_t1.yaml --smoke
+python jepa_distill/train_distill.py --config configs/exp/distill_t1_target.yaml --smoke
 ```
 Expect: teacher/student shape printout (teacher dim=1280 grid=16, student P4
 256ch 14x14), loss starting near 1.0 and moving. FLAG me anything odd.
 
 **5.3 Distill** (A40: ~1.5–3 h, ~8–12 GB VRAM; check nvidia-smi, use tmux):
 ```bash
-nohup python jepa_distill/train_distill.py --config configs/exp/distill_t1.yaml > distill_t1.log 2>&1 &
-tail -f distill_t1.log
+nohup python jepa_distill/train_distill.py --config configs/exp/distill_t1_target.yaml > distill_t1_target.log 2>&1 &
+tail -f distill_t1_target.log
 ```
+Reference from the context-encoder run: 30 epochs = 3.0 h at 189 img/s, 3.7 GB VRAM,
+loss 1.007 → 0.186, probe 0.98.
 Watch: loss trending down; `[probe]` day/night accuracy every 5 epochs should
 sit well above 0.5 and climb/plateau. Auto-resumes from ckpt_latest.pt.
 
 **5.4 Assemble the stage-3 init** (seconds):
 ```bash
 python tools/make_init_weights.py \
-  --distilled runs_jepa/stage2/distill_t1/backbone_distilled.pt \
+  --distilled runs_jepa/stage2/distill_t1_target/backbone_distilled.pt \
   --base yolov5s.pt --out weights/init_t1.pt
+# archived context-encoder variant (optional footnote arm):
+python tools/make_init_weights.py \
+  --distilled runs_jepa/stage2/distill_t1/backbone_distilled.pt \
+  --base yolov5s.pt --out weights/init_t1_ctx.pt
 ```
 Policy (fairness): distilled backbone layers 0–6 + COCO neck/head — every arm
 shares neck/head init and differs only in backbone.

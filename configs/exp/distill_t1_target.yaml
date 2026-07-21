@@ -1,0 +1,38 @@
+# Stage 2, T1 arm — TARGET-ENCODER version (brief §12 compliant).
+#
+# Why this file exists (FLAG 5, 2026-07-21): HuggingFace's conversion script
+# for facebook/ijepa_vith14_1k loads checkpoint["encoder"] — the CONTEXT
+# encoder (x-encoder). The brief's non-negotiable is to distill from the
+# TARGET encoder (y-encoder, the EMA copy; I-JEPA paper App. A.1). This config
+# loads Meta's original release and takes ckpt["target_encoder"].
+#
+# Prereq: wget https://dl.fbaipublicfiles.com/ijepa/IN1K-vit.h.14-300e.pth.tar -P weights/
+# Everything else is byte-identical to distill_t1.yaml.
+name: distill_t1_target
+project: runs_jepa/stage2
+teacher:
+  kind: t2_ijepa                    # loads ckpt["target_encoder"] via vendored ijepa ViT
+  kwargs:
+    checkpoint: weights/IN1K-vit.h.14-300e.pth.tar
+    arch: vit_huge
+    patch_size: 14
+    image_size: 224
+model_yaml: yolov5/models/yolov5s.yaml
+nc: 3
+train_list: splits/pretrain.txt
+images_dir: dataset/raw/bdd100k/bdd100k/images/100k/train
+attr_index: dataset/yolo/attr_index.json
+loss: cosine
+epochs: 30
+batch_size: 128
+micro_batch: 64
+lr: 1.0e-3
+lr_floor: 1.0e-5
+warmup_epochs: 3
+weight_decay: 0.05
+amp_dtype: bf16
+workers: 2       # staff directive: shared 32 GB RAM server
+seed: 0
+ckpt_every: 500
+probe_every: 5
+device: cuda:0

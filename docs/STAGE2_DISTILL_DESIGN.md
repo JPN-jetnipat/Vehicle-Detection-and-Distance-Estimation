@@ -22,7 +22,7 @@ Both feature maps L2-normalized per token, then **cosine distance** `1 − cos(p
 
 ## What gets trained, what stays random
 
-Gradient reaches backbone layers 0–6. Layers 7–9 (P5 conv, C3, SPPF) receive no distillation signal and stay random-init into Stage 3 (they train there end-to-end). This is the documented "single-level P4" start per the brief; if T1 results disappoint, the first escalation is an auxiliary P5 ↔ pooled-teacher loss, second is P3. Neck + head are always fresh-init in Stage 3, identically across all arms.
+Gradient reaches backbone layers 0–6. Layers 7–9 (P5 conv, C3, SPPF) receive no distillation signal; at Stage-3 assembly they are taken from the COCO checkpoint together with the neck and head (see tools/make_init_weights.py — corrected 2026-07-21; an earlier draft of this note said 'random', the implementation uses COCO, which is both fairer and identical across arms). This is the documented "single-level P4" start per the brief; if T1 results disappoint, the first escalation is an auxiliary P5 ↔ pooled-teacher loss, second is P3. Neck + head are always fresh-init in Stage 3, identically across all arms.
 
 ## Data & sampling
 
@@ -49,3 +49,15 @@ a) P4-only start (escalate to P5/P3 only on weak T1 results) — recommended yes
 b) Cosine loss primary, smooth-L1 as fallback flag — recommended yes.
 c) Uniform sampling in Stage 2 (no night oversampling here) — recommended yes.
 d) 30 epochs / batch 128 / lr 1e-3 defaults — recommended yes.
+
+## Addendum 2026-07-21 — teacher provenance (FLAG 5)
+
+The T1 teacher must be Meta's **target encoder**, loaded from the original
+`IN1K-vit.h.14-300e.pth.tar` (`ckpt["target_encoder"]`) via the vendored ijepa ViT
+(`vit_huge`, patch 14, embed 1280, depth 32) — NOT the HuggingFace conversion, which
+exports the context encoder. Config: `configs/exp/distill_t1_target.yaml`.
+
+Empirical note from the first (context-encoder) run: 30 epochs, 3.0 h on the A40 at
+189 img/s, 3.7 GB VRAM; loss 1.007 → 0.186 with most gains by epoch 12; day/night
+linear probe 0.98 (saturated by epoch 4 — this probe confirms non-collapse but is a
+weak semantic test, since brightness alone predicts day/night).

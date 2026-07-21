@@ -75,6 +75,33 @@ choice rather than a default. Action for Kanade/JPN: decide together whether
 to flip the repo to Private (Settings -> General -> Danger Zone -> Change
 visibility) or leave it Public; either is fine, just pick one deliberately.
 
+**FLAG 5 — the HuggingFace I-JEPA checkpoint is the CONTEXT encoder (2026-07-21).**
+Verified by reading HF's `convert_ijepa_to_hf.py`: it loads
+`torch.hub.load_state_dict_from_url(...)["encoder"]` from Meta's
+`IN1K-vit.h.14-300e.pth.tar`. That is the context (x) encoder; the brief's
+non-negotiable §12 and I-JEPA paper App. A.1 specify the **target** encoder for
+downstream use. The two differ (target = EMA of context), though they converge
+substantially after 300 epochs.
+Run `distill_t1` (2026-07-21) therefore used the CONTEXT encoder: loss
+1.007→0.186, probe 0.98, 3.0 h. Remedy available at zero code cost:
+`configs/exp/distill_t1_target.yaml` loads Meta's original .tar via the
+`t2_ijepa` teacher (`target_encoder` key, arch vit_huge, patch 14).
+Also fixed here: `jepa_distill/teacher.py` now puts `third_party/ijepa` on
+sys.path itself (train_distill.py did not, so any original-format teacher —
+including every T2 run — would have ImportError'd).
+
+
+**FLAG 5 — HuggingFace `ijepa_vith14_1k` is the CONTEXT encoder, not the target encoder.**
+Verified 2026-07-21 by reading transformers' `convert_ijepa_to_hf.py`: it loads
+`checkpoint["encoder"]` from Meta's `IN1K-vit.h.14-300e.pth.tar`. Meta's tar contains
+both `encoder` (context, x-encoder) and `target_encoder` (EMA, y-encoder). The brief
+§12 non-negotiable requires distilling from the TARGET encoder (I-JEPA paper App. A.1).
+Decision (Kanade, 2026-07-21): re-distill from the true target encoder using
+`configs/exp/distill_t1_target.yaml` (loads Meta's original tar via the vendored ijepa
+ViT, `ckpt["target_encoder"]`), and use THAT for the T1 arm. The completed
+context-encoder run (`runs_jepa/stage2/distill_t1`, final loss 0.1856, day/night probe
+0.980) is retained as `weights/init_t1_ctx.pt` for an optional context-vs-target footnote.
+
 ## Reuse verdict
 
 Reusable: the vanilla `yolov5/` tree itself (train/val/detect), the upload guide, the partial local dataset for tests. Everything else in the brief's pipeline (converter, attribute index, splits, evaluator, all I-JEPA/distillation code) must be built new — which also keeps us cleanly separable from the DANN teammate: we only add files, never edit his.

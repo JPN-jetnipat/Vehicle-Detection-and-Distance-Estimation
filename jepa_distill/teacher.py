@@ -6,9 +6,15 @@ T2: our own ViT-B/16 pretrained in Stage 1 with the vendored official ijepa
     code (checkpoint key 'target_encoder').
 """
 import math
+import sys
+from pathlib import Path
 
 import torch
 import torch.nn as nn
+
+_VENDORED_IJEPA = Path(__file__).resolve().parents[1] / "third_party" / "ijepa"
+if str(_VENDORED_IJEPA) not in sys.path:
+    sys.path.insert(0, str(_VENDORED_IJEPA))
 
 
 class HFTeacher(nn.Module):
@@ -32,7 +38,12 @@ class HFTeacher(nn.Module):
 
 
 class IJepaCheckpointTeacher(nn.Module):
-    """T2: target encoder from our Stage-1 run (vendored official ijepa repo)."""
+    """Target encoder from an ORIGINAL-format I-JEPA checkpoint (key
+    'target_encoder'). Two uses:
+      - T2: our Stage-1 run's target_encoder_final.pt
+      - T1-target: Meta's released IN1K-vit.h.14-300e.pth.tar (arch=vit_huge,
+        patch_size=14) - needed because the HuggingFace conversion exports the
+        CONTEXT encoder ('encoder'), not the target encoder. See FLAG 5."""
 
     def __init__(self, checkpoint, arch="vit_base", patch_size=16, image_size=224):
         super().__init__()
@@ -40,8 +51,8 @@ class IJepaCheckpointTeacher(nn.Module):
             import src.models.vision_transformer as vit  # vendored ijepa repo on sys.path
         except ImportError as e:
             raise ImportError(
-                "Vendored ijepa repo not on sys.path - Stage 1 must land first "
-                "(see RUNBOOK section 6). This teacher is for T2 only.") from e
+                f"Could not import vendored ijepa from {_VENDORED_IJEPA} - "
+                "is third_party/ijepa present?") from e
         self.encoder = vit.__dict__[arch](img_size=[image_size], patch_size=patch_size)
         ckpt = torch.load(checkpoint, map_location="cpu")
         state = ckpt.get("target_encoder", ckpt)

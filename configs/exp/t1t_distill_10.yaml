@@ -1,0 +1,19 @@
+# Ablation arm: T1-distilled backbone (copy of baseline config; ONLY name+weights differ), 10% labels.
+# Fairness (brief section 7): T1/T2 arms must copy this file and change
+# ONLY `name` and `weights`. Everything else stays byte-identical.
+name: t1t_distill_10
+project: runs_jepa/stage3
+data_config: configs/data/bdd100k_vehicle3.yaml # friend's protocol: 3 vehicle classes (2026-07-13)
+train_list: splits/train_10.txt
+val_list: splits/modelsel.txt        # BDD val is NEVER used during training
+weights: weights/init_t1_target.pt          # distilled backbone + COCO neck/head (tools/make_init_weights.py)
+model_cfg: ""                        # inferred from weights
+hyp: yolov5/data/hyps/hyp.scratch-low.yaml   # provisional until friend's recipe arrives
+imgsz: 640
+batch_size: 16   # per-step batch (staff RAM directive). YOLOv5 gradient-accumulates
+                 # to nominal batch 64 internally, so effective batch matches the
+                 # friend's recipe; loss scaling handled by yolov5 itself.
+epochs: 100      # friend's recipe
+seed: 0
+workers: 2       # staff directive: shared 32 GB RAM server
+device: 0
