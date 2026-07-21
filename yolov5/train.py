@@ -399,7 +399,7 @@ def train(hyp, opt, device, callbacks):
         pbar = enumerate(train_loader)
         LOGGER.info(("\n" + "%11s" * 7) % ("Epoch", "GPU_mem", "box_loss", "obj_loss", "cls_loss", "Instances", "Size"))
         if RANK in {-1, 0}:
-            pbar = tqdm(pbar, total=nb, bar_format=TQDM_BAR_FORMAT, disable=True)  # progress bar (display suppressed; one summary line printed after the epoch instead)
+            pbar = tqdm(pbar, total=nb, bar_format=TQDM_BAR_FORMAT)  # progress bar
         optimizer.zero_grad()
         for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
             callbacks.run("on_train_batch_start")
@@ -456,22 +456,10 @@ def train(hyp, opt, device, callbacks):
                     ("%11s" * 2 + "%11.4g" * 5)
                     % (f"{epoch}/{epochs - 1}", mem, *mloss, targets.shape[0], imgs.shape[-1])
                 )
-                heartbeat_every = max(1, nb // 10)  # ~10 progress lines per epoch, regardless of dataset size
-                if i > 0 and i % heartbeat_every == 0:
-                    LOGGER.info(
-                        ("%11s" * 2 + "%11.4g" * 5)
-                        % (f"{epoch}/{epochs - 1}", mem, *mloss, targets.shape[0], imgs.shape[-1])
-                    )
                 callbacks.run("on_train_batch_end", model, ni, imgs, targets, paths, list(mloss))
                 if callbacks.stop_training:
                     return
             # end batch ------------------------------------------------------------------------------------------------
-
-        if RANK in {-1, 0}:
-            LOGGER.info(
-                ("%11s" * 2 + "%11.4g" * 5)
-                % (f"{epoch}/{epochs - 1}", mem, *mloss, targets.shape[0], imgs.shape[-1])
-            )
 
         # Scheduler
         lr = [x["lr"] for x in optimizer.param_groups]  # for loggers
