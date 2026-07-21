@@ -360,7 +360,7 @@ def run(
         except Exception:
             compute_distance_metrics = False
     callbacks.run("on_val_start")
-    pbar = tqdm(dataloader, desc=s, bar_format=TQDM_BAR_FORMAT, mininterval=1e9)  # progress bar (one refresh per validation pass, not per batch)
+    pbar = tqdm(dataloader, desc=s, bar_format=TQDM_BAR_FORMAT, disable=True)  # progress bar display suppressed (per-class results table below already summarizes the pass)
     for batch_i, (im, targets, paths, shapes) in enumerate(pbar):
         callbacks.run("on_val_batch_start")
         with dt[0]:

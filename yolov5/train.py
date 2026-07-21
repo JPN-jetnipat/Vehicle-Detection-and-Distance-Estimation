@@ -399,7 +399,7 @@ def train(hyp, opt, device, callbacks):
         pbar = enumerate(train_loader)
         LOGGER.info(("\n" + "%11s" * 7) % ("Epoch", "GPU_mem", "box_loss", "obj_loss", "cls_loss", "Instances", "Size"))
         if RANK in {-1, 0}:
-            pbar = tqdm(pbar, total=nb, bar_format=TQDM_BAR_FORMAT, mininterval=1e9)  # progress bar (one refresh per epoch, not per batch)
+            pbar = tqdm(pbar, total=nb, bar_format=TQDM_BAR_FORMAT, disable=True)  # progress bar (display suppressed; one summary line printed after the epoch instead)
         optimizer.zero_grad()
         for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
             callbacks.run("on_train_batch_start")
@@ -460,6 +460,12 @@ def train(hyp, opt, device, callbacks):
                 if callbacks.stop_training:
                     return
             # end batch ------------------------------------------------------------------------------------------------
+
+        if RANK in {-1, 0}:
+            LOGGER.info(
+                ("%11s" * 2 + "%11.4g" * 5)
+                % (f"{epoch}/{epochs - 1}", mem, *mloss, targets.shape[0], imgs.shape[-1])
+            )
 
         # Scheduler
         lr = [x["lr"] for x in optimizer.param_groups]  # for loggers
