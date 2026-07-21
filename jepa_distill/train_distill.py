@@ -93,7 +93,15 @@ def main():
     cfg = yaml.safe_load(open(args.config))
     run_dir = REPO / cfg.get("project", "runs_jepa/stage2") / cfg["name"]
     run_dir.mkdir(parents=True, exist_ok=True)
-    device = torch.device(args.device if args.device else cfg.get("device", "cuda:0") if torch.cuda.is_available() else "cpu")
+    requested = args.device if args.device else cfg.get("device", "cuda:0")
+    if requested.startswith("cuda") and not torch.cuda.is_available():
+        print(f"WARNING: requested '{requested}' but torch.cuda.is_available() is False - "
+              f"falling back to CPU. This will be 100-300x slower for this workload. "
+              f"Check nvidia-smi before letting this continue.", flush=True)
+        device = torch.device("cpu")
+    else:
+        device = torch.device(requested)
+    print(f"using device: {device}", flush=True)
     dt = amp_dtype(cfg.get("amp_dtype", "bf16"), device)
 
     try:
