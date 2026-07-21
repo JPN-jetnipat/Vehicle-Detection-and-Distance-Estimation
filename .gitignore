@@ -38,3 +38,12 @@ kaggle.json
 
 # Jupyter autosave checkpoints (created in every dir opened via Jupyter)
 .ipynb_checkpoints/
+
+# entire weights/ dir - fully regenerable via RUNBOOK commands (huggingface-cli
+# download, kaggle downloads, tools/make_init_weights.py output). *.pt already
+# covers checkpoint files individually; this also catches the HuggingFace
+# download folders' small sidecar files (config.json, README.md, etc.)
+weights/
+
+# shell config - swept in by an old git add -A, doesn't belong in the repo
+.bashrc
