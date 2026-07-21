@@ -456,6 +456,12 @@ def train(hyp, opt, device, callbacks):
                     ("%11s" * 2 + "%11.4g" * 5)
                     % (f"{epoch}/{epochs - 1}", mem, *mloss, targets.shape[0], imgs.shape[-1])
                 )
+                heartbeat_every = max(1, nb // 10)  # ~10 progress lines per epoch, regardless of dataset size
+                if i > 0 and i % heartbeat_every == 0:
+                    LOGGER.info(
+                        ("%11s" * 2 + "%11.4g" * 5)
+                        % (f"{epoch}/{epochs - 1}", mem, *mloss, targets.shape[0], imgs.shape[-1])
+                    )
                 callbacks.run("on_train_batch_end", model, ni, imgs, targets, paths, list(mloss))
                 if callbacks.stop_training:
                     return
