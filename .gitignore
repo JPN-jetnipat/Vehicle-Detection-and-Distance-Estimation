@@ -3,13 +3,10 @@
 __pycache__/
 *.pyc
 
-# Ignore all folders inside dataset
-dataset/*/
-
-# Keep files directly inside dataset
-!dataset/*.yaml
-!dataset/*.py
+# Dataset: track everything except the raw source data
+dataset/raw/
 dataset.zip
+dataset.tar
 
 # Same rules for the archived old-version dataset copy
 legacy_yolov5/dataset/*/
