@@ -11,6 +11,11 @@ dataset/*/
 !dataset/*.py
 dataset.zip
 
+# Same rules for the archived old-version dataset copy
+legacy_yolov5/dataset/*/
+!legacy_yolov5/dataset/*.yaml
+!legacy_yolov5/dataset/*.py
+
 # VS Code settings
 .vscode/
 
