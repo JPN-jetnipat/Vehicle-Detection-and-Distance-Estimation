@@ -4,11 +4,13 @@ train: images/100k/train
 val: images/100k/val
 
 names:
-  0: Car
-  1: Van
-  2: Truck
-  3: Pedestrian
-  4: Person_sitting
-  5: Cyclist
-  6: Tram
-  7: Misc
+  0: person
+  1: rider
+  2: car
+  3: truck
+  4: bus
+  5: train
+  6: motor
+  7: bike
+  8: traffic light
+  9: traffic sign
