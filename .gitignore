@@ -28,4 +28,7 @@ legacy_yolov5/dataset/*/
 # VS Code settings
 .vscode/
 
-yolov5.zip
+yolov5.zipvenv/
+
+venv/
+results/

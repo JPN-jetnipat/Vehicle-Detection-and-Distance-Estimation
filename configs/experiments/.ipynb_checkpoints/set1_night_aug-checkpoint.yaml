@@ -1,9 +1,9 @@
-arm_name: set1_night_aug_3ep_test
+arm_name: set1_night_aug
 model: yolo11s.pt
 data: dataset/bdd100k_vehicle.yaml
 
 train:
-  epochs: 3
+  epochs: 100
   seed: 42
   imgsz: 640
   batch: 16
@@ -12,9 +12,9 @@ train:
   hsv_v: 0.25
   close_mosaic: 20
   box: 9.0
-  patience: 0
-  name: set1_night_aug_3ep_test
-  exist_ok: true
+  patience: 0  # disable early stopping so every arm trains the full 100 epochs
+  name: set1_night_aug
+  exist_ok: true  # rerunning this arm overwrites runs/detect/set1_night_aug rather than incrementing
 
 eval_splits:
   - name: val_night
