@@ -17,6 +17,8 @@ train:
   exist_ok: true
 
 eval_splits:
+  - name: val_day
+    data: dataset/bdd100k_test_day.yaml
   - name: val_night
     data: dataset/bdd100k_test_night.yaml
   - name: val_dawndusk
