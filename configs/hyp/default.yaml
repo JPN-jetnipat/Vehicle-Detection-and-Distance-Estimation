@@ -1,0 +1,14 @@
+# baseline.yaml - Default fine-tune arm (Baby)
+# Finalized 2026-08-15. batch/workers/cache are the RAM-constraint fix -
+# same lesson the old project's RUNBOOK already learned the hard way
+# (32GB shared host RAM, not A40 VRAM - it crashed once before on a full
+# cache=ram run). Keep workers=2 and cache=False on every arm, no exceptions.
+epochs: 100
+seed: 42
+imgsz: 640
+batch: 16          # already the ultralytics default - kept explicit for the record
+workers: 2         # RAM constraint fix (default is 8)
+cache: false       # RAM constraint fix - NEVER set this to true/"ram", see above
+# everything else is ultralytics' own default (hsv_v=0.4, box=7.5, cls=0.5,
+# dfl=1.5, mixup=0, copy_paste=0, ...) - deliberately not spelled out here,
+# tools/train_yolo.py doesn't override anything not listed in this file.

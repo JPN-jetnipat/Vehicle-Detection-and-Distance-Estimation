@@ -1,0 +1,24 @@
+# set2_field_imbalance.yaml - Set 2: Class & Scene Diversity (Field)
+# Hypothesis: rare classes (rider/bike/motor) and object scale/position
+# diversity are a general problem, not specifically a low-light one.
+# Finalized 2026-08-15.
+epochs: 100
+seed: 42
+imgsz: 640
+batch: 16
+workers: 2         # RAM constraint fix
+cache: false       # RAM constraint fix - do not enable
+
+copy_paste: 0.2    # default 0.0 - more examples of rare classes
+                   # (rider/bike/motor), which are already scarce
+cls: 0.7           # default 0.5 - more classification-loss weight, helps
+                   # separate small classes that get confused easily
+scale: 0.7         # default 0.5 - wider scale augmentation range, helps
+                   # robustness to small/distant objects
+translate: 0.15    # default 0.1 - more object-position diversity in frame,
+                   # not enough to break scene structure
+hsv_v: 0.4         # unchanged (default) - deliberately not touched; Set 1
+                   # owns this variable, don't duplicate the test here
+mixup: 0.0         # unchanged - same contrast reasoning as Set 1
+                   # (deliberate, not an oversight)
+dfl: 1.5           # unchanged - same reason as Set 1

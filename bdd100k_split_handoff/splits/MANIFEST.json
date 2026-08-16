@@ -1,0 +1,29 @@
+{
+  "seed": 42,
+  "val_fraction_per_timeofday_stratum": 0.025,
+  "counts": {
+    "train_raw": 69863,
+    "train_dropped_undefined": 8135,
+    "train_clean": 61728,
+    "val": 1542,
+    "pool_pretrain_train100": 60186,
+    "test_raw": 10000,
+    "test_dropped_undefined": 1159,
+    "test_clean": 8841
+  },
+  "val_by_timeofday": {
+    "daytime": 742,
+    "night": 688,
+    "dawn/dusk": 112
+  },
+  "test_by_timeofday": {
+    "daytime": 4264,
+    "night": 3863,
+    "dawn/dusk": 714
+  },
+  "pool_by_timeofday": {
+    "daytime": 28957,
+    "dawn/dusk": 4388,
+    "night": 26841
+  }
+}

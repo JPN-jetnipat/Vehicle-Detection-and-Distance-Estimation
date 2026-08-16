@@ -1,0 +1,29 @@
+# set1_japan_night_aug.yaml - Set 1: Low-Light Compensation (Japan)
+# Hypothesis: darkness weakens the training signal (low SNR, blur, low IoU)
+# -> reduce fake/synthetic noise from augmentation + roughly compensate the
+# resulting weak gradient. Finalized 2026-08-15.
+epochs: 100
+seed: 42
+imgsz: 640
+batch: 16
+workers: 2         # RAM constraint fix
+cache: false       # RAM constraint fix - do not enable
+
+hsv_v: 0.25        # default 0.4 - less synthetic brightness jitter, avoids
+                   # training on "fake darkness" that doesn't match real
+                   # night sensor noise/blur (still an untested hypothesis -
+                   # this run is what tests it)
+close_mosaic: 20   # default 10 - mosaic off for the last 20% of epochs,
+                   # fine-tune on real (non-stitched) images since eval is
+                   # on the night/dawn-dusk test slices
+box: 9.0           # default 7.5 - rough compensation for TAL's weak
+                   # gradient in dark zones (blurry edges -> low IoU -> low
+                   # target score)
+dfl: 1.5           # unchanged - kept as a clean baseline distribution for
+                   # Japan's later custom-TAL work (Phase 6)
+mixup: 0.0         # unchanged - dark images already have little contrast
+                   # left; blending would reduce it further
+
+# NOTE for later: if this arm wins and becomes the new default, Japan's
+# future TAL-vs-default-TAL comparison needs to decide whether to inherit
+# box=9.0 or reset to 7.5 to isolate TAL's effect cleanly. Not resolved yet.

@@ -1,0 +1,49 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# YOLO training outputs (ultralytics default: runs/detect/<name>/)
+runs/
+
+# Model weights / checkpoints
+*.pt
+*.pth
+
+# Datasets - regenerable via RUNBOOK.md (raw download + tools/*.py conversion)
+dataset/raw/
+dataset/yolo/images/
+dataset/yolo/labels/
+dataset/yolo/*.json
+dataset/yolo/*.csv
+dataset/yolo/splits/
+
+# VS Code settings
+.vscode/
+
+# macOS
+.DS_Store
+
+# training/console logs
+*.log
+nohup.out
+
+# converter eyeball-check images
+viz_out/
+
+# never ever commit an API key
+kaggle.json
+
+# results tables (regenerated from runs/metrics via tools/make_results_table.py)
+# comment this out once you want a specific results snapshot committed for the writeup
+# results/
+
+# Jupyter autosave checkpoints
+.ipynb_checkpoints/
+
+# leftover artifacts from the 2026-08-16 broken-symlink repair (harmless,
+# left on disk since this filesystem blocks deleting pre-existing files;
+# just keep them out of git)
+*_broken_OLD/
+*_broken_link
+splits_check/

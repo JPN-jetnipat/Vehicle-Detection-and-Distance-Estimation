@@ -1,0 +1,35 @@
+# Pinned environment for the YOLOv11s vehicle-detection project
+# (server: A40, CUDA 12.4 - same GPU as before; adjust index URL if that changes).
+#
+# Install order matters: install torch/torchvision from the cu124 index FIRST,
+# then the rest. See RUNBOOK.md Section 1 for exact commands.
+#
+#   pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu124
+#   pip install -r requirements.txt
+#
+# Kaggle note: Kaggle notebooks ship their own torch build - do NOT reinstall
+# torch there; install only the non-torch deps below.
+
+# --- core ---
+numpy==1.26.4
+opencv-python==4.10.0.84
+pillow==10.4.0
+pyyaml==6.0.2
+tqdm==4.66.5
+requests==2.32.3
+
+# --- detector: ultralytics YOLO11 (pip package, no vendored repo needed) ---
+ultralytics>=8.3.0          # first release with YOLO11 support - upgrade freely, no pin needed beyond this floor
+pandas==2.2.3
+matplotlib==3.9.2
+seaborn==0.13.2
+scipy==1.13.1
+
+# --- eval (evaluation/eval_detections.py) ---
+pycocotools==2.0.8
+
+# --- dataset prep (tools/build_attr_index.py, bdd_to_yolo.py) ---
+ijson==3.3.0                # RAM-safe streaming of the 1.4 GB label JSON
+
+# --- data download ---
+kaggle==1.6.17
