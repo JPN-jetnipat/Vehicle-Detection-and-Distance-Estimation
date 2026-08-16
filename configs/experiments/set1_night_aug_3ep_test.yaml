@@ -1,0 +1,23 @@
+arm_name: set1_night_aug_3ep_test
+model: yolo11s.pt
+data: dataset/bdd100k_vehicle.yaml
+
+train:
+  epochs: 3
+  seed: 42
+  imgsz: 640
+  batch: 16
+  workers: 2
+  cache: false
+  hsv_v: 0.25
+  close_mosaic: 20
+  box: 9.0
+  patience: 0
+  name: set1_night_aug_3ep_test
+  exist_ok: true
+
+eval_splits:
+  - name: val_night
+    data: dataset/bdd100k_test_night.yaml
+  - name: val_dawndusk
+    data: dataset/bdd100k_test_dawndusk.yaml

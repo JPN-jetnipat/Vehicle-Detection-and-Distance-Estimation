@@ -1,0 +1,26 @@
+{
+  "args": {
+    "labels_json": "dataset/raw/BDD100K/bdd100k_labels_release/bdd100k/labels/bdd100k_labels_images_val.json",
+    "data_config": "bdd100k_split_handoff/configs/data/bdd100k_vehicle5.yaml",
+    "out_dir": "dataset/yolo/labels/val",
+    "stats_out": "dataset/yolo/convert_stats_val.json",
+    "img_width": 1280,
+    "img_height": 720,
+    "images_dir": null,
+    "verify_sizes": 0
+  },
+  "totals": {
+    "images": 10000,
+    "boxes_kept": 109804,
+    "boxes_skipped_category": 75719,
+    "boxes_degenerate": 3,
+    "empty_label_files": 92
+  },
+  "per_class": {
+    "car": 102504,
+    "truck": 4244,
+    "bus": 1597,
+    "motor": 452,
+    "bike": 1007
+  }
+}

@@ -1,16 +1,17 @@
-path: ../dataset/raw/BDD100K/bdd100k/bdd100k
+# Canonical train/val split (see bdd100k_split_handoff/README.md): train_100
+# is the 97.5% train pool (stratified by timeofday), val is a 2.5%-per-stratum
+# carve-out from that same pool. BDD's official val set is the held-out TEST
+# pool (dataset/bdd100k_test_{day,night,dawndusk}.yaml) - not used here.
+path: dataset/yolo
 
-train: images/100k/train
-val: images/100k/val
+# *_resolved.txt is machine-specific (absolute paths) and gitignored -
+# regenerate with `python scripts/resolve_splits.py` before training.
+train: splits/train_100_resolved.txt
+val: splits/val_resolved.txt
 
 names:
-  0: person
-  1: rider
-  2: car
-  3: truck
-  4: bus
-  5: train
-  6: motor
-  7: bike
-  8: traffic light
-  9: traffic sign
+  0: car
+  1: truck
+  2: bus
+  3: motor
+  4: bike

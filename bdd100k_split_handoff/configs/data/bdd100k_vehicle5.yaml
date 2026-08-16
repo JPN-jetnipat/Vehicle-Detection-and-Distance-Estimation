@@ -1,0 +1,22 @@
+# CANONICAL data config for the new project scope (2026-08).
+# 5 vehicle classes kept from BDD100K's native 10: car, truck, bus, motor, bike.
+# Dropped: person, rider (non-vehicle road users), traffic light, traffic sign
+# (infrastructure, not objects), train (very rare, ~180 instances total).
+#
+# NOTE: this supersedes the old project's bdd100k_vehicle3.yaml (car/bus/truck
+# only, id-matched to a collaborator's earlier model). That id-compatibility
+# is intentionally broken here — a 5-class head can't reuse a 3-class head's
+# weights anyway, so ids are just assigned in the order the classes were
+# specified, alphabetical-by-mention: car, truck, bus, motor, bike.
+path: dataset/yolo
+train: splits/train_100.txt   # override to train_50/25/10.txt for the label-fraction arms
+val: splits/val.txt           # new project's own val (2.5%/timeofday carve-out from train) - NOT BDD's official val
+# BDD's official val is test.txt now — see splits/MANIFEST.json. Touch it for
+# final scoring only, same discipline as the old project's val_final.txt.
+
+names:
+  0: car
+  1: truck
+  2: bus
+  3: motor
+  4: bike
