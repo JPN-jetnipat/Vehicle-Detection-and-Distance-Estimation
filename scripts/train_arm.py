@@ -80,51 +80,6 @@ def export_excel() -> None:
     wb.save(METRICS_XLSX)
 
 
-def print_table(headers: list[str], table_rows: list[list[str]]) -> None:
-    widths = [len(h) for h in headers]
-    for r in table_rows:
-        widths = [max(w, len(c)) for w, c in zip(widths, r)]
-
-    def fmt_row(cells: list[str]) -> str:
-        return "| " + " | ".join(c.ljust(w) for c, w in zip(cells, widths)) + " |"
-
-    sep = "+-" + "-+-".join("-" * w for w in widths) + "-+"
-    print(sep)
-    print(fmt_row(headers))
-    print(sep)
-    for r in table_rows:
-        print(fmt_row(r))
-    print(sep)
-
-
-def print_summary(arm_name: str, rows: list[dict]) -> None:
-    by_split: dict[str, dict[str, float]] = {}
-    split_order: list[str] = []
-    for row in rows:
-        split = row["dataset_split"]
-        if split not in by_split:
-            by_split[split] = {}
-            split_order.append(split)
-        by_split[split][row["metric_name"]] = row["value"]
-
-    print(f"\n=== {arm_name}: overall ===")
-    print_table(
-        ["split", "mAP50", "mAP50-95"],
-        [[split, f"{by_split[split]['mAP50']:.4f}", f"{by_split[split]['mAP50-95']:.4f}"] for split in split_order],
-    )
-
-    class_names = sorted({m.split("_", 1)[1] for m in by_split[split_order[0]] if m.startswith("mAP50_")})
-    for split in split_order:
-        print(f"\n=== {arm_name}: {split} by class ===")
-        print_table(
-            ["class", "mAP50", "mAP50-95"],
-            [
-                [c, f"{by_split[split][f'mAP50_{c}']:.4f}", f"{by_split[split][f'mAP50-95_{c}']:.4f}"]
-                for c in class_names
-            ],
-        )
-
-
 def metrics_to_rows(arm_name: str, dataset_split: str, metrics, timestamp: str) -> list[dict]:
     rows = [
         {"arm_name": arm_name, "dataset_split": dataset_split, "metric_name": "mAP50", "value": metrics.box.map50, "timestamp": timestamp},
@@ -235,8 +190,7 @@ def main() -> None:
 
     append_metrics(rows)
     export_excel()
-    print_summary(arm_name, rows)
-    print(f"\nAppended {len(rows)} metric rows for arm '{arm_name}' to {METRICS_CSV}")
+    print(f"Appended {len(rows)} metric rows for arm '{arm_name}' to {METRICS_CSV}")
     print(f"Updated {METRICS_XLSX}")
     print(f"Per-epoch log: {log_path}")
 
