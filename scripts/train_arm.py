@@ -80,6 +80,51 @@ def export_excel() -> None:
     wb.save(METRICS_XLSX)
 
 
+def print_table(headers: list[str], table_rows: list[list[str]]) -> None:
+    widths = [len(h) for h in headers]
+    for r in table_rows:
+        widths = [max(w, len(c)) for w, c in zip(widths, r)]
+
+    def fmt_row(cells: list[str]) -> str:
+        return "| " + " | ".join(c.ljust(w) for c, w in zip(cells, widths)) + " |"
+
+    sep = "+-" + "-+-".join("-" * w for w in widths) + "-+"
+    print(sep)
+    print(fmt_row(headers))
+    print(sep)
+    for r in table_rows:
+        print(fmt_row(r))
+    print(sep)
+
+
+def print_summary(arm_name: str, rows: list[dict]) -> None:
+    by_split: dict[str, dict[str, float]] = {}
+    split_order: list[str] = []
+    for row in rows:
+        split = row["dataset_split"]
+        if split not in by_split:
+            by_split[split] = {}
+            split_order.append(split)
+        by_split[split][row["metric_name"]] = row["value"]
+
+    print(f"\n=== {arm_name}: overall ===")
+    print_table(
+        ["split", "mAP50", "mAP50-95"],
+        [[split, f"{by_split[split]['mAP50']:.4f}", f"{by_split[split]['mAP50-95']:.4f}"] for split in split_order],
+    )
+
+    class_names = sorted({m.split("_", 1)[1] for m in by_split[split_order[0]] if m.startswith("mAP50_")})
+    for split in split_order:
+        print(f"\n=== {arm_name}: {split} by class ===")
+        print_table(
+            ["class", "mAP50", "mAP50-95"],
+            [
+                [c, f"{by_split[split][f'mAP50_{c}']:.4f}", f"{by_split[split][f'mAP50-95_{c}']:.4f}"]
+                for c in class_names
+            ],
+        )
+
+
 def metrics_to_rows(arm_name: str, dataset_split: str, metrics, timestamp: str) -> list[dict]:
     rows = [
         {"arm_name": arm_name, "dataset_split": dataset_split, "metric_name": "mAP50", "value": metrics.box.map50, "timestamp": timestamp},
@@ -111,6 +156,19 @@ def make_epoch_progress_callback(pbar: tqdm):
     return _on_fit_epoch_end
 
 
+def format_per_class(validator) -> str:
+    """Compact 'class:mAP50/mAP50-95 ...' string from a validator's DetMetrics (None if unavailable)."""
+    box = getattr(getattr(validator, "metrics", None), "box", None)
+    if box is None or not len(box.ap_class_index):
+        return ""
+    names = validator.metrics.names
+    parts = []
+    for i, class_id in enumerate(box.ap_class_index):
+        _, _, ap50, ap = box.class_result(i)
+        parts.append(f"{names[int(class_id)]}={ap50:.3f}/{ap:.3f}")
+    return " ".join(parts)
+
+
 def make_epoch_log_callback(log_path: Path):
     def _on_fit_epoch_end(trainer) -> None:
         losses = trainer.label_loss_items(trainer.tloss) if trainer.tloss is not None else {}
@@ -120,6 +178,9 @@ def make_epoch_log_callback(log_path: Path):
             for k, v in metrics.items()
             if k in ("metrics/mAP50(B)", "metrics/mAP50-95(B)", "metrics/precision(B)", "metrics/recall(B)")
         ]
+        per_class = format_per_class(trainer.validator)
+        if per_class:
+            metric_parts.append(f"per_class(mAP50/mAP50-95)=[{per_class}]")
         timestamp = datetime.now(timezone.utc).isoformat()
         # See note in make_epoch_progress_callback: this extra firing is a final
         # re-validation on best.pt after training ends, not a new epoch.
@@ -174,7 +235,8 @@ def main() -> None:
 
     append_metrics(rows)
     export_excel()
-    print(f"Appended {len(rows)} metric rows for arm '{arm_name}' to {METRICS_CSV}")
+    print_summary(arm_name, rows)
+    print(f"\nAppended {len(rows)} metric rows for arm '{arm_name}' to {METRICS_CSV}")
     print(f"Updated {METRICS_XLSX}")
     print(f"Per-epoch log: {log_path}")
 
