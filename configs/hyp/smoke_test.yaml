@@ -1,0 +1,10 @@
+# smoke_test.yaml - pipeline sanity check, NOT one of the 4 arms.
+# Same imgsz/batch as the real arms on purpose - the point is to confirm
+# the RAM-safety margin (32GB shared host) holds at real settings, just
+# capped to 2 epochs so it takes minutes, not overnight.
+epochs: 2
+seed: 42
+imgsz: 640
+batch: 16
+workers: 2         # RAM constraint fix - required, train_yolo.py refuses to run without it
+cache: false        # RAM constraint fix - required, same as above

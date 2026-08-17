@@ -141,6 +141,19 @@ python tools/viz_boxes.py --images-dir dataset/yolo/images/val \
   --num 8 --out-dir viz_out
 ```
 
+**3.6 Smoke test** - confirm the whole pipeline (data loading, RAM
+discipline, checkpointing) works before committing a GPU to a 100-epoch
+run. Same imgsz/batch as the real arms so it actually tests the RAM-safety
+margin, just capped to 2 epochs:
+```bash
+python tools/train_yolo.py --hyp configs/hyp/smoke_test.yaml --name smoke_test
+free -h   # watch this in a second pane while it runs - stay well clear of 32 GB
+```
+Expect: hyperparameters print, training starts, 2 epochs complete without
+a FLAG/refusal or an OOM kill, `runs/detect/smoke_test/weights/{last,best}.pt`
+both exist. Safe to delete `runs/detect/smoke_test/` afterward (gitignored
+already, doesn't touch any of the 4 methods' own run dirs).
+
 ## 4. The 4 methods
 
 **Method 1 — vanilla pretrained (no training).** See the open flag in
