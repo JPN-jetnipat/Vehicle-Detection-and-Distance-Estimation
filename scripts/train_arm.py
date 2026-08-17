@@ -21,7 +21,7 @@ Must be run with the repo root as the working directory (the dataset yamls'
 
 import argparse
 import csv
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import yaml
@@ -36,6 +36,13 @@ METRICS_CSV = ROOT / "results" / "metrics_all_arms.csv"
 METRICS_XLSX = ROOT / "results" / "metrics_all_arms.xlsx"
 LOGS_DIR = ROOT / "results" / "logs"
 CSV_FIELDS = ["arm_name", "dataset_split", "scorer", "metric_name", "value", "timestamp"]
+
+THAI_TZ = timezone(timedelta(hours=7))  # Asia/Bangkok, fixed offset (no DST)
+
+
+def now_th() -> str:
+    """ISO 8601 timestamp in Thai local time (UTC+7), e.g. for log/CSV timestamps."""
+    return datetime.now(THAI_TZ).isoformat()
 
 
 def append_metrics(rows: list[dict]) -> None:
@@ -136,7 +143,7 @@ def make_epoch_log_callback(log_path: Path):
         per_class = format_per_class(trainer.validator)
         if per_class:
             metric_parts.append(f"per_class(mAP50/mAP50-95)=[{per_class}]")
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = now_th()
         # See note in make_epoch_progress_callback: this extra firing is a final
         # re-validation on best.pt after training ends, not a new epoch.
         if trainer.epoch >= trainer.epochs:
@@ -163,14 +170,14 @@ def main() -> None:
 
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     log_path = LOGS_DIR / f"{arm_name}.log"
-    log_path.write_text(f"[{datetime.now(timezone.utc).isoformat()}] starting arm '{arm_name}' ({train_kwargs['epochs']} epochs)\n", encoding="utf-8")
+    log_path.write_text(f"[{now_th()}] starting arm '{arm_name}' ({train_kwargs['epochs']} epochs)\n", encoding="utf-8")
 
     model = YOLO(cfg["model"])
     with tqdm(total=train_kwargs["epochs"], desc=f"[{arm_name}] train", unit="epoch") as epoch_pbar:
         model.add_callback("on_fit_epoch_end", make_epoch_progress_callback(epoch_pbar))
         model.add_callback("on_fit_epoch_end", make_epoch_log_callback(log_path))
         train_results = model.train(data=cfg["data"], **train_kwargs)
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = now_th()
 
     rows = metrics_to_rows(arm_name, "val", train_results, timestamp)
 

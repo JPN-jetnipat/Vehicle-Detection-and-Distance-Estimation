@@ -12,7 +12,6 @@ Must be run with the repo root as the working directory (same as train_arm.py).
 """
 
 import argparse
-from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -43,7 +42,7 @@ def main() -> None:
         raise FileNotFoundError(f"No weights at {weights} - train this arm first, or pass --weights explicitly.")
 
     model = YOLO(weights)
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = train_arm.now_th()
     rows: list[dict] = []
     for split in cfg["eval_splits"]:
         split_metrics = model.val(

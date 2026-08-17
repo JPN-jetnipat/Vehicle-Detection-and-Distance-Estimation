@@ -25,7 +25,6 @@ import contextlib
 import io
 import os
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -226,7 +225,7 @@ def main() -> None:
         raise FileNotFoundError(f"No weights at {weights} - train this arm first, or pass --weights explicitly.")
 
     model = YOLO(weights)
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = train_arm.now_th()
     rows: list[dict] = []
     for split in cfg["eval_splits"]:
         print(f"\n[{arm_name}] scoring {split['name']} ({split['data']}) with pycocotools ...")
