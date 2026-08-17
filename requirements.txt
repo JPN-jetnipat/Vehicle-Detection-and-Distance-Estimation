@@ -1,17 +1,34 @@
-# Pinned environment for the YOLOv11s vehicle-detection project
-# (server: A40, CUDA 12.4 - same GPU as before; adjust index URL if that changes).
+# Environment for the YOLOv11s vehicle-detection project (server: A40).
 #
-# Install order matters: install torch/torchvision from the cu124 index FIRST,
-# then the rest. See RUNBOOK.md Section 1 for exact commands.
+# torch/torchvision/ultralytics are DELIBERATELY left loose below rather than
+# hard-pinned. They were originally pinned to torch==2.5.1/cu124, but a
+# teammate's confirmed-working environment on this same server (2026-08-17)
+# showed torch==2.12.0 + ultralytics==8.4.65 - nearly two years past that
+# pin, and even his own two snapshots (an eval run vs. a later `pip freeze`)
+# disagreed on the exact ultralytics build. Hard-pinning against a
+# point-in-time snapshot on a SHARED server that other people also update is
+# how you end up silently stale. Before installing:
 #
-#   pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu124
-#   pip install -r requirements.txt
+#   1. Check what's already there: `python -c "import torch; print(torch.__version__)"`
+#      and `nvidia-smi` (top-right corner shows the driver's max supported CUDA).
+#   2. If torch is already installed and CUDA-capable, don't reinstall it -
+#      just `pip install -r requirements.txt` for the rest.
+#   3. If installing fresh, match whatever CUDA version `nvidia-smi` reports,
+#      e.g.: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+#      (swap cu124 for cu126/cu128/whatever is current - check
+#      https://pytorch.org/get-started/locally/ for the right index URL)
+#   4. Whatever version you land on, `pip freeze | grep -E "torch|ultralytics"`
+#      and drop the output in the team channel so everyone else's env matches -
+#      this is exactly the discrepancy that prompted this note.
 #
 # Kaggle note: Kaggle notebooks ship their own torch build - do NOT reinstall
 # torch there; install only the non-torch deps below.
 
 # --- core ---
-numpy==1.26.4
+numpy>=1.26          # no upper-bound pin needed - the old numpy<2.0 constraint
+                      # was specifically for classic YOLOv5's internals, which
+                      # this project doesn't use; a teammate's env already runs
+                      # numpy==2.3.0 fine with ultralytics
 opencv-python==4.10.0.84
 pillow==10.4.0
 pyyaml==6.0.2
