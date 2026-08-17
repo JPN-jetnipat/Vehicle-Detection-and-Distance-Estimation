@@ -35,7 +35,7 @@ ROOT = Path(__file__).resolve().parent.parent
 METRICS_CSV = ROOT / "results" / "metrics_all_arms.csv"
 METRICS_XLSX = ROOT / "results" / "metrics_all_arms.xlsx"
 LOGS_DIR = ROOT / "results" / "logs"
-CSV_FIELDS = ["arm_name", "dataset_split", "metric_name", "value", "timestamp"]
+CSV_FIELDS = ["arm_name", "dataset_split", "scorer", "metric_name", "value", "timestamp"]
 
 
 def append_metrics(rows: list[dict]) -> None:
@@ -49,47 +49,47 @@ def append_metrics(rows: list[dict]) -> None:
 
 
 def export_excel() -> None:
-    """Rebuild metrics_all_arms.xlsx as a wide pivot (one row per run/split) from the full CSV history."""
+    """Rebuild metrics_all_arms.xlsx as a wide pivot (one row per run/split/scorer) from the full CSV history."""
     with METRICS_CSV.open(encoding="utf-8") as f:
         long_rows = list(csv.DictReader(f))
 
-    pivot: dict[tuple[str, str, str], dict[str, float]] = {}
+    pivot: dict[tuple[str, str, str, str], dict[str, float]] = {}
     metric_names: list[str] = []
     for row in long_rows:
-        key = (row["timestamp"], row["arm_name"], row["dataset_split"])
+        key = (row["timestamp"], row["arm_name"], row["dataset_split"], row.get("scorer", "ultralytics"))
         pivot.setdefault(key, {})[row["metric_name"]] = float(row["value"])
         if row["metric_name"] not in metric_names:
             metric_names.append(row["metric_name"])
     # Stable order: overall metrics first, then per-class, alphabetically after that.
-    priority = {"mAP50": 0, "mAP50-95": 1}
-    metric_names.sort(key=lambda m: (priority.get(m, 2), m))
+    priority = {"mAP50": 0, "mAP50-95": 1, "mAP75": 2}
+    metric_names.sort(key=lambda m: (priority.get(m, 3), m))
 
     wb = Workbook()
     ws = wb.active
     ws.title = "metrics"
-    ws.append(["timestamp", "arm_name", "dataset_split", *metric_names])
+    ws.append(["timestamp", "arm_name", "dataset_split", "scorer", *metric_names])
     for key in sorted(pivot):
-        timestamp, arm_name, dataset_split = key
+        timestamp, arm_name, dataset_split, scorer = key
         values = pivot[key]
-        ws.append([timestamp, arm_name, dataset_split, *(values.get(m) for m in metric_names)])
+        ws.append([timestamp, arm_name, dataset_split, scorer, *(values.get(m) for m in metric_names)])
     ws.freeze_panes = "A2"
-    for col_idx in range(1, 4 + len(metric_names)):
+    for col_idx in range(1, 5 + len(metric_names)):
         ws.column_dimensions[ws.cell(row=1, column=col_idx).column_letter].width = 14
 
     METRICS_XLSX.parent.mkdir(parents=True, exist_ok=True)
     wb.save(METRICS_XLSX)
 
 
-def metrics_to_rows(arm_name: str, dataset_split: str, metrics, timestamp: str) -> list[dict]:
+def metrics_to_rows(arm_name: str, dataset_split: str, metrics, timestamp: str, scorer: str = "ultralytics") -> list[dict]:
     rows = [
-        {"arm_name": arm_name, "dataset_split": dataset_split, "metric_name": "mAP50", "value": metrics.box.map50, "timestamp": timestamp},
-        {"arm_name": arm_name, "dataset_split": dataset_split, "metric_name": "mAP50-95", "value": metrics.box.map, "timestamp": timestamp},
+        {"arm_name": arm_name, "dataset_split": dataset_split, "scorer": scorer, "metric_name": "mAP50", "value": metrics.box.map50, "timestamp": timestamp},
+        {"arm_name": arm_name, "dataset_split": dataset_split, "scorer": scorer, "metric_name": "mAP50-95", "value": metrics.box.map, "timestamp": timestamp},
     ]
     for i, class_id in enumerate(metrics.box.ap_class_index):
         class_name = metrics.names[int(class_id)]
         _, _, ap50, ap = metrics.box.class_result(i)
-        rows.append({"arm_name": arm_name, "dataset_split": dataset_split, "metric_name": f"mAP50_{class_name}", "value": ap50, "timestamp": timestamp})
-        rows.append({"arm_name": arm_name, "dataset_split": dataset_split, "metric_name": f"mAP50-95_{class_name}", "value": ap, "timestamp": timestamp})
+        rows.append({"arm_name": arm_name, "dataset_split": dataset_split, "scorer": scorer, "metric_name": f"mAP50_{class_name}", "value": ap50, "timestamp": timestamp})
+        rows.append({"arm_name": arm_name, "dataset_split": dataset_split, "scorer": scorer, "metric_name": f"mAP50-95_{class_name}", "value": ap, "timestamp": timestamp})
     return rows
 
 
