@@ -52,6 +52,20 @@ def main():
                     help="resume from <project>/<name>/weights/last.pt if it exists")
     args = ap.parse_args()
 
+    # Force --project to an absolute path anchored at THIS repo, not cwd and
+    # not ultralytics' own global runs_dir setting (~/.config/Ultralytics/
+    # settings.json). Found the hard way: on a machine that had previously
+    # run training from an old checkout, a relative project="runs/detect"
+    # resolved against that stale global setting and silently wrote results
+    # into the OLD project's directory (doubled path and all:
+    # <old_repo>/runs/detect/runs/detect/<name>). Same class of bug as the
+    # dataset-symlink/split-path issues this project already hit once -
+    # implicit path resolution against something other than "this repo,
+    # right here" is not safe to rely on across machines/teammates.
+    repo_root = Path(__file__).resolve().parent.parent
+    if not Path(args.project).is_absolute():
+        args.project = str(repo_root / args.project)
+
     try:
         from ultralytics import YOLO
     except ImportError:
