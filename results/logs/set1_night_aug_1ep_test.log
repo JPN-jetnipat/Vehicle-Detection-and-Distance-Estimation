@@ -1,6 +1,6 @@
-[2026-08-16T10:59:19.098528+00:00] starting arm 'set1_night_aug_1ep_test' (1 epochs)
-[2026-08-16T11:06:32.171055+00:00] epoch 1/1 | box_loss=1.69426 | cls_loss=0.98080 | dfl_loss=1.09332 | precision=0.4317 | recall=0.3341 | mAP50=0.3052 | mAP50-95=0.1817 | per_class(mAP50/mAP50-95)=[car=0.685/0.396 truck=0.298/0.194 bus=0.257/0.180 motor=0.151/0.079 bike=0.135/0.059]
-[2026-08-16T11:06:40.484703+00:00] final validation (best.pt) | precision=0.4229 | recall=0.3385 | mAP50=0.3053 | mAP50-95=0.1821 | per_class(mAP50/mAP50-95)=[car=0.685/0.396 truck=0.298/0.194 bus=0.257/0.181 motor=0.152/0.081 bike=0.134/0.059]
-[2026-08-16T11:06:41.674227+00:00] eval val_day: mAP50=0.2865 mAP50-95=0.1695
-[2026-08-16T11:06:41.674227+00:00] eval val_night: mAP50=0.2672 mAP50-95=0.1517
-[2026-08-16T11:06:41.674227+00:00] eval val_dawndusk: mAP50=0.2986 mAP50-95=0.1791
+[2026-08-16T17:59:19.098528+07:00] starting arm 'set1_night_aug_1ep_test' (1 epochs)
+[2026-08-16T18:06:32.171055+07:00] epoch 1/1 | box_loss=1.69426 | cls_loss=0.98080 | dfl_loss=1.09332 | precision=0.4317 | recall=0.3341 | mAP50=0.3052 | mAP50-95=0.1817 | per_class(mAP50/mAP50-95)=[car=0.685/0.396 truck=0.298/0.194 bus=0.257/0.180 motor=0.151/0.079 bike=0.135/0.059]
+[2026-08-16T18:06:40.484703+07:00] final validation (best.pt) | precision=0.4229 | recall=0.3385 | mAP50=0.3053 | mAP50-95=0.1821 | per_class(mAP50/mAP50-95)=[car=0.685/0.396 truck=0.298/0.194 bus=0.257/0.181 motor=0.152/0.081 bike=0.134/0.059]
+[2026-08-16T18:06:41.674227+07:00] eval val_day: mAP50=0.2865 mAP50-95=0.1695
+[2026-08-16T18:06:41.674227+07:00] eval val_night: mAP50=0.2672 mAP50-95=0.1517
+[2026-08-16T18:06:41.674227+07:00] eval val_dawndusk: mAP50=0.2986 mAP50-95=0.1791
