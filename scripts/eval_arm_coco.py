@@ -1,14 +1,13 @@
-"""Score an already-trained arm's checkpoint with the pycocotools-based shared
-evaluator (evaluation/eval_detections.py + evaluation/run_inference.py),
-instead of ultralytics' own model.val().
+"""Score an already-trained arm's checkpoint with a pycocotools-based
+scorer, instead of ultralytics' own model.val().
 
 Combines the two evaluators discussed with the set2 collaborator: standard
-COCO-protocol scoring (pycocotools) and NMS settings fixed identically for
-every arm (conf=0.001, iou=0.6, max_det=300) for fairness, while still
-writing into the same results/metrics_all_arms.csv|xlsx used by
-train_arm.py/eval_arm.py - rows are tagged scorer="pycocotools" (vs
-"ultralytics" for the model.val()-based rows) so the two are never
-conflated in the comparison table.
+COCO-protocol scoring (pycocotools, adapted from their eval_detections.py)
+and NMS settings fixed identically for every arm (conf=0.001, iou=0.6,
+max_det=300) for fairness, while still writing into the same
+results/metrics_all_arms.csv|xlsx used by train_arm.py/eval_arm.py - rows
+are tagged scorer="pycocotools" (vs "ultralytics" for the model.val()-based
+rows) so the two are never conflated in the comparison table.
 
 Raw prediction files are written to a temp directory and deleted once
 scoring is done - nothing is kept on disk beyond the usual CSV/xlsx rows.
@@ -25,28 +24,101 @@ import argparse
 import contextlib
 import io
 import os
-import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
+from pycocotools.coco import COCO
+from pycocotools.cocoeval import COCOeval
 from ultralytics import YOLO
 from ultralytics.data.utils import check_det_dataset
 
 import train_arm
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "evaluation"))
-import eval_detections as coco_eval  # noqa: E402
 
-# Fixed for every arm, matching evaluation/run_inference.py's defaults - do
-# not make these per-arm configurable, that would defeat the fairness point.
+# Fixed for every arm - do not make these per-arm configurable, that would
+# defeat the fairness point.
 CONF_THRES = 0.001
 IOU_THRES = 0.6
 MAX_DET = 300
 IMG_WIDTH = 1280
 IMG_HEIGHT = 720
+
+
+def load_names(data_config) -> list[str]:
+    names = yaml.safe_load(open(data_config))["names"]
+    if isinstance(names, dict):
+        names = [names[k] for k in sorted(names)]
+    return names
+
+
+def yolo_line_to_xywh(parts: list[str], W: int, H: int) -> list[float]:
+    cx, cy, w, h = (float(v) for v in parts[1:5])
+    return [(cx - w / 2) * W, (cy - h / 2) * H, w * W, h * H]
+
+
+def build_coco(image_names: list[str], gt_dir, names: list[str], W: int, H: int):
+    images, anns = [], []
+    name_to_id = {}
+    aid = 1
+    for iid, name in enumerate(sorted(image_names), start=1):
+        name_to_id[name] = iid
+        images.append({"id": iid, "file_name": name, "width": W, "height": H})
+        gt = Path(gt_dir) / (Path(name).stem + ".txt")
+        if not gt.exists():
+            raise FileNotFoundError(f"missing GT label file: {gt}")
+        for line in gt.read_text().splitlines():
+            p = line.split()
+            box = yolo_line_to_xywh(p, W, H)
+            anns.append({"id": aid, "image_id": iid, "category_id": int(p[0]),
+                         "bbox": box, "area": box[2] * box[3], "iscrowd": 0})
+            aid += 1
+    gt_coco = COCO()
+    gt_coco.dataset = {"images": images, "annotations": anns,
+                       "categories": [{"id": i, "name": n} for i, n in enumerate(names)]}
+    with contextlib.redirect_stdout(io.StringIO()):
+        gt_coco.createIndex()
+    return gt_coco, name_to_id
+
+
+def load_preds(image_names: list[str], pred_dir, name_to_id: dict, W: int, H: int, n_classes: int):
+    dets = []
+    found = 0
+    oob = 0  # predictions in classes outside our list (guards against a
+             # mismatched/stale weights file firing on dead class ids)
+    for name in image_names:
+        pf = Path(pred_dir) / (Path(name).stem + ".txt")
+        if not pf.exists():
+            continue
+        found += 1
+        for line in pf.read_text().splitlines():
+            if not line.strip():
+                continue
+            p = line.split()
+            if len(p) != 6:
+                raise ValueError(f"{pf}: expected 'cls cx cy w h conf', got: {line}")
+            if int(p[0]) >= n_classes:
+                oob += 1
+                continue
+            dets.append({"image_id": name_to_id[name], "category_id": int(p[0]),
+                         "bbox": yolo_line_to_xywh(p, W, H), "score": float(p[5])})
+    if oob:
+        print(f"note: dropped {oob} predictions with class id >= {n_classes} (untrained/dead classes)")
+    return dets, found
+
+
+def evaluate_slice(gt_coco, dt_coco, img_ids: list[int], cat_id: int | None = None) -> dict:
+    ev = COCOeval(gt_coco, dt_coco, iouType="bbox")
+    ev.params.imgIds = img_ids
+    if cat_id is not None:
+        ev.params.catIds = [cat_id]
+    with contextlib.redirect_stdout(io.StringIO()):
+        ev.evaluate(); ev.accumulate(); ev.summarize()
+    s = ev.stats
+    return {"mAP50_95": round(float(s[0]), 5), "mAP50": round(float(s[1]), 5),
+            "mAP75": round(float(s[2]), 5)}
 
 
 def resolve_split_dirs(data_yaml: str) -> tuple[Path, Path]:
@@ -85,24 +157,24 @@ def run_inference_to_dir(model: YOLO, image_paths: list[Path], out_dir: Path, im
 def score_split(model: YOLO, data_yaml: str, imgsz: int, device: str, batch: int) -> tuple[dict, int]:
     images_dir, gt_labels_dir = resolve_split_dirs(data_yaml)
     image_names = sorted(p.name for p in images_dir.iterdir() if p.is_file())
-    names = coco_eval.load_names(data_yaml)
+    names = load_names(data_yaml)
 
     with tempfile.TemporaryDirectory(prefix="eval_arm_coco_") as tmp:
         preds_dir = Path(tmp)
         run_inference_to_dir(model, [images_dir / n for n in image_names], preds_dir, imgsz, device, batch)
 
-        gt_coco, name_to_id = coco_eval.build_coco(image_names, gt_labels_dir, names, IMG_WIDTH, IMG_HEIGHT)
-        dets, _found = coco_eval.load_preds(image_names, preds_dir, name_to_id, IMG_WIDTH, IMG_HEIGHT, len(names))
+        gt_coco, name_to_id = build_coco(image_names, gt_labels_dir, names, IMG_WIDTH, IMG_HEIGHT)
+        dets, _found = load_preds(image_names, preds_dir, name_to_id, IMG_WIDTH, IMG_HEIGHT, len(names))
     if not dets:
         raise SystemExit(f"no detections for {data_yaml} - check weights/thresholds")
     with contextlib.redirect_stdout(io.StringIO()):
         dt_coco = gt_coco.loadRes(dets)
 
     all_ids = [name_to_id[n] for n in image_names]
-    overall = coco_eval.evaluate_slice(gt_coco, dt_coco, all_ids)
+    overall = evaluate_slice(gt_coco, dt_coco, all_ids)
     per_class = {}
     for ci, cname in enumerate(names):
-        per_class[cname] = coco_eval.evaluate_slice(gt_coco, dt_coco, all_ids, cat_id=ci)
+        per_class[cname] = evaluate_slice(gt_coco, dt_coco, all_ids, cat_id=ci)
     return {"overall": overall, "per_class": per_class}, len(image_names)
 
 
