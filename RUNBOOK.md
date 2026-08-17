@@ -41,23 +41,22 @@ the hyp yaml has `workers: 2` and `cache: false` — every file in
 
 ## 1. Environment — ~10 min
 
-Don't blindly pin torch to an old snapshot — check what's already proven
-working on this server first (see requirements.txt's header note for why:
-a teammate's confirmed-working env here is torch==2.12.0 / ultralytics==8.4.65,
-not the 2.5.1 this used to say).
+torch/torchvision/ultralytics/numpy are pinned exactly in requirements.txt
+to Japan's confirmed-working env on this same server (torch==2.12.0,
+ultralytics==8.4.65) — see requirements.txt's header for why exact pins
+matter here (it's the actual fix for the evaluator mAP-discrepancy issue,
+not just a version bump).
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
-nvidia-smi   # top-right corner: driver's max supported CUDA version
-# match that CUDA version in the index URL below (cu124 shown - swap if yours differs,
-# see https://pytorch.org/get-started/locally/):
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+nvidia-smi   # confirm CUDA 12.4 still current (top-right corner)
+pip install torch==2.12.0 torchvision==0.27.0 --index-url https://download.pytorch.org/whl/cu124
 pip install -r requirements.txt
 python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 # expect: torch.cuda.is_available() == True, device == NVIDIA A40
-pip freeze | grep -iE "torch|ultralytics"   # share this in the team channel so everyone's env matches
+pip freeze | grep -iE "torch|ultralytics"   # sanity check it matches the pin above
 ```
 Kaggle notebooks: skip the torch line (preinstalled); `pip install -r requirements.txt` minus torch.
 

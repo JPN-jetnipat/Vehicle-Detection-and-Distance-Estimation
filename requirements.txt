@@ -1,42 +1,40 @@
-# Environment for the YOLOv11s vehicle-detection project (server: A40).
+# Environment for the YOLOv11s vehicle-detection project (server: A40, CUDA 12.4).
 #
-# torch/torchvision/ultralytics are DELIBERATELY left loose below rather than
-# hard-pinned. They were originally pinned to torch==2.5.1/cu124, but a
-# teammate's confirmed-working environment on this same server (2026-08-17)
-# showed torch==2.12.0 + ultralytics==8.4.65 - nearly two years past that
-# pin, and even his own two snapshots (an eval run vs. a later `pip freeze`)
-# disagreed on the exact ultralytics build. Hard-pinning against a
-# point-in-time snapshot on a SHARED server that other people also update is
-# how you end up silently stale. Before installing:
+# torch/torchvision/ultralytics/numpy are pinned exactly to Japan's
+# confirmed-working environment on this same server (his requirements.txt,
+# shared 2026-08-17). This is the actual fix for the version-drift problem
+# behind the model.val() vs eval_detections.py mAP discrepancy (up to 6pp on
+# low-instance classes like truck/bus - see the evaluator debate/hybrid
+# decision). Loose pins don't solve that; identical pins do.
 #
-#   1. Check what's already there: `python -c "import torch; print(torch.__version__)"`
-#      and `nvidia-smi` (top-right corner shows the driver's max supported CUDA).
-#   2. If torch is already installed and CUDA-capable, don't reinstall it -
-#      just `pip install -r requirements.txt` for the rest.
-#   3. If installing fresh, match whatever CUDA version `nvidia-smi` reports,
-#      e.g.: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-#      (swap cu124 for cu126/cu128/whatever is current - check
-#      https://pytorch.org/get-started/locally/ for the right index URL)
-#   4. Whatever version you land on, `pip freeze | grep -E "torch|ultralytics"`
-#      and drop the output in the team channel so everyone else's env matches -
-#      this is exactly the discrepancy that prompted this note.
+# OPEN ITEM: Japan's own two snapshots disagreed before - an eval run showed
+# ultralytics==8.4.120, a later pip freeze showed 8.4.65 (pinned below, and
+# repeated in his latest shared requirements.txt, so it looks like the real
+# current one). Worth a one-line confirm from him before a long training run:
+# `pip show ultralytics | grep Version`.
+#
+# Install order matters - torch/torchvision need the CUDA build, which plain
+# `pip install -r requirements.txt` alone won't get you:
+#   1. nvidia-smi                                    # confirm CUDA 12.4 still current
+#   2. pip install torch==2.12.0 torchvision==0.27.0 --index-url https://download.pytorch.org/whl/cu124
+#   3. pip install -r requirements.txt                # torch/torchvision already satisfied, skipped
+#   4. python -c "import torch; print(torch.__version__, torch.cuda.is_available())"   # expect True
 #
 # Kaggle note: Kaggle notebooks ship their own torch build - do NOT reinstall
 # torch there; install only the non-torch deps below.
 
 # --- core ---
-numpy>=1.26          # no upper-bound pin needed - the old numpy<2.0 constraint
-                      # was specifically for classic YOLOv5's internals, which
-                      # this project doesn't use; a teammate's env already runs
-                      # numpy==2.3.0 fine with ultralytics
-opencv-python==4.10.0.84
-pillow==10.4.0
+numpy==2.3.0
+opencv-python==4.11.0.86
+pillow==11.3.0
 pyyaml==6.0.2
 tqdm==4.66.5
 requests==2.32.3
 
 # --- detector: ultralytics YOLO11 (pip package, no vendored repo needed) ---
-ultralytics>=8.3.0          # first release with YOLO11 support - upgrade freely, no pin needed beyond this floor
+ultralytics==8.4.65        # see OPEN ITEM above - confirm with Japan before a long run
+torch==2.12.0               # installed via step 2 above (CUDA build) - pinned here too
+torchvision==0.27.0         # so `pip install -r requirements.txt` doesn't drift it later
 pandas==2.2.3
 matplotlib==3.9.2
 seaborn==0.13.2
