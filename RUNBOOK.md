@@ -42,17 +42,20 @@ the hyp yaml has `workers: 2` and `cache: false` — every file in
 ## 1. Environment — ~10 min
 
 torch/torchvision/ultralytics/numpy are pinned exactly in requirements.txt
-to Japan's confirmed-working env on this same server (torch==2.12.0,
-ultralytics==8.4.65) — see requirements.txt's header for why exact pins
-matter here (it's the actual fix for the evaluator mAP-discrepancy issue,
-not just a version bump).
+to Japan's env (torch==2.6.0, ultralytics==8.4.120 — updated 2026-08-17,
+superseding an earlier snapshot of his that showed 2.12.0/8.4.65; his
+header now explicitly claims this is the env that produced his real
+training results). See requirements.txt's header for why exact pins matter
+here (it's the actual fix for the evaluator mAP-discrepancy issue, not just
+a version bump) — worth a live confirm with him before a long run, since
+his own numbers have moved once already.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 nvidia-smi   # confirm CUDA 12.4 still current (top-right corner)
-pip install torch==2.12.0 torchvision==0.27.0 --index-url https://download.pytorch.org/whl/cu124
+pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
 pip install -r requirements.txt
 python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 # expect: torch.cuda.is_available() == True, device == NVIDIA A40

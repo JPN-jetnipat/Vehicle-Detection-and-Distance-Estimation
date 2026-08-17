@@ -1,50 +1,63 @@
-# Environment for the YOLOv11s vehicle-detection project (server: A40, CUDA 12.4).
+# Pinned to match the environment that produced the real training results
+# (server: Linux, Python 3.11.8, NVIDIA A40, driver 550.54, CUDA 12.4).
 #
-# torch/torchvision/ultralytics/numpy are pinned exactly to Japan's
-# confirmed-working environment on this same server (his requirements.txt,
-# shared 2026-08-17). This is the actual fix for the version-drift problem
-# behind the model.val() vs eval_detections.py mAP discrepancy (up to 6pp on
-# low-instance classes like truck/bus - see the evaluator debate/hybrid
-# decision). Loose pins don't solve that; identical pins do.
+# torch/torchvision are pinned WITHOUT a CUDA build tag on purpose - a CPU
+# or wrong-CUDA wheel gets installed by `pip install -r requirements.txt`
+# alone. Always follow up with the platform-appropriate CUDA install, e.g.:
+#   pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124   (Linux, driver >=550/CUDA 12.4)
+#   pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu121   (older driver capped at CUDA 12.1)
+# Check your driver's max CUDA version with `nvidia-smi` before picking one.
 #
-# OPEN ITEM: Japan's own two snapshots disagreed before - an eval run showed
-# ultralytics==8.4.120, a later pip freeze showed 8.4.65 (pinned below, and
-# repeated in his latest shared requirements.txt, so it looks like the real
-# current one). Worth a one-line confirm from him before a long training run:
-# `pip show ultralytics | grep Version`.
-#
-# Install order matters - torch/torchvision need the CUDA build, which plain
-# `pip install -r requirements.txt` alone won't get you:
-#   1. nvidia-smi                                    # confirm CUDA 12.4 still current
-#   2. pip install torch==2.12.0 torchvision==0.27.0 --index-url https://download.pytorch.org/whl/cu124
-#   3. pip install -r requirements.txt                # torch/torchvision already satisfied, skipped
-#   4. python -c "import torch; print(torch.__version__, torch.cuda.is_available())"   # expect True
-#
-# Kaggle note: Kaggle notebooks ship their own torch build - do NOT reinstall
-# torch there; install only the non-torch deps below.
+# Linux-only CUDA runtime packages (nvidia-*-cu12, triton, cuda-bindings,
+# etc.) are deliberately NOT pinned here - torch pulls its own matching set
+# automatically on Linux, and pinning them would break `pip install` on
+# Windows (no Windows wheels for most of them).
+anyio==4.14.2
+certifi==2026.7.22
+charset-normalizer==3.5.1
+contourpy==1.3.3
+cycler==0.12.1
+filelock==3.32.3
+fonttools==4.63.0
+fsspec==2026.7.0
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+idna==3.18
+Jinja2==3.1.6
+kiwisolver==1.5.0
+MarkupSafe==3.0.3
+matplotlib==3.11.1
+mpmath==1.3.0
+networkx==3.6.1
+numpy==2.4.6
+opencv-python==5.0.0.93
+openpyxl==3.1.5
+packaging==26.3
+pillow==12.3.0
+pycocotools==2.0.11
+polars==1.43.2
+psutil==7.2.2
+pyparsing==3.3.2
+python-dateutil==2.9.0.post0
+PyYAML==6.0.3
+requests==2.34.2
+six==1.17.0
+sympy==1.13.1
+torch==2.6.0
+torchvision==0.21.0
+tqdm==4.70.0
+typing_extensions==4.16.0
+ultralytics==8.4.120
+ultralytics-platform==0.1.5
+ultralytics-thop==2.1.6
+urllib3==2.7.0
+pycocotools==2.0.11
 
-# --- core ---
-numpy==2.3.0
-opencv-python==4.11.0.86
-pillow==11.3.0
-pyyaml==6.0.2
-tqdm==4.66.5
-requests==2.32.3
-
-# --- detector: ultralytics YOLO11 (pip package, no vendored repo needed) ---
-ultralytics==8.4.65        # see OPEN ITEM above - confirm with Japan before a long run
-torch==2.12.0               # installed via step 2 above (CUDA build) - pinned here too
-torchvision==0.27.0         # so `pip install -r requirements.txt` doesn't drift it later
-pandas==2.2.3
-matplotlib==3.9.2
-seaborn==0.13.2
-scipy==1.13.1
-
-# --- eval (evaluation/eval_detections.py) ---
-pycocotools==2.0.8
-
-# --- dataset prep (tools/build_attr_index.py, bdd_to_yolo.py) ---
-ijson==3.3.0                # RAM-safe streaming of the 1.4 GB label JSON
-
-# --- data download ---
-kaggle==1.6.17
+# --- added on this side, everything above is Japan's file untouched ---
+# Grep'd from actual `import` statements in tools/ and evaluation/ (nothing
+# added speculatively):
+ijson==3.3.0    # tools/bdd_to_yolo.py's streaming train-JSON parser - confirmed
+                # missing, not just theoretical: cngpu-vm001 already hit the
+                # "ijson not installed, falling back to json.load" warning
+                # without it (2026-08-17)
