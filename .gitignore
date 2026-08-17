@@ -22,7 +22,7 @@ legacy_yolov5/dataset/*/
 
 # VS Code settings
 .vscode/
+.ipynb_checkpoints/
 
 yolov5.zip
-
 venv/
