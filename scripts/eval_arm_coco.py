@@ -131,27 +131,33 @@ def resolve_split_dirs(data_yaml: str) -> tuple[Path, Path]:
 
 
 def run_inference_to_dir(model: YOLO, image_paths: list[Path], out_dir: Path, imgsz: int, device: str, batch: int) -> None:
-    results = model.predict(
-        source=[str(p) for p in image_paths],
-        imgsz=imgsz,
-        conf=CONF_THRES,
-        iou=IOU_THRES,
-        max_det=MAX_DET,
-        device=device,
-        batch=batch,
-        stream=True,
-        verbose=False,
-    )
-    for r in results:
-        lines = []
-        if r.boxes is not None and len(r.boxes):
-            xywhn = r.boxes.xywhn.tolist()
-            conf = r.boxes.conf.tolist()
-            cls = r.boxes.cls.tolist()
-            for (cx, cy, w, h), c, k in zip(xywhn, conf, cls):
-                lines.append(f"{int(k)} {cx:.6f} {cy:.6f} {w:.6f} {h:.6f} {c:.6f}")
-        stem = Path(r.path).stem
-        (out_dir / f"{stem}.txt").write_text("\n".join(lines) + ("\n" if lines else ""))
+    # Chunk manually - passing the full path list straight to model.predict()
+    # with batch=N does NOT actually cap memory use to N images at a time (it
+    # allocates as if for the whole list regardless of `batch`), which OOM'd
+    # even on a 46GB A40. One predict() call per chunk keeps memory bounded.
+    for start in range(0, len(image_paths), batch):
+        chunk = image_paths[start:start + batch]
+        results = model.predict(
+            source=[str(p) for p in chunk],
+            imgsz=imgsz,
+            conf=CONF_THRES,
+            iou=IOU_THRES,
+            max_det=MAX_DET,
+            device=device,
+            batch=len(chunk),
+            stream=False,
+            verbose=False,
+        )
+        for r in results:
+            lines = []
+            if r.boxes is not None and len(r.boxes):
+                xywhn = r.boxes.xywhn.tolist()
+                conf = r.boxes.conf.tolist()
+                cls = r.boxes.cls.tolist()
+                for (cx, cy, w, h), c, k in zip(xywhn, conf, cls):
+                    lines.append(f"{int(k)} {cx:.6f} {cy:.6f} {w:.6f} {h:.6f} {c:.6f}")
+            stem = Path(r.path).stem
+            (out_dir / f"{stem}.txt").write_text("\n".join(lines) + ("\n" if lines else ""))
 
 
 def score_split(model: YOLO, data_yaml: str, imgsz: int, device: str, batch: int) -> tuple[dict, int]:
