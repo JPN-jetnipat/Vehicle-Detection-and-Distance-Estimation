@@ -179,9 +179,22 @@ def score_split(model: YOLO, data_yaml: str, imgsz: int, device: str, batch: int
     all_ids = [name_to_id[n] for n in image_names]
     overall = evaluate_slice(gt_coco, dt_coco, all_ids)
     per_class = {}
+    n_instances = {}
     for ci, cname in enumerate(names):
         per_class[cname] = evaluate_slice(gt_coco, dt_coco, all_ids, cat_id=ci)
-    return {"overall": overall, "per_class": per_class}, len(image_names)
+        n_instances[cname] = len(gt_coco.getAnnIds(catIds=[ci]))
+    return {"overall": overall, "per_class": per_class, "n_instances": n_instances}, len(image_names)
+
+
+def print_split_table(n_images: int, result: dict) -> None:
+    n_total_instances = sum(result["n_instances"].values())
+    o = result["overall"]
+    print(f"{'Class':>10} {'Images':>8} {'Instances':>10} {'mAP50':>8} {'mAP75':>8} {'mAP50-95':>10}")
+    print(f"{'all':>10} {n_images:>8} {n_total_instances:>10} "
+          f"{o['mAP50']:>8} {o['mAP75']:>8} {o['mAP50_95']:>10}")
+    for cname, m in result["per_class"].items():
+        print(f"{cname:>10} {n_images:>8} {result['n_instances'][cname]:>10} "
+              f"{m['mAP50']:>8} {m['mAP75']:>8} {m['mAP50_95']:>10}")
 
 
 def coco_result_to_rows(arm_name: str, dataset_split: str, result: dict, timestamp: str) -> list[dict]:
@@ -216,9 +229,9 @@ def main() -> None:
     timestamp = datetime.now(timezone.utc).isoformat()
     rows: list[dict] = []
     for split in cfg["eval_splits"]:
-        print(f"[{arm_name}] scoring {split['name']} ({split['data']}) with pycocotools ...")
+        print(f"\n[{arm_name}] scoring {split['name']} ({split['data']}) with pycocotools ...")
         result, n_images = score_split(model, split["data"], train_kwargs["imgsz"], args.device, args.batch)
-        print(f"  n={n_images}  mAP50={result['overall']['mAP50']}  mAP75={result['overall']['mAP75']}  mAP50-95={result['overall']['mAP50_95']}")
+        print_split_table(n_images, result)
         rows.extend(coco_result_to_rows(arm_name, split["name"], result, timestamp))
 
     train_arm.append_metrics(rows)
