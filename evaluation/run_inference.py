@@ -60,33 +60,43 @@ def main():
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    results = model.predict(
-        source=[str(p) for p in paths],
-        imgsz=args.imgsz,
-        conf=args.conf_thres,
-        iou=args.iou_thres,
-        max_det=args.max_det,
-        device=args.device,
-        half=args.half,
-        batch=args.batch,
-        stream=True,     # generator - one Results object per image, low memory for 10k+ lists
-        verbose=False,
-    )
-
+    # Chunk manually rather than handing the full 8k+ path list to a single
+    # model.predict(..., batch=N, stream=True) call. Found the hard way:
+    # ultralytics 8.4.120 doesn't reliably cap the preprocessing tensor to
+    # `batch` images for a long list `source` even with stream=True - a run
+    # against splits/test.txt (8,841 images) tried to allocate ~24GB for
+    # what should have been a <1GB batch=32 preprocessing step, OOMing on a
+    # shared GPU. Same failure mode Japan's Claude already hit and worked
+    # around the same way in eval_arm_coco.py's run_inference_to_dir().
+    # stream=False is fine per-chunk since each chunk is small and bounded.
     n_det = 0
-    for i, r in enumerate(results):
-        lines = []
-        if r.boxes is not None and len(r.boxes):
-            xywhn = r.boxes.xywhn.tolist()   # normalized [cx, cy, w, h], already rescaled to ORIGINAL image size
-            conf = r.boxes.conf.tolist()
-            cls = r.boxes.cls.tolist()
-            for (cx, cy, w, h), c, k in zip(xywhn, conf, cls):
-                lines.append(f"{int(k)} {cx:.6f} {cy:.6f} {w:.6f} {h:.6f} {c:.6f}")
-        stem = Path(r.path).stem
-        (out / f"{stem}.txt").write_text("\n".join(lines) + ("\n" if lines else ""))
-        n_det += len(lines)
-        if (i + 1) % 500 == 0:
-            print(f"{i + 1}/{len(paths)} images, {n_det} detections so far", flush=True)
+    for start in range(0, len(paths), args.batch):
+        chunk = paths[start:start + args.batch]
+        results = model.predict(
+            source=[str(p) for p in chunk],
+            imgsz=args.imgsz,
+            conf=args.conf_thres,
+            iou=args.iou_thres,
+            max_det=args.max_det,
+            device=args.device,
+            half=args.half,
+            batch=len(chunk),
+            stream=False,
+            verbose=False,
+        )
+        for r in results:
+            lines = []
+            if r.boxes is not None and len(r.boxes):
+                xywhn = r.boxes.xywhn.tolist()   # normalized [cx, cy, w, h], already rescaled to ORIGINAL image size
+                conf = r.boxes.conf.tolist()
+                cls = r.boxes.cls.tolist()
+                for (cx, cy, w, h), c, k in zip(xywhn, conf, cls):
+                    lines.append(f"{int(k)} {cx:.6f} {cy:.6f} {w:.6f} {h:.6f} {c:.6f}")
+            stem = Path(r.path).stem
+            (out / f"{stem}.txt").write_text("\n".join(lines) + ("\n" if lines else ""))
+            n_det += len(lines)
+        done = start + len(chunk)
+        print(f"{done}/{len(paths)} images, {n_det} detections so far", flush=True)
 
     print(f"done: {len(paths)} images, {n_det} detections -> {out}")
 
