@@ -27,6 +27,7 @@ import os
 import tempfile
 from pathlib import Path
 
+import torch
 import yaml
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
@@ -212,7 +213,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument("--weights", type=Path, default=None, help="Defaults to runs/detect/<train.name>/weights/best.pt")
-    parser.add_argument("--device", default="cpu", help="'cpu' or CUDA index like '0'")
+    parser.add_argument(
+        "--device",
+        default="0" if torch.cuda.is_available() else "cpu",
+        help="'cpu' or CUDA index like '0' (auto-detects GPU if available)",
+    )
     parser.add_argument("--batch", type=int, default=16)
     args = parser.parse_args()
 

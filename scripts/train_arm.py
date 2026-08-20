@@ -24,6 +24,7 @@ import csv
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import torch
 import yaml
 from openpyxl import Workbook
 from tqdm import tqdm
@@ -158,6 +159,8 @@ def make_epoch_log_callback(log_path: Path):
 
 
 def main() -> None:
+    import eval_arm_coco  # deferred: eval_arm_coco imports this module at its top level
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, type=Path)
     args = parser.parse_args()
@@ -194,6 +197,18 @@ def main() -> None:
         rows.extend(metrics_to_rows(arm_name, split["name"], split_metrics, timestamp))
         with log_path.open("a", encoding="utf-8") as f:
             f.write(f"[{timestamp}] eval {split['name']}: mAP50={split_metrics.box.map50:.4f} mAP50-95={split_metrics.box.map:.4f}\n")
+
+    coco_device = "0" if torch.cuda.is_available() else "cpu"
+    for split in tqdm(cfg["eval_splits"], desc=f"[{arm_name}] pycocotools eval splits", unit="split"):
+        print(f"\n[{arm_name}] scoring {split['name']} ({split['data']}) with pycocotools ...")
+        coco_result, n_images = eval_arm_coco.score_split(
+            eval_model, split["data"], train_kwargs["imgsz"], coco_device, train_kwargs["batch"]
+        )
+        eval_arm_coco.print_split_table(n_images, coco_result)
+        rows.extend(eval_arm_coco.coco_result_to_rows(arm_name, split["name"], coco_result, timestamp))
+        o = coco_result["overall"]
+        with log_path.open("a", encoding="utf-8") as f:
+            f.write(f"[{timestamp}] eval {split['name']} (pycocotools): mAP50={o['mAP50']:.4f} mAP50-95={o['mAP50_95']:.4f}\n")
 
     append_metrics(rows)
     export_excel()
