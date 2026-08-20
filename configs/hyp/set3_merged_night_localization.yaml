@@ -1,0 +1,138 @@
+# set3_merged_night_localization.yaml - Set 3: merged, night-localization arm
+# Derived from the Set 1 vs Set 2 test.txt results, not from averaging them.
+# Finalized 2026-08-20. Full reasoning: docs/set3-notes.md
+#
+# WHY THIS ARM EXISTS
+#   Set 1 beat Set 2 (overall mAP50 0.5521 vs 0.5392, and 48 of 75 per-class
+#   metric cells). But the interesting part isn't which bundle won - it's that
+#   BOTH arms show the same night failure, and neither arm aimed at it:
+#
+#       car, daytime -> night      Set 1     Set 2
+#       mAP50                      -3.43     -3.34
+#       mAP75                      -9.88     -9.78     <-- this
+#       mAP50-95                   -6.96     -6.92
+#
+#   Car is 96.4% of night instances. The model still FINDS the car at night;
+#   it can't put a tight box on it. Set 3 keeps Set 1's photometric restraint,
+#   drops Set 2's instance-level augmentation, and puts the new pressure on the
+#   regression branch, which is where the measured loss actually is.
+#
+#   (Set 2's copy_paste: 0.2 never ran. ultralytics CopyPaste.__call__ opens
+#   with `if len(labels["instances"].segments) == 0: return labels`, and
+#   tools/bdd_to_yolo.py emits bbox-only labels, so segments is empty -> silent
+#   no-op. Verified on 8.4.124: image unmodified, instance count unchanged.
+#   Set 2's headline hypothesis was never tested; its real delta from Set 1 was
+#   only cls, scale, translate + the reversion of Set 1's three changes.)
+#
+# NOT TOUCHED, DELIBERATELY (kept out of this file per the lean-YAML rule,
+# recorded here so it reads as a decision, not an oversight):
+#   degrees / shear    - dashcam horizon is fixed.
+#   perspective        - vertical box position carries the distance cue the
+#                        pinhole estimator reads. Don't train invariance to the
+#                        geometry we later measure with.
+#   hsv_h, fliplr, mosaic, lrf, weight_decay, warmup_epochs, patience,
+#   amp, deterministic - ultralytics defaults, no evidence to move them.
+#   cos_lr             - considered and rejected for THIS arm: it's a
+#                        convenience change, not a hypothesis, and Set 3
+#                        already moves 6 variables. Candidate for a later run.
+
+epochs: 100
+seed: 42
+imgsz: 640         # HELD. 768 is the strongest untried lever for the mAP75
+                   # problem above, but it changes the eval basis vs Set 1/2 -
+                   # keep it here, test it as its own arm.
+batch: 16
+workers: 2         # RAM constraint fix - enforced by tools/train_yolo.py
+cache: false       # RAM constraint fix - enforced by tools/train_yolo.py
+
+# --- photometric: Set 1's winning idea, inherited and extended ------------
+hsv_v: 0.25        # KEEP from Set 1 (default 0.4). Part of the winning bundle.
+hsv_s: 0.60        # NEW (default 0.7). Same hypothesis as hsv_v, applied to
+                   # the channel Set 1 left alone: night frames are already
+                   # desaturated by sodium/LED lighting, so +-70% saturation
+                   # jitter invents colour statistics no night sensor
+                   # produces. The one place Set 3 EXTENDS a hypothesis that
+                   # already earned it, rather than just inheriting.
+
+# --- geometric ------------------------------------------------------------
+scale: 0.55        # PULLED BACK from Set 2's 0.7 (default 0.5). Not a
+                   # split-the-difference: at 640, scale=0.7 lets objects
+                   # shrink to 0.3x, pushing BDD's already-small motor/bike
+                   # under the P3 stride-8 floor and manufacturing targets the
+                   # network can't resolve. Most likely mechanism for Set 2's
+                   # rare-class recall loss now that copy_paste is ruled out.
+translate: 0.15    # KEEP from Set 2 (default 0.1). The only one of Set 2's
+                   # three changes with no plausible downside - it moves
+                   # objects in frame without degrading them, and fights the
+                   # centre-of-frame position prior dashcam data bakes in.
+
+# --- mixing augmentations -------------------------------------------------
+close_mosaic: 20   # KEEP from Set 1. NOTE: this is 20 EPOCHS, not 20% - it
+                   # coincides with 20% only because epochs=100, and does NOT
+                   # scale if the epoch budget changes. (Set 1's comment says
+                   # "the last 20% of epochs"; right answer, wrong reason.)
+                   # It matters more here than it did in Set 1: the final
+                   # clean-image window is where the heavier regression loss
+                   # below gets to sharpen boxes on real, un-stitched night
+                   # scenes instead of mosaic seams.
+mixup: 0.0         # unchanged - same contrast reasoning as Set 1 and Set 2.
+cutmix: 0.0        # unchanged, stated explicitly. New key in 8.4.x and an
+                   # easy thing to reach for later - same reasoning as mixup.
+copy_paste: 0.0    # DROPPED from Set 2's 0.2. It was inert (see header), so
+                   # this costs nothing and stops it looking like a tested
+                   # variable in the writeup. If we do want copy-paste for the
+                   # rare classes it needs polygon labels - BDD100K ships
+                   # instance seg for a 10K subset. Dataset job, not a hyp.
+
+# --- loss balance: Set 3's actual new contribution ------------------------
+box: 9.0           # KEEP from Set 1 (default 7.5).
+dfl: 1.8           # NEW (default 1.5; Set 1 and Set 2 both left it at 1.5, so
+                   # this is genuinely untested). Set 1 raised box alone, which
+                   # quietly shifted the regression branch's internal balance
+                   # from box:dfl = 5.0 (7.5/1.5) to 6.0 (9.0/1.5): more weight
+                   # on the IoU term, none on the distribution that actually
+                   # produces the box edge. 9.0/1.8 restores the 5.0 ratio
+                   # while keeping total regression weight ~20% above default.
+                   # DFL sharpness is the direct lever on blurry-edge boxes -
+                   # i.e. on the -9.9 pt night mAP75 collapse.
+cls: 0.5           # REVERTED from Set 2's 0.7. The only direct evidence on
+                   # this knob says raising it cost mAP50 on EVERY class,
+                   # including truck/bus - exactly where class confusion would
+                   # have shown up if cls weight were the bottleneck.
+                   # Mechanism: on a 94%-car dataset the cls BCE is dominated
+                   # by negatives, so raising its gain mostly amplifies the
+                   # background term and suppresses rare-class scores - the
+                   # opposite of what Set 2 wanted.
+
+# --- optimizer: PINNED, and this is a correction, not a change ------------
+# `optimizer: auto` (what default/set1/set2 all effectively used) is NOT a
+# no-op. In ultralytics 8.4.x, BaseTrainer.build_optimizer does:
+#     iterations = ceil(60186 / max(16, nbs=64)) * 100 = 94,100  (> 10,000)
+#     name, lr, momentum = ("MuSGD", 0.01, 0.9)
+#     self.args.warmup_bias_lr = 0.0
+# So every arm so far trained with MuSGD, momentum 0.9, warmup_bias_lr 0.0 -
+# NOT SGD, and NOT the momentum=0.937 / warmup_bias_lr=0.1 listed as the
+# defaults in cfg/default.yaml. The four lines below reproduce that exactly.
+# Pinning it changes nothing today and protects the arm from the auto
+# heuristic being retuned in a future ultralytics release (it already moved
+# once: this branch selected plain SGD before MuSGD was introduced).
+# Checked against both 8.4.65 and the pinned 8.4.120 - identical.
+# WATCH OUT: the threshold is on ITERATIONS, not epochs. A train_10.txt arm
+# (6019 imgs) at 100 epochs is ceil(6019/64)*100 = 9,500 iterations, BELOW
+# 10,000, so on `auto` it would silently train with AdamW at a different lr.
+# Pin the optimizer on the label-fraction arms too, or they compare optimizers
+# instead of label fractions.
+optimizer: MuSGD
+lr0: 0.01
+momentum: 0.9
+warmup_bias_lr: 0.0
+
+# --- checkpoint insurance (GPU-server constraint) -------------------------
+save_period: 10    # NEW (default -1 = off). ultralytics already writes
+                   # weights/last.pt every epoch, which covers a normal
+                   # stop/resume. It does NOT cover the failure the server
+                   # staff warned about: the room is under AC maintenance and
+                   # the power gets cut. A power loss mid-torch.save leaves a
+                   # truncated last.pt and --resume fails on it, losing the
+                   # whole run. Epoch snapshots cost ~10 files of disk and
+                   # zero RAM. Check `df -h ~` before launching.

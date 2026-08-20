@@ -1,0 +1,52 @@
+# set3_smoke.yaml - pipeline sanity check for the Set 3 arm. NOT an arm.
+#
+# Why a Set-3-specific smoke test when configs/hyp/smoke_test.yaml exists:
+# the generic one runs ultralytics defaults, so it does NOT exercise the two
+# things in Set 3 that could actually fail on launch -
+#   1. the explicit `optimizer: MuSGD` + warmup_bias_lr pin (the generic smoke
+#      test runs `auto`, and at 2 epochs `auto` resolves to AdamW, not MuSGD -
+#      a different code path entirely),
+#   2. `save_period`, which writes epoch snapshots to disk.
+# Same imgsz/batch/workers/cache as the real arm on purpose - the point is to
+# confirm the RAM-safety margin (32 GB shared host) holds at real settings.
+#
+# close_mosaic is set to 1 (not 20) so that 2 epochs cover BOTH dataloader
+# states: epoch 0 with mosaic ON (the higher-RAM path - 4 images per sample),
+# then the close transition at epoch 1, which tears down and rebuilds the
+# workers. That rebuild is the moment RAM can spike, and the generic smoke
+# test never reaches it. Watch `free -h` in a second pane across the switch.
+
+epochs: 2
+seed: 42
+imgsz: 640
+batch: 16
+workers: 2         # RAM constraint fix - required, train_yolo.py refuses without it
+cache: false       # RAM constraint fix - required, same as above
+
+# identical to set3_merged_night_localization.yaml from here down,
+# except close_mosaic and save_period (see header)
+hsv_v: 0.25
+hsv_s: 0.60
+scale: 0.55
+translate: 0.15
+close_mosaic: 1    # 20 in the real arm - see header
+mixup: 0.0
+cutmix: 0.0
+copy_paste: 0.0
+box: 9.0
+dfl: 1.8
+cls: 0.5
+optimizer: MuSGD
+lr0: 0.01
+momentum: 0.9
+warmup_bias_lr: 0.0
+save_period: 1     # 10 in the real arm - snapshot every epoch here so the
+                   # disk-write path is actually exercised in 2 epochs
+
+# PASS looks like:
+#   - hyperparameters print, no FLAG/refusal from train_yolo.py
+#   - the optimizer line says MuSGD (NOT "optimizer=auto found ...")
+#   - "Closing dataloader mosaic" appears before epoch 2
+#   - free -h stays well clear of 32 GB throughout, including at the close
+#   - runs/detect/set3_smoke/weights/ has last.pt, best.pt AND epoch0.pt
+# Safe to delete runs/detect/set3_smoke/ afterward.
