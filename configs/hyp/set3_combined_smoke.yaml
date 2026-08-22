@@ -1,0 +1,50 @@
+# set3_combined_smoke.yaml - 2-epoch pipeline check for the Method 3 arm.
+# NOT one of the arms. Run this before committing the A40 to the real run.
+#
+# Mirrors configs/hyp/set3_combined.yaml, with three deliberate differences so
+# that 2 epochs actually exercise the paths a 100-epoch run would:
+#   epochs        100 -> 2    (that is the whole point)
+#   close_mosaic   20 -> 1    at 20 the trigger `epoch == epochs - close_mosaic`
+#                             is never reached in a 2-epoch run, so the
+#                             mosaic-close path would go untested; 1 fires it
+#                             on the second epoch
+#   save_period    10 -> 1    same reasoning - at 10 no periodic checkpoint is
+#                             ever written, so the thing we added it for
+#                             (power-cut insurance) would go untested
+#
+# What this checks that configs/hyp/smoke_test.yaml does not:
+#   - ultralytics finding the low-light images under dataset/lowlight/ and
+#     pairing them with dataset/lowlight/labels/ (the /images/ -> /labels/ path
+#     swap fails silently - you just get "no labels found")
+#   - a split file with REPEATED lines loading without dedup
+#   - ~137k samples/epoch fitting in the 32 GB shared host RAM at workers: 2
+#
+# Usage (from the repo root):
+#   python tools/train_yolo.py --hyp configs/hyp/set3_combined_smoke.yaml \
+#       --data configs/data/bdd100k_vehicle5_method3.yaml --name set3_combined_smoke
+#   free -h    # in a second pane - stay well clear of 32 GB
+#
+# Expect: the dataset scan to report ~137k images (NOT ~60k, NOT ~120k - if it
+# says 60,186 the method3 split yaml was not picked up; if it says 120,372 the
+# repeats were dropped), 2 epochs complete, and
+# runs/detect/set3_combined_smoke/weights/ holding last.pt, best.pt and at
+# least one epoch*.pt. Safe to delete runs/detect/set3_combined_smoke/ after.
+
+epochs: 2
+seed: 42
+imgsz: 640
+batch: 16
+workers: 2
+cache: false
+
+hsv_v: 0.25
+close_mosaic: 1
+box: 9.0
+copy_paste: 0.2
+cls: 0.7
+scale: 0.7
+translate: 0.15
+
+patience: 0
+exist_ok: true
+save_period: 1

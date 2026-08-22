@@ -47,3 +47,8 @@ kaggle.json
 *_broken_OLD/
 *_broken_link
 splits_check/
+
+# Method 3 low-light augmented copies (~10 GB) - regenerable via
+# tools/augment_lowlight.py, same reasoning as dataset/yolo/images/ above.
+dataset/lowlight/
+dataset/lowlight_probe/
