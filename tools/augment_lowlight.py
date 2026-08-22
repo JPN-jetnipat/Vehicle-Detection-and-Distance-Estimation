@@ -67,7 +67,10 @@ Output:
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
+import functools
 import hashlib
+import os
 import shutil
 import sys
 import time
@@ -206,18 +209,101 @@ def rng_for(seed: int, name: str) -> np.random.RandomState:
 
 # --------------------------------------------------------------------------
 def repo_rel(path: Path) -> str:
-    """Path as repo-root-relative POSIX, so split lists survive machine moves."""
-    p = path.resolve()
+    """Path as repo-root-relative POSIX, so split lists survive machine moves.
+
+    Deliberately os.path.abspath, NOT Path.resolve(). resolve() follows
+    symlinks, and the supported way to put the ~12 GB of augmented copies on a
+    second volume is exactly a symlink:
+
+        dataset/lowlight -> /disk2/<user>/vehicle-detection-lowlight
+
+    resolve() would rewrite every line of the split list to an absolute
+    /disk2/... path, baking one machine's mount layout into a file that is
+    supposed to be portable -- undoing the whole point of the symlink. abspath
+    normalizes ".." without touching symlinks, so the list stays
+    dataset/lowlight/images/train/<name>.jpg on every machine.
+    """
+    p = Path(os.path.abspath(str(path)))
     try:
         return p.relative_to(REPO_ROOT).as_posix()
     except ValueError:
-        return p.as_posix()  # outside the repo: absolute is the only option
+        return p.as_posix()  # genuinely outside the repo: absolute is the only option
 
 
 def resolve(path_str: str) -> Path:
     """Interpret a CLI path as repo-relative unless it is already absolute."""
     p = Path(path_str).expanduser()
     return p if p.is_absolute() else (REPO_ROOT / p)
+
+
+def process_one(
+    line: str,
+    *,
+    seed: int,
+    p_gamma: float,
+    p_noise: float,
+    p_blur: float,
+    quality: int,
+    dst_img_dir: Path,
+    dst_lbl_dir: Path,
+    labels_src: Path,
+    overwrite: bool,
+):
+    """Augment one image. Module-level and side-effect-free w.r.t. shared state
+    so it can run in a worker process (--jobs > 1).
+
+    Parallelism is safe here ONLY because the RNG is seeded from
+    (seed, filename): each image's result depends on nothing but itself, so
+    --jobs 1 and --jobs 16 produce byte-identical output, and so does a resume.
+    A single sequential RNG stream would have made this impossible.
+
+    Returns (status, payload, gate_tuple_or_None, bytes_written) where status is
+    one of "ok" | "skip" | "unreadable" | "writefail".
+    """
+    cv2.setNumThreads(1)  # each worker is one core; OpenCV's own pool would oversubscribe
+
+    src_img = resolve(line)
+    out_img = dst_img_dir / src_img.name
+    out_lbl = dst_lbl_dir / (src_img.stem + ".txt")
+    src_lbl = labels_src / (src_img.stem + ".txt")
+
+    def place_label() -> bool:
+        """Copy the label across, or write an empty one. True if none existed.
+
+        BDD has 564 empty label files in train; an image with no vehicles is a
+        legitimate background image, so write an empty label rather than leaving
+        ultralytics to guess.
+        """
+        if src_lbl.exists():
+            shutil.copy(src_lbl, out_lbl)
+            return False
+        out_lbl.write_text("", encoding="utf-8")
+        return True
+
+    if out_img.exists() and not overwrite:
+        if not out_lbl.exists():  # partial previous run
+            place_label()
+        return ("skip", repo_rel(out_img), None, 0)
+
+    img = imread_unicode(src_img)
+    if img is None:
+        return ("unreadable", line, None, 0)
+
+    rng = rng_for(seed, src_img.name)
+    aug, gates = apply_lowlight_gated(img, rng, p_gamma=p_gamma, p_noise=p_noise, p_blur=p_blur)
+    if not imwrite_unicode(out_img, aug, quality):
+        return ("writefail", str(out_img), None, 0)
+
+    nbytes = out_img.stat().st_size
+    missing = place_label()
+    gate_tuple = (
+        src_img.name,
+        int(gates["gamma"]),
+        int(gates["noise"]),
+        int(gates["blur"]),
+        missing,
+    )
+    return ("ok", repo_rel(out_img), gate_tuple, nbytes)
 
 
 def parse_args() -> argparse.Namespace:
@@ -252,7 +338,13 @@ def parse_args() -> argparse.Namespace:
                          "every --check-every images, using the measured per-image size to project whether "
                          "the rest of the run still fits. See --no-space-guard.")
     ap.add_argument("--check-every", type=int, default=500,
-                    help="How often (in images) to re-check disk space and print progress.")
+                    help="How often (in images) to re-check disk space and print progress. Also the "
+                         "batch size submitted to the worker pool.")
+    ap.add_argument("--jobs", "-j", type=int, default=4,
+                    help="Worker processes. The job is embarrassingly parallel (JPEG decode/encode "
+                         "dominates, and each image's RNG is seeded from its own filename), so output "
+                         "is byte-identical at any --jobs value. Default 4 - deliberately not all cores, "
+                         "since this box is shared. Use 1 for a serial run.")
     ap.add_argument("--no-space-guard", action="store_true",
                     help="Disable the mid-run space projection (the start-of-run check still applies). "
                          "Only use this if you know the filesystem is shared with something that frees "
@@ -290,6 +382,13 @@ def main() -> None:
     if len(set(stems)) != len(stems):
         sys.exit("FLAG: --img-list contains duplicate basenames; the flat output dir cannot represent them.")
 
+    n_cpu = os.cpu_count() or 1
+    if args.jobs < 1:
+        sys.exit(f"FLAG: --jobs must be >= 1, got {args.jobs}.")
+    if args.jobs > n_cpu:
+        print(f"note: --jobs {args.jobs} exceeds the {n_cpu} CPUs visible here; capping to {n_cpu}.")
+        args.jobs = n_cpu
+
     free_gb = shutil.disk_usage(dst_root).free / 1024**3
     limit_note = f"  [--limit of {full_list_len} total]" if args.limit else ""
     print(f"Source list      : {repo_rel(img_list)}  ({len(src_lines)} images){limit_note}")
@@ -298,60 +397,73 @@ def main() -> None:
     print(f"Writing labels to: {repo_rel(dst_lbl_dir)}")
     print(f"Free space here  : {free_gb:.1f} GB")
     print(f"Gates            : gamma {args.p_gamma} (forced on), noise {args.p_noise}, blur {args.p_blur}")
-    print(f"JPEG quality     : {args.jpeg_quality}   seed: {args.seed}")
+    print(f"JPEG quality     : {args.jpeg_quality}   seed: {args.seed}   jobs: {args.jobs}/{n_cpu} CPUs")
     if free_gb < args.min_free_gb:
         sys.exit(f"FLAG: only {free_gb:.1f} GB free, below --min-free-gb {args.min_free_gb}. Refusing to start.")
+
+    worker = functools.partial(
+        process_one,
+        seed=args.seed,
+        p_gamma=args.p_gamma,
+        p_noise=args.p_noise,
+        p_blur=args.p_blur,
+        quality=args.jpeg_quality,
+        dst_img_dir=dst_img_dir,
+        dst_lbl_dir=dst_lbl_dir,
+        labels_src=labels_src,
+        overwrite=args.overwrite,
+    )
 
     out_paths: list[str] = []
     log_rows: list[tuple[str, int, int, int]] = []
     skipped_existing = 0
     unreadable = 0
+    write_failed = 0
     missing_labels = 0
     bytes_written = 0
+    stopped_early = False
     t0 = time.time()
 
-    for i, line in enumerate(src_lines, 1):
-        src_img = resolve(line)
-        out_img = dst_img_dir / src_img.name
-        out_lbl = dst_lbl_dir / (src_img.stem + ".txt")
-
-        if out_img.exists() and not args.overwrite:
-            skipped_existing += 1
-            out_paths.append(repo_rel(out_img))
-            if not out_lbl.exists():  # partial previous run
-                src_lbl = labels_src / (src_img.stem + ".txt")
-                if src_lbl.exists():
-                    shutil.copy(src_lbl, out_lbl)
-        else:
-            img = imread_unicode(src_img)
-            if img is None:
-                print(f"  skip (unreadable): {line}")
-                unreadable += 1
-                continue
-
-            rng = rng_for(args.seed, src_img.name)
-            aug, gates = apply_lowlight_gated(
-                img, rng, p_gamma=args.p_gamma, p_noise=args.p_noise, p_blur=args.p_blur
-            )
-            if not imwrite_unicode(out_img, aug, args.jpeg_quality):
-                print(f"  FLAG: failed to write {out_img}")
-                continue
-
-            bytes_written += out_img.stat().st_size
-            out_paths.append(repo_rel(out_img))
-            log_rows.append((src_img.name, int(gates["gamma"]), int(gates["noise"]), int(gates["blur"])))
-
-            src_lbl = labels_src / (src_img.stem + ".txt")
-            if src_lbl.exists():
-                shutil.copy(src_lbl, out_lbl)
-            else:
-                # BDD has 564 empty label files in train; an image with no
-                # vehicles is a legitimate background image, so write an empty
-                # label rather than leaving ultralytics to guess.
-                out_lbl.write_text("", encoding="utf-8")
+    def absorb(result) -> None:
+        """Fold one worker result into the running totals."""
+        nonlocal skipped_existing, unreadable, write_failed, missing_labels, bytes_written
+        status, payload, gates, nbytes = result
+        if status == "ok":
+            out_paths.append(payload)
+            log_rows.append(gates[:4])
+            if gates[4]:
                 missing_labels += 1
+            bytes_written += nbytes
+        elif status == "skip":
+            out_paths.append(payload)
+            skipped_existing += 1
+        elif status == "unreadable":
+            print(f"  skip (unreadable): {payload}")
+            unreadable += 1
+        elif status == "writefail":
+            print(f"  FLAG: failed to write {payload}")
+            write_failed += 1
 
-        if i % args.check_every == 0 or i == len(src_lines):
+    # Work is submitted in batches of --check-every so the disk guard runs at a
+    # clean boundary with no in-flight writes, whether --jobs is 1 or 16.
+    # Ordering is preserved because each batch's results come back in order and
+    # batches are consumed in order -- so the output list matches --img-list,
+    # exactly as the serial version did.
+    pool = None
+    if args.jobs > 1:
+        pool = concurrent.futures.ProcessPoolExecutor(max_workers=args.jobs)
+
+    try:
+        for start in range(0, len(src_lines), args.check_every):
+            batch = src_lines[start : start + args.check_every]
+            if pool is None:
+                for line in batch:
+                    absorb(worker(line))
+            else:
+                for result in pool.map(worker, batch, chunksize=8):
+                    absorb(result)
+
+            i = start + len(batch)
             done_new = max(i - skipped_existing, 1)
             avg_bytes = bytes_written / done_new
             rate = done_new / max(time.time() - t0, 1e-9)
@@ -381,7 +493,11 @@ def main() -> None:
                     print(f"  - rerun with a lower --jpeg-quality (current: {args.jpeg_quality}); note the "
                           "deviation from Method 1 in the write-up")
                     print("  - point --dst-root at a volume with more room")
+                    stopped_early = True
                     break
+    finally:
+        if pool is not None:
+            pool.shutdown(wait=True)
 
     out_list.write_text("\n".join(out_paths) + "\n", encoding="utf-8")
 
@@ -405,6 +521,8 @@ def main() -> None:
         print(f"Skipped (already present, resume): {skipped_existing}")
     if unreadable:
         print(f"FLAG: unreadable source images: {unreadable}")
+    if write_failed:
+        print(f"FLAG: failed writes: {write_failed} (usually a full disk)")
     if missing_labels:
         print(f"Wrote {missing_labels} empty label files for images with no source label.")
     print(f"Augmented images : {len(out_paths)} in {repo_rel(dst_img_dir)}")
@@ -414,7 +532,8 @@ def main() -> None:
 
     incomplete = len(out_paths) < len(src_lines)
     if incomplete:
-        print(f"INCOMPLETE: {len(out_paths)} of {len(src_lines)} images written.")
+        reason = "stopped by the disk guard" if stopped_early else "some images could not be processed"
+        print(f"INCOMPLETE: {len(out_paths)} of {len(src_lines)} images written ({reason}).")
         print("Do NOT run tools/build_method3_split.py yet - Method 1's recipe augments every")
         print("training image, and the builder will refuse a short pool anyway. Resolve the")
         print("reason above, then rerun this command to resume.")

@@ -81,13 +81,57 @@ Budget for the training run too, not just the images: at `save_period: 10`,
 `runs/detect/set3_combined/` holds ~10 yolo11s epoch checkpoints (optimizer
 state included, ~50 MB each) plus `last.pt`/`best.pt` — call it **600 MB**.
 
+> **cngpu-vm001 storage (checked 2026-08-22):** do **not** write this to the
+> root filesystem. `/dev/sda3` is a single 983 GB root at **99% full, 14 GB
+> available**, shared by every user on the box — 12.1 GB of augmented copies
+> would take it to effectively zero and break other people's jobs as well as
+> yours. Use the second volume: **`/dev/sdb1`, 1.5 TB mounted at `/disk2`,
+> ~101 GB free.** §3 sets it up as a symlink so nothing else has to change and
+> quality stays at 95.
+>
+> Always check `df -h` (no path — it hides other volumes) before assuming
+> you're out of space.
+
 ```bash
-df -h .     # want ≥ 13 GB free before stage 1, at quality 95
+df -h       # ALL filesystems. /disk2 is the one with room on cngpu-vm001
 ```
 
-**Time.** Stage 1 is single-threaded CPU. Measured at **7.8 img/s** on the
-GPU server → **~2.1 hours** for the full 60,186. It touches no GPU, so run it
-while something else has the A40.
+**If you are ever forced onto a smaller volume** and have to drop
+`--jpeg-quality` below 95, it is a disclosable deviation rather than a
+disqualifying one — but measure it, don't assert it. Measured on 24 real BDD
+train images (mean absolute pixel difference, 0–255):
+
+| | |
+|---|---|
+| q95 vs q90 | 1.36 |
+| ideal vs q95 (the JPEG error Method 1 already accepts) | 2.05 |
+| ideal vs q90 | 2.25 |
+| the sensor noise this pipeline deliberately injects | 5.12 |
+| **same recipe, different random draw** | **6.53** |
+
+The last row is the one that matters. Method 1 seeds one global RNG and draws
+sequentially; this script seeds per image from `(seed, filename)`. So the two
+arms were never going to hold pixel-identical images — for any given photo they
+draw different gamma, different σ, different blur kernels from the *same*
+distributions. **The arms share a recipe, not a realization**, exactly like
+running with a different seed. A JPEG quality change is a perturbation ~5×
+smaller than a gap that is already there by design (and 7× smaller on edge
+pixels: 2.41 vs 16.72). It is not a reason to compromise the arm, and it is
+also not free — prefer `/disk2` and stay at 95.
+
+**Time.** Stage 1 is CPU-only. Measured at **7.8 img/s single-threaded** on the
+GPU server → ~2.1 hours serial, or **~35 min at `--jobs 4`**. It touches no
+GPU, so run it while something else has the A40.
+
+**Why not the GPU?** Because the GPU is not the bottleneck. Per image the work
+is JPEG decode → a 256-entry LUT → noise → one small convolution → JPEG encode.
+The two JPEG steps and the disk write dominate; the arithmetic is a rounding
+error next to them. Moving it to CUDA would add a host→device→host copy per
+image to accelerate the part that was never slow, and the encode would land
+back on the CPU anyway. The job is embarrassingly parallel, so *cores*, not
+CUDA, are the speedup — hence `--jobs`. On a shared box the GPU is also the
+scarce resource; taking it for work that doesn't need it is the thing
+`RUNBOOK.md`'s GPU-sharing protocol exists to prevent.
 
 **Training.** ~137,500 samples/epoch is **≈2.0× Method 2's** epoch time and
 **≈1.14× Method 1's**. `RUNBOOK.md`'s convention says runs projected past ~2
@@ -99,8 +143,38 @@ epoch time and announce before launching.
 
 ## 3. Stage 1 — materialize the low-light copies
 
+### 3.0 Point `dataset/lowlight/` at the big volume (one time, per machine)
+
+The ~12 GB belongs on `/disk2`, not on the 99%-full root filesystem. Do that
+with a **symlink**, not by passing an absolute `--dst-root`:
+
+```bash
+mkdir -p /disk2/$USER/vehicle-detection-lowlight
+ln -s /disk2/$USER/vehicle-detection-lowlight dataset/lowlight
+ls -la dataset/ | grep lowlight        # confirm the link
+touch dataset/lowlight/.writetest && rm dataset/lowlight/.writetest && echo "writable"
+```
+
+Why a symlink rather than `--dst-root /disk2/...`: every path this pipeline
+writes into a split list stays `dataset/lowlight/images/train/<name>.jpg`, so
+the lists remain repo-relative and portable. Point `--dst-root` at an absolute
+path instead and you bake one machine's mount layout into
+`train_100_method3.txt` — it then breaks for your teammates and on any box
+without a `/disk2`.
+
+This is why both scripts' `repo_rel()` use `os.path.abspath` rather than
+`Path.resolve()`: `resolve()` follows symlinks and would rewrite every line to
+`/disk2/...`, defeating the point. Verified end to end — with the symlink in
+place, ultralytics scans `dataset/lowlight/labels/train`, pairs every image to
+its label, reports 0 corrupt, and the bytes land on the other volume.
+
+`dataset/lowlight/` is already in `.gitignore`, so the symlink is never
+committed.
+
+### 3.1 Probe, then run
+
 Probe first, on 500 images, to confirm the real per-image size on this machine
-before committing 10 GB:
+before committing 12 GB:
 
 ```bash
 python tools/augment_lowlight.py --limit 500 \
@@ -121,17 +195,32 @@ originals — if they don't, something non-pixel-level crept in and the whole
 premise of §1 breaks. Then delete `dataset/lowlight_probe/` and run for real:
 
 ```bash
-nohup python tools/augment_lowlight.py > lowlight_aug.log 2>&1 &
+nohup python tools/augment_lowlight.py --jobs 4 --min-free-gb 5 \
+    > lowlight_aug.log 2>&1 &
 tail -f lowlight_aug.log
 ```
 
-**The run guards its own disk.** Every `--check-every` images (default 500) it
-re-measures free space, projects whether the remaining images still fit above
-`--min-free-gb`, and if not stops cleanly, exits non-zero, and prints
-`INCOMPLETE: N of 60186`. Nothing written is lost — rerun the same command once
-you have room and it resumes, reproducing byte-identical images for everything
-already done (verified). `--no-space-guard` disables the projection if you know
-the filesystem frees space as you go.
+Quality stays at the default 95 — matching Method 1 — because `/disk2` has the
+room. `--min-free-gb 5` because `/disk2` is shared too (93% full); the guard
+should stop with headroom left for other users, not scrape the last gigabyte.
+
+**`--jobs` is free speed.** Output is **byte-identical at any `--jobs` value**,
+because each image's RNG is seeded from `(seed, filename)` rather than from one
+sequential stream — nothing depends on what order images are processed in.
+Verified: `--jobs 1` and `--jobs 8` produce identical images, identical labels,
+identical split lists (ordering preserved) and identical gate logs. Default is
+4, deliberately not every core, since the box is shared. Each worker calls
+`cv2.setNumThreads(1)` so OpenCV's own pool doesn't oversubscribe on top.
+
+**The run guards its own disk.** Every `--check-every` images (default 500, also
+the batch size sent to the worker pool) it re-measures free space, projects
+whether the remaining images still fit above `--min-free-gb`, and if not stops
+cleanly at that batch boundary, exits non-zero, and prints
+`INCOMPLETE: N of 60186 (stopped by the disk guard)`. Nothing written is lost —
+rerun the same command once you have room and it resumes, reproducing
+byte-identical images for everything already done (verified, including under
+`--jobs 8`). `--no-space-guard` disables the projection if you know the
+filesystem frees space as you go.
 
 Writes:
 

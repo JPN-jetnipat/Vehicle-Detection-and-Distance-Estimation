@@ -51,6 +51,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -84,7 +85,11 @@ def resolve(path_str: str) -> Path:
 
 
 def repo_rel(path: Path) -> str:
-    p = path.resolve()
+    """Repo-root-relative POSIX path. os.path.abspath, not Path.resolve(): see
+    the same function in tools/augment_lowlight.py -- resolve() would follow a
+    dataset/lowlight -> /disk2/... symlink and bake an absolute path into the
+    generated split list and dataset yaml."""
+    p = Path(os.path.abspath(str(path)))
     try:
         return p.relative_to(REPO_ROOT).as_posix()
     except ValueError:
