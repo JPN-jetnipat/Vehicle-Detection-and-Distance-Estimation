@@ -1,0 +1,22 @@
+arm_name: method2_irfs_sampling
+model: yolo11s.pt
+data: dataset/bdd100k_vehicle_irfs.yaml
+
+train:
+  epochs: 100
+  seed: 42
+  imgsz: 640
+  batch: 16
+  workers: 2
+  cache: false
+  patience: 0  # disable early stopping so every arm trains the full run
+  name: method2_irfs_sampling
+  exist_ok: true  # rerunning this arm overwrites runs/detect/method2_irfs_sampling rather than incrementing
+
+eval_splits:
+  - name: val_day
+    data: dataset/bdd100k_test_day.yaml
+  - name: val_night
+    data: dataset/bdd100k_test_night.yaml
+  - name: val_dawndusk
+    data: dataset/bdd100k_test_dawndusk.yaml

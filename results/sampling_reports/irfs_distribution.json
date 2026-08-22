@@ -1,0 +1,63 @@
+{
+  "mode": "irfs",
+  "threshold": 0.122,
+  "seed": 42,
+  "restricted_to": [
+    "bike",
+    "motor"
+  ],
+  "excluded_classes_forced_r1": [
+    "bus",
+    "car",
+    "truck"
+  ],
+  "total_images_before": 60186,
+  "total_images_after": 68763,
+  "per_class": {
+    "car": {
+      "f_i_c": 0.9893496826504503,
+      "f_b_c": 0.9355885816121949,
+      "repeat_factor_r_c": 1.0,
+      "image_count_before": 59545,
+      "instance_count_before": 617379,
+      "image_count_after": 68035,
+      "instance_count_after": 703650
+    },
+    "truck": {
+      "f_i_c": 0.2645631874522314,
+      "f_b_c": 0.038231019741378394,
+      "repeat_factor_r_c": 1.0,
+      "image_count_before": 15923,
+      "instance_count_before": 25228,
+      "image_count_after": 18498,
+      "instance_count_after": 29291
+    },
+    "bus": {
+      "f_i_c": 0.1222044993852391,
+      "f_b_c": 0.014429830742722574,
+      "repeat_factor_r_c": 1.0,
+      "image_count_before": 7355,
+      "instance_count_before": 9522,
+      "image_count_after": 8846,
+      "instance_count_after": 11455
+    },
+    "motor": {
+      "f_i_c": 0.030754660552287906,
+      "f_b_c": 0.003673378462545633,
+      "repeat_factor_r_c": 3.3879404024300688,
+      "image_count_before": 1851,
+      "instance_count_before": 2424,
+      "image_count_after": 6263,
+      "instance_count_after": 8186
+    },
+    "bike": {
+      "f_i_c": 0.05398265377330276,
+      "f_b_c": 0.008077189441158508,
+      "repeat_factor_r_c": 2.417137134475934,
+      "image_count_before": 3249,
+      "instance_count_before": 5330,
+      "image_count_after": 8140,
+      "instance_count_after": 13500
+    }
+  }
+}

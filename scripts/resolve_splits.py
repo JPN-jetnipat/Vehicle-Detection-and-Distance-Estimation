@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SPLITS_DIR = ROOT / "dataset" / "yolo" / "splits"
 TRAIN_IMAGES_DIR = ROOT / "dataset" / "yolo" / "images" / "train"
 
-SOURCE_LISTS = ["train_100", "train_50", "train_25", "train_10", "val"]
+SOURCE_LISTS = ["train_100", "train_50", "train_25", "train_10", "val", "train_100_rfs", "train_100_irfs"]
 
 
 def resolve_split(source_name: str) -> Path:
