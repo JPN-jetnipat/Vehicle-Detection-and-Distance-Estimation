@@ -77,6 +77,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--batch", type=int, default=16)
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--hsv-v", type=float, default=None, help="Optional aug override, e.g. to match another arm's recipe.")
+    parser.add_argument("--close-mosaic", type=int, default=None)
+    parser.add_argument("--box", type=float, default=None)
+    parser.add_argument("--copy-paste", type=float, default=None)
+    parser.add_argument("--cls", type=float, default=None)
+    parser.add_argument("--scale", type=float, default=None)
+    parser.add_argument("--translate", type=float, default=None)
     return parser.parse_args()
 
 
@@ -115,6 +122,7 @@ def write_experiment_config(
     workers: int,
     seed: int,
     out_path: Path,
+    extra_train_params: dict[str, float] | None = None,
 ) -> None:
     lines = [
         f"arm_name: {arm_name}",
@@ -128,6 +136,10 @@ def write_experiment_config(
         f"  batch: {batch}",
         f"  workers: {workers}",
         "  cache: false",
+    ]
+    for key, value in (extra_train_params or {}).items():
+        lines.append(f"  {key}: {value}")
+    lines += [
         "  patience: 0  # disable early stopping so every arm trains the full run",
         f"  name: {arm_name}",
         f"  exist_ok: true  # rerunning this arm overwrites runs/detect/{arm_name} rather than incrementing",
@@ -214,8 +226,29 @@ def main() -> None:
 
     config_out = args.config_out_dir / f"{arm_name}.yaml"
     dataset_yaml_rel = dataset_yaml_out.relative_to(ROOT).as_posix()
+    extra_train_params = {
+        key: value
+        for key, value in {
+            "hsv_v": args.hsv_v,
+            "close_mosaic": args.close_mosaic,
+            "box": args.box,
+            "copy_paste": args.copy_paste,
+            "cls": args.cls,
+            "scale": args.scale,
+            "translate": args.translate,
+        }.items()
+        if value is not None
+    }
     write_experiment_config(
-        arm_name, dataset_yaml_rel, args.epochs, args.imgsz, args.batch, args.workers, args.seed, config_out
+        arm_name,
+        dataset_yaml_rel,
+        args.epochs,
+        args.imgsz,
+        args.batch,
+        args.workers,
+        args.seed,
+        config_out,
+        extra_train_params,
     )
 
     report = build_distribution_report(

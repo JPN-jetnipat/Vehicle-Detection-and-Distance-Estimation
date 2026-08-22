@@ -9,6 +9,13 @@ train:
   batch: 16
   workers: 2
   cache: false
+  hsv_v: 0.25
+  close_mosaic: 20
+  box: 9.0
+  copy_paste: 0.2
+  cls: 0.7
+  scale: 0.7
+  translate: 0.15
   patience: 0  # disable early stopping so every arm trains the full run
   name: method2_irfs_sampling
   exist_ok: true  # rerunning this arm overwrites runs/detect/method2_irfs_sampling rather than incrementing
