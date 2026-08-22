@@ -248,7 +248,15 @@ def parse_args() -> argparse.Namespace:
                          "(resume). Output is identical either way thanks to per-image seeding.")
     ap.add_argument("--log-csv", default=DEFAULT_LOG_CSV, help="Per-image gate log. Pass '' to disable.")
     ap.add_argument("--min-free-gb", type=float, default=1.0,
-                    help="Abort before starting if the destination filesystem has less free space than this.")
+                    help="Free space the destination filesystem must keep. Checked before starting AND "
+                         "every --check-every images, using the measured per-image size to project whether "
+                         "the rest of the run still fits. See --no-space-guard.")
+    ap.add_argument("--check-every", type=int, default=500,
+                    help="How often (in images) to re-check disk space and print progress.")
+    ap.add_argument("--no-space-guard", action="store_true",
+                    help="Disable the mid-run space projection (the start-of-run check still applies). "
+                         "Only use this if you know the filesystem is shared with something that frees "
+                         "space as you go.")
     return ap.parse_args()
 
 
@@ -272,6 +280,7 @@ def main() -> None:
     out_list.parent.mkdir(parents=True, exist_ok=True)
 
     src_lines = [ln.strip() for ln in img_list.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    full_list_len = len(src_lines)  # kept so --limit runs can extrapolate to the real run
     if args.limit:
         src_lines = src_lines[: args.limit]
 
@@ -282,7 +291,8 @@ def main() -> None:
         sys.exit("FLAG: --img-list contains duplicate basenames; the flat output dir cannot represent them.")
 
     free_gb = shutil.disk_usage(dst_root).free / 1024**3
-    print(f"Source list      : {repo_rel(img_list)}  ({len(src_lines)} images)")
+    limit_note = f"  [--limit of {full_list_len} total]" if args.limit else ""
+    print(f"Source list      : {repo_rel(img_list)}  ({len(src_lines)} images){limit_note}")
     print(f"Labels from      : {repo_rel(labels_src)}")
     print(f"Writing images to: {repo_rel(dst_img_dir)}")
     print(f"Writing labels to: {repo_rel(dst_lbl_dir)}")
@@ -341,13 +351,37 @@ def main() -> None:
                 out_lbl.write_text("", encoding="utf-8")
                 missing_labels += 1
 
-        if i % 500 == 0 or i == len(src_lines):
-            done_new = i - skipped_existing
+        if i % args.check_every == 0 or i == len(src_lines):
+            done_new = max(i - skipped_existing, 1)
+            avg_bytes = bytes_written / done_new
             rate = done_new / max(time.time() - t0, 1e-9)
             eta_min = (len(src_lines) - i) / rate / 60 if rate > 0 else float("nan")
-            proj_gb = (bytes_written / max(done_new, 1)) * len(src_lines) / 1024**3
-            print(f"  {i}/{len(src_lines)}  ({rate:.1f} img/s, ETA {eta_min:.0f} min, "
-                  f"projected total {proj_gb:.1f} GB)")
+            this_run_gb = avg_bytes * len(src_lines) / 1024**3
+            free_now_gb = shutil.disk_usage(dst_root).free / 1024**3
+            remaining_gb = avg_bytes * (len(src_lines) - i) / 1024**3
+
+            msg = (f"  {i}/{len(src_lines)}  ({rate:.1f} img/s, ETA {eta_min:.0f} min, "
+                   f"this run ~{this_run_gb:.1f} GB, {free_now_gb:.1f} GB free)")
+            # A --limit run is a probe for the real one, so say what the real one costs.
+            if args.limit:
+                msg += f"  [full {full_list_len} images would be ~{avg_bytes * full_list_len / 1024**3:.1f} GB]"
+            print(msg, flush=True)
+
+            # Mid-run space guard: abort while the run is still cheap to redo,
+            # not after an hour of failed writes. The partial output is valid --
+            # rerunning the same command resumes and reproduces it byte-identically.
+            if not args.no_space_guard and bytes_written > 0:
+                if remaining_gb > free_now_gb - args.min_free_gb:
+                    print()
+                    print(f"FLAG: stopping at {i}/{len(src_lines)} - the rest of this run needs about "
+                          f"{remaining_gb:.1f} GB but only {free_now_gb:.1f} GB is free "
+                          f"(keeping {args.min_free_gb:.1f} GB in reserve).")
+                    print("Nothing written so far is lost. Options:")
+                    print("  - free up space, then rerun the SAME command (it resumes where it stopped)")
+                    print(f"  - rerun with a lower --jpeg-quality (current: {args.jpeg_quality}); note the "
+                          "deviation from Method 1 in the write-up")
+                    print("  - point --dst-root at a volume with more room")
+                    break
 
     out_list.write_text("\n".join(out_paths) + "\n", encoding="utf-8")
 
@@ -377,7 +411,20 @@ def main() -> None:
     print(f"Image list       : {repo_rel(out_list)}")
     print(f"Elapsed          : {(time.time() - t0)/60:.1f} min")
     print()
-    print("Next: python tools/build_method3_split.py")
+
+    incomplete = len(out_paths) < len(src_lines)
+    if incomplete:
+        print(f"INCOMPLETE: {len(out_paths)} of {len(src_lines)} images written.")
+        print("Do NOT run tools/build_method3_split.py yet - Method 1's recipe augments every")
+        print("training image, and the builder will refuse a short pool anyway. Resolve the")
+        print("reason above, then rerun this command to resume.")
+        sys.exit(1)
+
+    if args.limit:
+        print(f"Probe complete ({len(src_lines)} of {full_list_len} images). Check the overlays with")
+        print("tools/viz_boxes.py, then rerun without --limit for the real pool.")
+    else:
+        print("Next: python tools/build_method3_split.py")
 
 
 if __name__ == "__main__":

@@ -60,27 +60,34 @@ Concretely, this means:
 
 ## 2. Cost before you start
 
-**Disk — measured on 40 real BDD train images, not estimated:**
+**Disk — measured, not estimated.** A 500-image probe on the GPU server
+(2026-08-22) wrote 103 MB, i.e. **211 KB per image → ~12.1 GB** for the full
+60,186 at quality 95. Lower qualities, from an in-memory measurement on 40 real
+BDD train images:
 
 | `--jpeg-quality` | avg augmented image | 60,186 images |
 |---|---|---|
-| **95** (default, matches Method 1) | 183 KB | **10.5 GB** |
-| 90 | 118 KB | 6.8 GB |
-| 85 | 89 KB | 5.1 GB |
+| **95** (default, matches Method 1) | 183–211 KB | **~12.1 GB** |
+| 90 | 118 KB | ~7.8 GB |
+| 85 | 89 KB | ~5.9 GB |
 
-Originals average 54 KB; darkening plus sensor noise is what costs the 3.4×
+Originals average 54 KB; darkening plus sensor noise is what costs the 3–4×
 — noise is the least compressible thing you can put in a JPEG. Stay at **95**
 unless disk forces otherwise: dropping quality changes the compression
 artifacts relative to Method 1's images and becomes a confound you have to
 disclose.
 
+Budget for the training run too, not just the images: at `save_period: 10`,
+`runs/detect/set3_combined/` holds ~10 yolo11s epoch checkpoints (optimizer
+state included, ~50 MB each) plus `last.pt`/`best.pt` — call it **600 MB**.
+
 ```bash
-df -h ~     # want ≥ 12 GB free before stage 1
+df -h .     # want ≥ 13 GB free before stage 1, at quality 95
 ```
 
-**Time.** Stage 1 is single-threaded CPU, roughly 40–90 min for the full
-60,186 images depending on the host. It touches no GPU — run it while
-something else has the A40.
+**Time.** Stage 1 is single-threaded CPU. Measured at **7.8 img/s** on the
+GPU server → **~2.1 hours** for the full 60,186. It touches no GPU, so run it
+while something else has the A40.
 
 **Training.** ~137,500 samples/epoch is **≈2.0× Method 2's** epoch time and
 **≈1.14× Method 1's**. `RUNBOOK.md`'s convention says runs projected past ~2
@@ -106,6 +113,9 @@ python tools/viz_boxes.py --images-dir dataset/lowlight_probe/images/train \
     --data-config configs/data/bdd100k_vehicle5.yaml --num 8 --out-dir viz_out
 ```
 
+The probe prints its own extrapolation (`[full 60186 images would be ~N GB]`),
+so you don't have to do the `du × 120` arithmetic yourself.
+
 Eyeball those 8 overlays. Boxes must sit exactly where they do on the
 originals — if they don't, something non-pixel-level crept in and the whole
 premise of §1 breaks. Then delete `dataset/lowlight_probe/` and run for real:
@@ -114,6 +124,14 @@ premise of §1 breaks. Then delete `dataset/lowlight_probe/` and run for real:
 nohup python tools/augment_lowlight.py > lowlight_aug.log 2>&1 &
 tail -f lowlight_aug.log
 ```
+
+**The run guards its own disk.** Every `--check-every` images (default 500) it
+re-measures free space, projects whether the remaining images still fit above
+`--min-free-gb`, and if not stops cleanly, exits non-zero, and prints
+`INCOMPLETE: N of 60186`. Nothing written is lost — rerun the same command once
+you have room and it resumes, reproducing byte-identical images for everything
+already done (verified). `--no-space-guard` disables the projection if you know
+the filesystem frees space as you go.
 
 Writes:
 
