@@ -1,0 +1,321 @@
+{
+  "source_list": "splits/test.txt",
+  "total_images": 8841,
+  "slices": {
+    "day": {
+      "images": 4264,
+      "timeofday": [
+        "daytime"
+      ],
+      "weather": "any",
+      "instances": {
+        "car": 47715,
+        "truck": 2532,
+        "bus": 927,
+        "motor": 262,
+        "bike": 494
+      },
+      "instances_total": 51930
+    },
+    "night": {
+      "images": 3863,
+      "timeofday": [
+        "night"
+      ],
+      "weather": "any",
+      "instances": {
+        "car": 35439,
+        "truck": 736,
+        "bus": 297,
+        "motor": 93,
+        "bike": 186
+      },
+      "instances_total": 36751
+    },
+    "dawndusk": {
+      "images": 714,
+      "timeofday": [
+        "dawn/dusk"
+      ],
+      "weather": "any",
+      "instances": {
+        "car": 7964,
+        "truck": 340,
+        "bus": 127,
+        "motor": 22,
+        "bike": 59
+      },
+      "instances_total": 8512
+    },
+    "clear": {
+      "images": 5345,
+      "timeofday": "any",
+      "weather": [
+        "clear"
+      ],
+      "instances": {
+        "car": 53654,
+        "truck": 1740,
+        "bus": 682,
+        "motor": 200,
+        "bike": 391
+      },
+      "instances_total": 56667
+    },
+    "overcast": {
+      "images": 1239,
+      "timeofday": "any",
+      "weather": [
+        "overcast"
+      ],
+      "instances": {
+        "car": 14370,
+        "truck": 660,
+        "bus": 262,
+        "motor": 72,
+        "bike": 141
+      },
+      "instances_total": 15505
+    },
+    "partlycloudy": {
+      "images": 738,
+      "timeofday": "any",
+      "weather": [
+        "partly cloudy"
+      ],
+      "instances": {
+        "car": 8526,
+        "truck": 454,
+        "bus": 142,
+        "motor": 65,
+        "bike": 69
+      },
+      "instances_total": 9256
+    },
+    "snowy": {
+      "images": 769,
+      "timeofday": "any",
+      "weather": [
+        "snowy"
+      ],
+      "instances": {
+        "car": 7486,
+        "truck": 371,
+        "bus": 133,
+        "motor": 9,
+        "bike": 81
+      },
+      "instances_total": 8080
+    },
+    "rainy": {
+      "images": 737,
+      "timeofday": "any",
+      "weather": [
+        "rainy"
+      ],
+      "instances": {
+        "car": 6944,
+        "truck": 378,
+        "bus": 132,
+        "motor": 30,
+        "bike": 57
+      },
+      "instances_total": 7541
+    },
+    "foggy": {
+      "images": 13,
+      "timeofday": "any",
+      "weather": [
+        "foggy"
+      ],
+      "instances": {
+        "car": 138,
+        "truck": 5,
+        "bus": 0,
+        "motor": 1,
+        "bike": 0
+      },
+      "instances_total": 144
+    },
+    "adverse": {
+      "images": 1519,
+      "timeofday": "any",
+      "weather": [
+        "foggy",
+        "rainy",
+        "snowy"
+      ],
+      "instances": {
+        "car": 14568,
+        "truck": 754,
+        "bus": 265,
+        "motor": 40,
+        "bike": 138
+      },
+      "instances_total": 15765
+    },
+    "benign": {
+      "images": 7322,
+      "timeofday": "any",
+      "weather": [
+        "clear",
+        "overcast",
+        "partly cloudy"
+      ],
+      "instances": {
+        "car": 76550,
+        "truck": 2854,
+        "bus": 1086,
+        "motor": 337,
+        "bike": 601
+      },
+      "instances_total": 81428
+    },
+    "night_clear": {
+      "images": 3274,
+      "timeofday": [
+        "night"
+      ],
+      "weather": [
+        "clear"
+      ],
+      "instances": {
+        "car": 30489,
+        "truck": 577,
+        "bus": 251,
+        "motor": 81,
+        "bike": 152
+      },
+      "instances_total": 31550
+    },
+    "night_rainy": {
+      "images": 286,
+      "timeofday": [
+        "night"
+      ],
+      "weather": [
+        "rainy"
+      ],
+      "instances": {
+        "car": 2416,
+        "truck": 72,
+        "bus": 22,
+        "motor": 10,
+        "bike": 15
+      },
+      "instances_total": 2535
+    },
+    "night_snowy": {
+      "images": 273,
+      "timeofday": [
+        "night"
+      ],
+      "weather": [
+        "snowy"
+      ],
+      "instances": {
+        "car": 2251,
+        "truck": 83,
+        "bus": 19,
+        "motor": 2,
+        "bike": 19
+      },
+      "instances_total": 2374
+    },
+    "night_adverse": {
+      "images": 566,
+      "timeofday": [
+        "night"
+      ],
+      "weather": [
+        "foggy",
+        "rainy",
+        "snowy"
+      ],
+      "instances": {
+        "car": 4743,
+        "truck": 156,
+        "bus": 41,
+        "motor": 12,
+        "bike": 34
+      },
+      "instances_total": 4986
+    },
+    "day_clear": {
+      "images": 1764,
+      "timeofday": [
+        "daytime"
+      ],
+      "weather": [
+        "clear"
+      ],
+      "instances": {
+        "car": 19633,
+        "truck": 1021,
+        "bus": 380,
+        "motor": 111,
+        "bike": 207
+      },
+      "instances_total": 21352
+    },
+    "day_rainy": {
+      "images": 396,
+      "timeofday": [
+        "daytime"
+      ],
+      "weather": [
+        "rainy"
+      ],
+      "instances": {
+        "car": 3930,
+        "truck": 272,
+        "bus": 97,
+        "motor": 16,
+        "bike": 41
+      },
+      "instances_total": 4356
+    },
+    "day_snowy": {
+      "images": 422,
+      "timeofday": [
+        "daytime"
+      ],
+      "weather": [
+        "snowy"
+      ],
+      "instances": {
+        "car": 4421,
+        "truck": 264,
+        "bus": 97,
+        "motor": 7,
+        "bike": 53
+      },
+      "instances_total": 4842
+    },
+    "day_adverse": {
+      "images": 823,
+      "timeofday": [
+        "daytime"
+      ],
+      "weather": [
+        "foggy",
+        "rainy",
+        "snowy"
+      ],
+      "instances": {
+        "car": 8401,
+        "truck": 540,
+        "bus": 194,
+        "motor": 23,
+        "bike": 94
+      },
+      "instances_total": 9252
+    }
+  },
+  "partition_checks": {
+    "timeofday_sum": 8841,
+    "weather_sum": 8841,
+    "total": 8841,
+    "ok": true
+  }
+}

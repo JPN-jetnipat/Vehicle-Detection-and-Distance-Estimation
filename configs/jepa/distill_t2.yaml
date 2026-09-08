@@ -1,0 +1,43 @@
+# Stage 2, T2 arm: distill OUR BDD-pretrained I-JEPA ViT-B/16 (stage 1 output)
+# into the yolo11s backbone (layers 0-6, tapped at P4).
+#
+# Requires runs_jepa/stage1/pretrain_t2/target_encoder_final.pt to exist.
+# ViT-B/16 @224 gives a 14x14 teacher grid, which matches the student's P4 grid
+# exactly - no interpolation happens on this arm (unlike T1's 16x16).
+#
+# Sampling here is UNIFORM on purpose. Adverse-condition oversampling is stage
+# 1's job (that is what makes the T2 teacher domain-specific); repeating it in
+# stage 2 would confound "better teacher" with "different distillation data".
+name: distill_t2
+project: runs_jepa/stage2
+
+teacher:
+  kind: t2_ijepa
+  kwargs:
+    checkpoint: runs_jepa/stage1/pretrain_t2/target_encoder_final.pt
+    arch: vit_base
+    patch_size: 16
+    image_size: 224
+
+model_yaml: yolo11s.yaml
+nc: 5
+student_init: random
+
+train_list: splits/pretrain.txt
+images_dir: dataset/yolo/images/train
+attr_index: dataset/yolo/attr_index.json
+
+loss: cosine
+epochs: 30
+batch_size: 128
+micro_batch: 64
+lr: 1.0e-3
+lr_floor: 1.0e-5
+warmup_epochs: 3
+weight_decay: 0.05
+amp_dtype: bf16
+workers: 2
+seed: 0
+ckpt_every: 500
+probe_every: 5
+device: cuda:0

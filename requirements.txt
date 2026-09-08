@@ -61,3 +61,9 @@ ijson==3.3.0    # tools/bdd_to_yolo.py's streaming train-JSON parser - confirmed
                 # missing, not just theoretical: cngpu-vm001 already hit the
                 # "ijson not installed, falling back to json.load" warning
                 # without it (2026-08-17)
+
+# --- added 2026-09-08 for the JEPA phase (jepa_pretrain/ + jepa_distill/) ---
+# Grep'd from actual imports in those two packages plus third_party/ijepa/src.
+# third_party/ijepa needs nothing beyond torch/torchvision/numpy/PIL/pyyaml,
+# all already pinned above - it does NOT need timm or einops.
+tensorboard==2.17.1   # SummaryWriter in train_ijepa.py and train_distill.py

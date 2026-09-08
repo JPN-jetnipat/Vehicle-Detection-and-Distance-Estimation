@@ -1,0 +1,48 @@
+# Stage 1: I-JEPA ViT-B/16 pretrained from scratch on the unlabeled BDD100K
+# train pool (this is the T2 teacher - the project's actual contribution).
+# Masking / EMA / WD follow the paper; LR is linearly scaled to batch 256.
+# Schedule is designed to extend 300 -> 600 epochs by raising `epochs` and
+# relaunching (it auto-resumes).
+#
+# Honest limitation to carry into the write-up: I-JEPA was trained on 1.28M
+# ImageNet images. This pool is 60,186 - about 20x less data. Meta released no
+# ViT-B I-JEPA checkpoint (only ViT-H/14, ViT-H/16-448 and ViT-g/16), so there
+# is no same-architecture warm start available. See docs/jepa-plan.md section 2.
+name: pretrain_t2
+project: runs_jepa/stage1
+
+arch: vit_base
+patch_size: 16
+image_size: 224
+pred_embed_dim: 384
+pred_depth: 6
+
+train_list: splits/pretrain.txt          # 60,186 train images; val/test NEVER enter pretraining
+images_dir: dataset/yolo/images/train
+attr_index: dataset/yolo/attr_index.json
+
+# Adverse-environment oversampling (widened 2026-09 from night/dawn-dusk/rainy).
+# Multiplicative: a night+rainy image gets 2.0 x 2.0 = 4.0. Keys must be one of
+# daytime/night/dawn_dusk/clear/overcast/partly_cloudy/snowy/rainy/foggy - the
+# script refuses to start on an unrecognized key rather than silently ignoring it.
+oversample:
+  night: 2.0
+  dawn_dusk: 2.0
+  rainy: 2.0
+  snowy: 2.0
+  foggy: 2.0          # only 129 foggy images in the pool - effectively free
+
+loss: l2              # paper/brief; `smooth_l1` switches to the official code's behavior
+epochs: 300
+batch_size: 256       # effective
+micro_batch: 128      # drop to 64 if the A40 is contended
+warmup_epochs: 15
+wd: 0.04
+final_wd: 0.4
+final_lr: 1.0e-6
+ema: [0.996, 1.0]
+amp_dtype: bf16
+workers: 2            # shared 32 GB RAM server - do not raise
+seed: 0
+keep_every: 50
+device: cuda:0

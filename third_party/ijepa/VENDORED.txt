@@ -1,0 +1,1 @@
+VENDORED from https://github.com/facebookresearch/ijepa on 2026-07-13. Unmodified copy of src/ + LICENSE. (src/datasets is unused - we bring our own loader.)

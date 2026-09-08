@@ -1,0 +1,41 @@
+# Stage 2, T1 arm: distill Meta's released I-JEPA ViT-H/14 TARGET encoder into
+# the yolo11s backbone (layers 0-6, tapped at P4).
+#
+# FLAG carried over from the archived project: the HuggingFace conversion
+# (facebook/ijepa_vith14_1k) exports the CONTEXT encoder, not the target
+# encoder. Use Meta's original tar, which contains the 'target_encoder' key:
+#   wget https://dl.fbaipublicfiles.com/ijepa/IN1K-vit.h.14-300e.pth.tar -P weights/
+# The archived project burned a full run on the wrong one. Don't repeat it.
+name: distill_t1
+project: runs_jepa/stage2
+
+teacher:
+  kind: t2_ijepa            # IJepaCheckpointTeacher - reads the 'target_encoder' key
+  kwargs:
+    checkpoint: weights/IN1K-vit.h.14-300e.pth.tar
+    arch: vit_huge
+    patch_size: 14
+    image_size: 224         # -> 16x16 teacher grid, dim 1280, resized to the student's 14x14
+
+model_yaml: yolo11s.yaml
+nc: 5                       # only shapes the discarded head; the backbone is unaffected
+student_init: random        # 'coco' would make this arm "COCO then JEPA" - relabel if you switch
+
+train_list: splits/pretrain.txt          # same 60,186 unlabeled images; val/test never
+images_dir: dataset/yolo/images/train
+attr_index: dataset/yolo/attr_index.json
+
+loss: cosine                # fallback: smooth_l1
+epochs: 30
+batch_size: 128             # effective = micro_batch x grad-accum
+micro_batch: 64
+lr: 1.0e-3
+lr_floor: 1.0e-5
+warmup_epochs: 3
+weight_decay: 0.05
+amp_dtype: bf16
+workers: 2
+seed: 0
+ckpt_every: 500
+probe_every: 5
+device: cuda:0

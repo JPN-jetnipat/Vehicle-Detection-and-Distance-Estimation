@@ -52,3 +52,11 @@ splits_check/
 # tools/augment_lowlight.py, same reasoning as dataset/yolo/images/ above.
 dataset/lowlight/
 dataset/lowlight_probe/
+
+# JEPA stage-1/stage-2 run outputs (checkpoints already covered by *.pt/*.pth,
+# this also catches the TensorBoard event files and metrics csv)
+runs_jepa/
+
+# Meta's released I-JEPA checkpoint (~2.5 GB tar) - fetch with the wget in
+# docs/jepa-runbook.md, never commit it
+weights/*.tar
