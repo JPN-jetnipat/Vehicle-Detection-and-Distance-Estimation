@@ -174,8 +174,14 @@ one night total.
 10. Fine-tune with the **exact `set3_combined` recipe**, only `model:` changes to
     `weights/init_t1.pt`. ~2 nights of shared A40.
 
-**Gate:** if T1@100% lands within noise of BASE, that is *expected*, not failure — go
-straight to the 10% arms before spending 15 h on T2's pretraining.
+**Gate — FIRED 2026-09-10, and it fired the way this doc predicted.** T1@100% came in
+at −0.66 mAP50 overall against BASE, inside the ±1-point noise band, with the loss
+concentrated at night (−2.27) and in mAP75 rather than mAP50. Full table and reading:
+`MASTER-RECORD.md` §2.5. Per this gate, the next runs are the **10% arms**, not T2's
+15 h pretraining. Two things the result also surfaced, both now in the master record:
+`student_init: random` makes T1 *JEPA instead of COCO* rather than *COCO plus JEPA*
+(§3.10), and the noise floor is still unmeasured, so this is "indistinguishable from
+BASE", not "worse" (§4.2).
 
 ### Phase 2 — T2 arm (the contribution)
 
@@ -191,10 +197,23 @@ straight to the 10% arms before spending 15 h on T2's pretraining.
 
 14. Three more runs on `splits/train_10.txt`: BASE@10%, T1@10%, T2@10%. ~3–4 h each,
     Kaggle-suitable. Same recipe otherwise.
+    **Two blockers to clear first, both cheap:** (a) `configs/data/bdd100k_vehicle5_10.yaml`
+    does not exist yet — create it with `train: splits/train_10.txt`; (b) **pin the
+    optimizer explicitly**, because `train_10.txt` is 9,500 iterations and `optimizer: auto`
+    flips to AdamW below 10,000 (`MASTER-RECORD.md` §3.5). Left unpinned, this whole
+    column compares optimizers rather than label fractions.
+    **Promoted from optional to core** after the T1@100% result — see the Phase 1 gate.
 
-### Phase 4 — scoring (new, per the scope change — **done today, see §4**)
+### Phase 4 — scoring (slices built 2026-09-08; scorer built 2026-09-10)
 
-15. Score every arm's `best.pt` with `eval_arm_coco.py` on **all** the new test slices.
+`evaluation/score_slices.py` is the scorer. It runs inference **once** over the 8,841-image
+test set and restricts `COCOeval.params.imgIds` per slice, instead of re-running the
+detector 19 times, and it is a deliberate protocol match to `eval_arm_coco.py` — verified
+by both returning identical BASE numbers to 4dp (`MASTER-RECORD.md` §4.6). Score every arm
+you intend to compare in **one** invocation.
+
+15. Score every arm's `best.pt` with `evaluation/score_slices.py` on **all** the new test slices,
+    all arms in one invocation.
     Never re-tune on test; `splits/val.txt` stays the development set.
 16. Headline table: arm × {overall, day, night, dawn/dusk, clear, rainy, snowy, adverse,
     night_adverse} at 100% and 10% labels.

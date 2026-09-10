@@ -61,3 +61,6 @@ runs_jepa/
 # docs/jepa-runbook.md, never commit it
 weights/*.tar
 dataset/lowlight
+
+# review diffs generated during doc edits - git history is the real record
+docs/*.diff

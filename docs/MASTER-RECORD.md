@@ -1,6 +1,6 @@
 # Master record — nighttime / adverse-environment vehicle detection
 
-**Owner:** Kanade · **Last updated:** 2026-09-09
+**Owner:** Kanade · **Last updated:** 2026-09-10
 **Purpose:** the single ordered record of what was run, what was found, why each choice
 was made, and how to defend it. Other project docs hold the detail; this one holds the
 argument. If a claim isn't in here with its defence, don't put it in the write-up.
@@ -39,6 +39,10 @@ Get this wrong in the write-up and the whole methods section becomes unreadable.
 | name | what it is | in use? |
 |---|---|---|
 | **`set3_combined`** | the **shared cross-team hyperparameter recipe** — hsv_v 0.25, close_mosaic 20, box 9.0, copy_paste 0.2, cls 0.7, scale 0.7, translate 0.15, patience 0, seed 42, imgsz 640, batch 16, workers 2, cache false | ✅ **this is the recipe** |
+
+> `set3_combined` = **Set 2 + `hsv_v` 0.4→0.25 + `close_mosaic` 10→20 + `box` 7.5→9.0**.
+> Re-examined 2026-09-10 against Set 2 and confirmed as the recipe — see §3.11 for the
+> per-class decomposition and the defence. **Do not switch recipes mid-study.**
 | `set3_combined` (as a *run name*) | in this repo it also labels **Method 3** of the augmentation ablation; in the teammates' pipeline the same string labels the **no-augmentation baseline** | ⚠️ ambiguous — always say which |
 | `set3_merged_night_localization` | a **different, earlier** hyperparameter-search arm (dfl 1.8, cls 0.5, scale 0.55, hsv_s 0.60) | ❌ not the recipe |
 
@@ -176,7 +180,64 @@ Full detail in `claude/jepa-t1-distill-record.md`.
 | throughput / wall clock / VRAM | 134 img/s · 3.7 h · 4,348 MiB |
 | graft | 126/126 backbone tensors into `weights/init_t1.pt`, 0 non-backbone tensors changed |
 
-**None of these are results.** They are methods detail. See §3.7 and §4.4.
+**None of these are results.** They are methods detail. See §3.7 and §4.5.
+
+---
+
+### 2.5 JEPA Stage 3 — T1 fine-tuned at 100% labels (2026-09-10)
+
+`runs/detect/t1_jepa_100/weights/best.pt` against the BASE arm, both scored in a
+**single** `evaluation/score_slices.py` invocation so the two cannot silently differ
+in protocol.
+
+**Comparator provenance.** BASE here is `weights/external/base_100_friend.pt`, a
+checkpoint received from a teammate. It is the same BASE arm already in §2.2: through
+the new slice scorer it returns day **0.54074** / night **0.56255** / dawndusk
+**0.5739**, against §2.2's `eval_arm_coco.py` values of 0.5407 / 0.5625 / 0.5739 —
+exact to four decimals. Record its `sha256sum` and an `args.yaml` diff here to close
+the point beyond argument.
+
+| slice | BASE mAP50 | T1 mAP50 | Δ | BASE mAP75 | T1 mAP75 | Δ |
+|---|---|---|---|---|---|---|
+| overall | 0.5477 | 0.5412 | −0.66 | 0.3474 | 0.3364 | **−1.10** |
+| day | 0.5407 | 0.5388 | −0.20 | 0.3494 | 0.3470 | −0.24 |
+| **night** | 0.5625 | 0.5399 | **−2.27** | 0.3460 | 0.3128 | **−3.32** |
+| night_clear | 0.5655 | 0.5445 | −2.10 | 0.3380 | 0.3090 | −2.90 |
+| night_adverse | 0.5423 | 0.5066 | −3.57 | 0.3981 | 0.3424 | −5.56 |
+| day_adverse | 0.5262 | 0.5213 | −0.48 | 0.3517 | 0.3506 | −0.11 |
+| snowy | 0.4813 | 0.4496 | −3.17 | 0.3219 | 0.2963 | −2.56 |
+| rainy | 0.5503 | 0.5574 | +0.71 | 0.3871 | 0.3762 | −1.09 |
+| dawndusk | 0.5739 | 0.5745 | +0.06 | 0.3728 | 0.3606 | −1.21 |
+
+Detections emitted: BASE 622,150 · T1 **637,128** (+2.4%).
+
+**car day→night mAP75: −9.71 → −9.60.** Unmoved. Five training-data recipes and one
+backbone initialisation have now failed to shift this number (§2.3).
+
+**Three patterns, stated before any interpretation:**
+
+1. Daytime is essentially untouched (−0.20); the damage is concentrated at night and
+   in snow.
+2. mAP75 falls harder than mAP50 in every damaged slice — the arm got *less* precise
+   at localization, which is the axis JEPA was introduced to fix.
+3. T1 emits **more** boxes, not fewer.
+
+**What this is NOT yet.** −0.66 overall sits inside the ±1-point spread the
+augmentation ablation showed on `all` rows (§4.2), and both arms are n=1. Until a
+noise floor exists, write this as **"indistinguishable from BASE, trending down"** —
+not "worse". §5 lists two ways to get that floor without training anything.
+
+**Candidate mechanism — inference, not measurement.** Two properties of the T1 setup
+would each predict damage concentrated in mAP75 and in the hardest slices:
+
+- T1's layers 0–6 never saw COCO (`student_init: random`, §3.10), so this arm is
+  *JEPA instead of COCO*, and those layers feed a neck, head and C2PSA block that are
+  still COCO-initialised and were trained expecting COCO-shaped P4 features.
+- The distillation target is a 14×14 grid over a 224px image — about one cell per
+  16×16 pixel block. It supervises *what is present*, carrying little information
+  about *where an edge precisely lies*.
+
+Both are consistent with the table; neither is tested. §5 says what would test them.
 
 ---
 
@@ -265,6 +326,75 @@ on the server disk — copy each run's `results.csv` and `args.yaml` into a trac
 
 ---
 
+### 3.10 Why the distillation student started from random weights
+`configs/jepa/distill_t1.yaml` sets `student_init: random`, so T1's layers 0–6 carry no
+COCO information at all. This was deliberate, and it makes T1 the clean form of the
+scientific question: **can self-supervised pretraining replace ImageNet/COCO
+initialisation?** The alternative, `student_init: coco`, asks a different and more
+practical question: **can it improve on COCO?** Both are legitimate. They are not the
+same arm and must never be reported under one name.
+
+**What §2.5 costs this choice.** A random-init backbone is grafted onto a
+COCO-initialised neck, head and C2PSA (§3.4). That mismatch is one plausible reading of
+§2.5's damage pattern — but it is a hypothesis, and §2.5's numbers are the honest
+answer to the question T1 was actually built to ask. If a COCO-init student is run
+later it is a **new arm (T1b)**, not a rerun of T1.
+
+---
+
+### 3.11 Why the recipe is `set3_combined` and not Set 2
+Set 2 is the strongest arm of the §2.1 search, and `set3_combined` is **Set 2 plus
+exactly three changes**: `hsv_v` 0.4→0.25, `close_mosaic` 10→20, `box` 7.5→9.0.
+Everything else — `cls` 0.7, `scale` 0.7, `translate` 0.15, `copy_paste` 0.2, `dfl` 1.5,
+`mixup` 0.0 — is identical. Head-to-head on the test slices (2026-09-10; Set 2 via
+`eval_detections.py`, `set3_combined` via pycocotools, protocol-identical per §4.6):
+
+| slice | Set 2 | set3_combined | Δ |
+|---|---|---|---|
+| overall mAP50 | **0.5521** | 0.5478 | −0.44 |
+| day mAP50 | **0.5497** | 0.5407 | −0.90 |
+| night mAP50 | 0.5555 | **0.5626** | **+0.71** |
+| night mAP75 | 0.3399 | **0.3460** | **+0.61** |
+| dawndusk mAP50 | 0.5703 | **0.5739** | +0.37 |
+| rainy mAP50 | **0.5740** | 0.5503 | −2.37 |
+
+**Why this table does not justify switching — and the reason is not "we already
+started".** `all` is an *unweighted* mean over five classes, so a class with 30 instances
+votes as loudly as `car` with 91,118. Decomposed, every gap above is carried by classes
+under this project's own ≥800-instance threshold:
+
+- **Day's −0.90:** `motor` contributes 0.59 of it (**262 instances**), `bike` 0.13 (494)
+  — 80% of Set 2's daytime win from two under-threshold classes.
+- **Night's +0.71:** `bus` contributes 0.36 (**297 instances**), `truck` 0.16 (736) — 74%.
+- **Rainy's −2.37:** rests on `motor` at **30 instances** and `bike` at 57.
+
+**On `car`, the only class with adequate support anywhere, the two are a tie:** day
+−0.12, night −0.16, dawn/dusk −0.49 mAP50, night mAP75 **+0.05**. Both arms are n=1 and
+every gap here is inside the ±1-point band of §4.2.
+
+**Four further reasons the choice stands:**
+
+1. Both recipes were selected while looking at `test.txt` (§4.1), so this table cannot
+   legitimately arbitrate between them. The honest tie-break is `splits/val.txt`, and
+   only `set3_combined` has a val score (all mAP50 0.619, `set3_combined_val.txt`).
+   There is no Set 2 val run to compare against.
+2. Three knobs moved at once, so this is not an ablation — no per-knob claim is available
+   in either direction.
+3. It is the **agreed cross-team recipe**, byte-identical across Methods 1, 2 and 3.
+   Switching breaks comparability with the teammate's DANN arm.
+4. BASE, M1, M2, M3 and T1 all ran `set3_combined`. Switching invalidates all five and
+   costs ~4 nights of retraining to return to the current position.
+
+**The defence that does not lean on test numbers — use this one in the write-up.**
+`hsv_v: 0.25` applies *less* brightness jitter than Set 2's 0.4. §2.2 found that
+aggressive brightness manipulation of already-dark BDD images pushes them
+off-distribution and *hurt* night (M1 ranked last on every time-of-day slice). Lower
+`hsv_v` is that same mechanism read forwards, and this is a night-focused study. It is
+the only argument here that survives a reviewer asking whether the recipe was picked off
+the test set.
+
+---
+
 ## 4. Limitations to disclose, not hide
 
 1. **Test-set leakage.** The `set3_combined` recipe was chosen from `test.txt` observations,
@@ -286,12 +416,28 @@ on the server disk — copy each run's `results.csv` and `args.yaml` into a trac
    can keep improving downstream after the matching loss plateaus. Testing costs one full
    fine-tune per length (~2 nights each). Also `backbone_distilled.pt` is overwritten each
    epoch, so no intermediate snapshots exist — an ablation needs a fresh run.
-6. **Two evaluators existed historically.** M3 was scored with `eval_detections.py`;
-   M1/M2/BASE with pycocotools. Instance counts matched exactly across all four, but score
-   one common arm through both before publishing any cross-pipeline delta.
+6. **Two evaluators existed historically — partially RESOLVED 2026-09-10.** M3 was
+   scored with `eval_detections.py`; M1/M2/BASE with pycocotools via `eval_arm_coco.py`;
+   `evaluation/score_slices.py` is a third entry point. The common arm has now been
+   scored through **both pycocotools paths and they agree exactly**: `score_slices.py`
+   returns BASE day 0.54074 / night 0.56255 / dawndusk 0.5739 against `eval_arm_coco.py`'s
+   0.5407 / 0.5625 / 0.5739. Deltas between any two pycocotools-scored arms are therefore
+   safe, and that includes every JEPA arm. **Still open, but narrow:**
+   `eval_detections.py` — which scored M3 and the whole Set 1/2/3 search — has not been
+   reconciled *empirically*, but by inspection it is protocol-identical: its predictions
+   come from `run_inference.py` at the same conf 0.001 / iou 0.6 / max_det 300, its GT is
+   built the same way at 1280×720 with `category_id == class index`, and it leaves
+   `COCOeval` maxDets at default. Expect agreement. Confirm it by scoring one common arm
+   through both before publishing a cross-pipeline delta.
 7. **Rare-class thresholds.** Any per-class number resting on <800 instances is indicative
    only. The most-quoted figure from the ablation — M3 motor at dawn/dusk, +5.57 — rests on
    **22 boxes.**
+8. **`COCOeval` maxDets is left at its default 100 while NMS runs at max_det 300.**
+   Deliberate — it matches `eval_arm_coco.py` exactly, which is what makes §4.6's
+   agreement meaningful — but any test image holding more than 100 ground-truth
+   vehicles has its recall clipped, and dense night scenes are where that bites. The
+   clip is identical for every arm, so between-arm deltas stay fair. Count how many
+   test images exceed 100 GT boxes and disclose the figure.
 
 ---
 
@@ -299,28 +445,57 @@ on the server disk — copy each run's `results.csv` and `args.yaml` into a trac
 
 **Done:** splits frozen · 19 test slices built and cross-verified · hyperparameter search ·
 four-arm augmentation ablation (closed, negative result) · JEPA code ported to YOLOv11 and
-verified · T1 distillation converged · `weights/init_t1.pt` grafted.
+verified · T1 distillation converged · `weights/init_t1.pt` grafted ·
+**`evaluation/score_slices.py` built and cross-validated against `eval_arm_coco.py` (§4.6)** ·
+**T1 fine-tuned and scored at 100% labels (§2.5)**.
 
 **Deliverable being built — one table:**
 
 | arm (backbone init) | 100% labels | 10% labels |
 |---|---|---|
 | BASE — COCO `yolo11s.pt` | ✅ done | ⬜ |
-| T1 — I-JEPA ViT-H/14 target encoder, distilled | 🔧 fine-tune next | ⬜ |
-| T2 — I-JEPA ViT-B/16 pretrained on BDD, distilled | ⬜ | ⬜ |
+| T1 — I-JEPA ViT-H/14 distilled into a **random-init** student | ✅ done — §2.5 | ⬜ |
+| T1b — same teacher, **COCO-init** student (§3.10) | ⬜ not started | ⬜ |
+| T2 — I-JEPA ViT-B/16 pretrained on BDD, distilled | ⬜ not started | ⬜ |
 
 Scored on: overall · day · night · dawndusk · clear · rainy · snowy · adverse ·
-night_adverse · day_adverse · night_clear. Plus **car day→night mAP75 for every arm** —
-whether a JEPA backbone moves the −9.7 is the sharpest question in the study.
+night_adverse · day_adverse · night_clear. Plus **car day→night mAP75 for every arm**.
 
-**Immediate order:**
-1. Fine-tune T1 at 100% labels (`--model weights/init_t1.pt --name t1_jepa_100`), ~2 nights.
-2. Build `evaluation/score_slices.py` so Phase 3 isn't blocked (not yet started).
-3. **Pin the optimizer explicitly before any 10%-label run** (§3.5).
-4. T2: Stage-1 I-JEPA pretrain (10–15 h) → distil → graft → fine-tune.
-5. Seed repeat of BASE to establish the noise floor (§4.2).
+### Immediate order
 
-**Note on expectations:** BASE at 100% labels is already strong, and the augmentation
-ablation showed how hard it is to beat. If JEPA wins anywhere it is most likely the
-**10%-label column**, which is where self-supervised pretraining reliably shows its gains.
-Treat the 10% grid as core, not optional.
+**Free — no GPU training required:**
+
+1. `sha256sum weights/external/base_100_friend.pt`, and diff its `args.yaml` against the
+   T1 run's. Record both in §2.5.
+2. **Get a noise floor out of work already done.** Score `last.pt` alongside `best.pt`
+   for both arms in one `score_slices.py` call — the within-arm best/last gap bounds run
+   variance. Then read the last 20 rows of each `results.csv`: post-`close_mosaic`
+   epoch-to-epoch val fluctuation is a second free estimate. **§2.5's verdict depends on
+   this**, and it costs inference time only.
+3. Copy `results.csv` and `args.yaml` for `t1_jepa_100` into the tracked `results/`
+   directory — `runs/` is gitignored and `exist_ok: true` will overwrite it (§3.9).
+4. Count test images with more than 100 GT boxes (§4.8).
+
+**Cheap — about one night of shared A40 in total:**
+
+5. **Pin the optimizer explicitly (§3.5) before anything else in this block.**
+   `train_10.txt` works out to 9,500 iterations, below ultralytics' 10,000 threshold, so
+   `optimizer: auto` silently switches to AdamW and the label-fraction column would be
+   comparing optimizers instead of label fractions.
+6. Create `configs/data/bdd100k_vehicle5_10.yaml` (`train: splits/train_10.txt`). **It
+   does not exist yet and it blocks every 10% run.**
+7. Run `base_10` and `t1_jepa_10` (~3–4 h each) and score both.
+
+**The fork — decide with the 10% numbers in hand.** T2 (the stated contribution;
+~15 h pretrain + ~1 h distill + ~2 nights fine-tune) or T1b (§3.10; ~3.7 h distill +
+~2 nights). There is not budget for both plus the 10% grid.
+
+**Note on expectations, restated after §2.5.** BASE at 100% labels was already hard to
+beat, and T1 did not beat it. The 10% column is where self-supervised pretraining
+reliably shows its gain, which makes it the **core** of the deliverable now rather than
+an extension.
+
+**Still open, and still the strongest result in the study:** the −9.7 car day→night
+mAP75 collapse. Five training-data recipes and one backbone initialisation have failed
+to move it. `imgsz: 768` is the untried resolution lever (§2.3), and it is now the most
+likely source of a positive finding if budget allows one more BASE run.

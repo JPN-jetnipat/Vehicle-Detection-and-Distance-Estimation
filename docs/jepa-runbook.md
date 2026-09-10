@@ -20,6 +20,7 @@ jepa_distill/student.py        YOLOv11 backbone student         (REWRITTEN)
 jepa_distill/train_distill.py  Stage 2 — distillation loop      (patched)
 tools/make_init_weights.py     Stage 3 — graft into yolo11s.pt  (REWRITTEN)
 tools/patch_jepa_port.py       the idempotent patcher, kept for provenance
+evaluation/score_slices.py     Phase 4 — all 19 slices, one inference pass  (added 2026-09-10)
 configs/jepa/{pretrain_t2,distill_t1,distill_t2}.yaml
 ```
 
@@ -167,9 +168,28 @@ python tools/make_init_weights.py \
 
 ## 5. The 10%-label grid
 
-Same commands, `train: splits/train_10.txt` in the data yaml, names
-`base_10 / t1_jepa_10 / t2_jepa_10`. ~3–4 h each. This is where SSL pretraining
-usually shows its gain, so do not treat it as optional.
+**Clear two blockers first.**
+
+```bash
+# (a) the 10% data yaml does not exist yet
+sed 's#^train: splits/train_100.txt#train: splits/train_10.txt#' \
+  configs/data/bdd100k_vehicle5.yaml > configs/data/bdd100k_vehicle5_10.yaml
+grep '^train:' configs/data/bdd100k_vehicle5_10.yaml     # must read splits/train_10.txt
+
+# (b) PIN THE OPTIMIZER in the recipe before any 10% run
+grep -n 'optimizer' configs/hyp/set3_combined.yaml
+```
+
+`train_10.txt` is 6,019 images; ultralytics computes
+`ceil(6019 / max(batch, nbs=64)) x 100 epochs = 9,500` iterations, **below** its 10,000
+threshold, so `optimizer: auto` silently selects AdamW while every 100%-label arm ran
+MuSGD. Unpinned, this column compares optimizers, not label fractions
+(`MASTER-RECORD.md` §3.5).
+
+Then the same commands with `--data configs/data/bdd100k_vehicle5_10.yaml` and names
+`base_10 / t1_jepa_10 / t2_jepa_10`. ~3–4 h each. This is where SSL pretraining usually
+shows its gain — after the T1@100% result it is the **core** of the deliverable, not an
+extension.
 
 ## 6. Scoring — all 19 test slices, one scorer, fixed NMS
 
@@ -177,8 +197,27 @@ usually shows its gain, so do not treat it as optional.
 python tools/make_test_slices.py          # regenerate if attr_index ever changes
 ```
 
-Then score each arm's `best.pt` with the pycocotools scorer against
-`configs/data/bdd100k_test_<slug>.yaml`. Headline slices:
+Then score **every arm you intend to compare in one invocation** — separate
+invocations can silently differ in protocol:
+
+```bash
+python evaluation/score_slices.py \
+  --arm base_100=weights/external/base_100_friend.pt \
+  --arm t1_jepa_100=runs/detect/t1_jepa_100/weights/best.pt \
+  --device 0 --out results/slice_scores_t1.csv
+```
+
+It runs inference once over all 8,841 test images and restricts `COCOeval.params.imgIds`
+per slice, so 19 slices cost one inference pass, not 19. NMS is hard-pinned at
+conf 0.001 / iou 0.6 / max_det 300 and is deliberately not configurable. Writes a
+720-row CSV plus a per-slice/per-class JSON, and prints the headline table and the
+car day→night mAP75 line.
+
+**To measure the noise floor for free, add each arm's `last.pt` as an extra `--arm`.**
+The within-arm best/last gap bounds run-to-run variance, which is what decides whether
+a 1-point between-arm delta means anything (`MASTER-RECORD.md` §4.2).
+
+Headline slices:
 
 ```
 overall  day  night  dawndusk  clear  rainy  snowy  adverse  night_adverse  day_adverse  night_clear
