@@ -1,0 +1,29 @@
+# 10%-LABEL data config for the label-fraction column of the JEPA deliverable.
+#
+# Byte-identical to bdd100k_vehicle5.yaml except for `train:`. val and test are
+# UNCHANGED, so a 10%-label arm is scored on exactly the same 8,841 test images
+# and the same 19 slices as a 100%-label arm - the only thing that differs is
+# how many labels it was allowed to learn from.
+#
+# train_10.txt = 6,019 images, the deterministic 10% carve-out of the
+# 60,186-image train pool (seed 42, tools/make_splits.py, frozen in
+# splits/MANIFEST.json).
+#
+# WARNING - pair this ONLY with configs/hyp/set3_combined_10.yaml, never with
+# set3_combined.yaml. At 6,019 images ultralytics computes
+#     ceil(6019 / max(batch=16, nbs=64)) x 100 epochs = 9,500 iterations
+# which is BELOW its 10,000 threshold, so `optimizer: auto` would silently
+# select AdamW while every 100%-label arm ran MuSGD. A label-fraction ablation
+# run that way compares optimizers, not label fractions.
+# See docs/MASTER-RECORD.md §3.5.
+
+path: dataset/yolo
+train: splits/train_10.txt   # <-- the only line that differs from bdd100k_vehicle5.yaml
+val: splits/val.txt          # same dev set as every other arm; test.txt stays for final scoring
+
+names:
+  0: car
+  1: truck
+  2: bus
+  3: motor
+  4: bike

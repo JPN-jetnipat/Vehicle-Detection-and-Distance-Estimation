@@ -1,0 +1,66 @@
+# set3_combined_10.yaml - the set3_combined recipe for the 10%-LABEL arms.
+#
+# Recipe values below the divider are byte-identical to set3_combined.yaml.
+# The ONLY additions are the four pinned optimizer keys, and they exist to make
+# the 10% column comparable to the 100% column rather than to change anything.
+#
+# ---------------------------------------------------------------------------
+# WHY THE OPTIMIZER IS PINNED HERE AND NOT IN set3_combined.yaml
+# ---------------------------------------------------------------------------
+# ultralytics 8.4.x picks the optimizer from the ITERATION count, not the epoch
+# count:  iterations = ceil(N_images / max(batch, nbs=64)) * epochs
+#
+#   100% labels: ceil(60186/64) * 100 = 94,100 iterations  -> above 10,000 -> MuSGD
+#    10% labels: ceil( 6019/64) * 100 =  9,500 iterations  -> BELOW 10,000 -> AdamW
+#
+# So leaving `optimizer: auto` here would train the 10% arms with a completely
+# different optimizer AND learning rate than the 100% arms, and every
+# BASE@100 -> BASE@10 comparison would be measuring that instead of the label
+# fraction. Confirmed empirically 2026-09-10 from t1_jepa_100.log:
+#
+#   optimizer: 'optimizer=auto' found, ignoring 'lr0=0.01' and 'momentum=0.937'
+#              and determining best 'optimizer', 'lr0' and 'momentum' automatically...
+#   optimizer: MuSGD(lr=0.01, momentum=0.9) with parameter groups
+#              81 weight(decay=0.0), 88 weight(decay=0.0005), 87 bias(decay=0.0)
+#
+# The four values below reproduce exactly what `auto` chose at 100% labels.
+# set3_combined.yaml is deliberately left untouched so the already-completed
+# BASE/M1/M2/M3/T1 arms keep a byte-identical recipe file and the cross-team
+# agreement with the DANN teammate is not broken. See docs/MASTER-RECORD.md §3.5.
+#
+# Usage:
+#   python tools/train_yolo.py --hyp configs/hyp/set3_combined_10.yaml \
+#       --data configs/data/bdd100k_vehicle5_10.yaml \
+#       --model yolo11s.pt --name base_10
+#   python tools/train_yolo.py --hyp configs/hyp/set3_combined_10.yaml \
+#       --data configs/data/bdd100k_vehicle5_10.yaml \
+#       --model weights/init_t1.pt --name t1_jepa_10
+
+# --- pinned optimizer: reproduces what `auto` resolved to at 100% labels ---
+optimizer: MuSGD
+lr0: 0.01               # what auto chose (NOT ultralytics' printed default path)
+momentum: 0.9           # what auto chose; the yaml default 0.937 is NOT what ran
+warmup_bias_lr: 0.0     # auto sets this to 0.0; an explicit optimizer does NOT,
+                        # so it must be stated or the 10% arms warm up differently
+
+# --- everything below is byte-identical to set3_combined.yaml ---
+epochs: 100
+seed: 42
+imgsz: 640
+batch: 16
+workers: 2         # RAM constraint fix (32 GB shared host) - train_yolo.py refuses to run without it
+cache: false       # RAM constraint fix - NEVER set true/"ram"
+
+hsv_v: 0.25        # default 0.4 - inherited from Set 1's low-light recipe
+close_mosaic: 20   # default 10 - longer mosaic-free tail before the run ends
+box: 9.0           # default 7.5 - more localization-loss weight
+copy_paste: 0.2    # documented no-op on bbox-only data; kept so the recipe stays
+                   # byte-identical to the 100% arms. NEVER report as active.
+cls: 0.7           # default 0.5 - more classification weight for the rare classes
+scale: 0.7         # default 0.5 - wider scale range, helps small/distant objects
+translate: 0.15    # default 0.1 - more object-position diversity
+
+patience: 0        # disable early stopping so every arm trains the full 100 epochs
+exist_ok: true     # NOTE: this OVERWRITES runs/detect/<name>/ - always use a fresh --name
+save_period: 10    # periodic checkpoints; these are what made the 2026-09-10 noise
+                   # floor possible without retraining anything
