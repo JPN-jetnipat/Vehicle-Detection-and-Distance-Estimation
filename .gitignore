@@ -60,3 +60,4 @@ runs_jepa/
 # Meta's released I-JEPA checkpoint (~2.5 GB tar) - fetch with the wget in
 # docs/jepa-runbook.md, never commit it
 weights/*.tar
+dataset/lowlight
