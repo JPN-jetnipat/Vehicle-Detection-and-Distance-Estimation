@@ -20,7 +20,7 @@ epoch (`last.pt`), so a multi-night job is safe to stop and resume:
 tmux attach -t train || tmux new -s train
 source .venv/bin/activate
 nvidia-smi && free -h
-nohup python tools/train_yolo.py --hyp configs/hyp/default.yaml --name default_100 > default_100.log 2>&1 &
+nohup python tools/train_yolo.py --hyp configs/archive/hyp/default.yaml --name default_100 > default_100.log 2>&1 &
 # detach: Ctrl+b d
 
 # MORNING - stop gracefully, freeing the GPU:
@@ -146,7 +146,7 @@ discipline, checkpointing) works before committing a GPU to a 100-epoch
 run. Same imgsz/batch as the real arms so it actually tests the RAM-safety
 margin, just capped to 2 epochs:
 ```bash
-python tools/train_yolo.py --hyp configs/hyp/smoke_test.yaml --name smoke_test
+python tools/train_yolo.py --hyp configs/archive/hyp/smoke_test.yaml --name smoke_test
 free -h   # watch this in a second pane while it runs - stay well clear of 32 GB
 ```
 Expect: hyperparameters print, training starts, 2 epochs complete without
@@ -168,18 +168,18 @@ python evaluation/run_inference.py --weights yolo11s.pt \
 
 **Method 2 — default:**
 ```bash
-nohup python tools/train_yolo.py --hyp configs/hyp/default.yaml --name default_100 > default_100.log 2>&1 &
+nohup python tools/train_yolo.py --hyp configs/archive/hyp/default.yaml --name default_100 > default_100.log 2>&1 &
 tail -f default_100.log
 ```
 
 **Method 3 — set1 (low-light compensation):**
 ```bash
-nohup python tools/train_yolo.py --hyp configs/hyp/set1_japan_night_aug.yaml --name set1_100 > set1_100.log 2>&1 &
+nohup python tools/train_yolo.py --hyp configs/archive/hyp/set1_japan_night_aug.yaml --name set1_100 > set1_100.log 2>&1 &
 ```
 
 **Method 4 — set2 (class & scene diversity):**
 ```bash
-nohup python tools/train_yolo.py --hyp configs/hyp/set2_field_imbalance.yaml --name set2_100 > set2_100.log 2>&1 &
+nohup python tools/train_yolo.py --hyp configs/archive/hyp/set2_field_imbalance.yaml --name set2_100 > set2_100.log 2>&1 &
 ```
 Each of 2-4 trains from COCO `yolo11s.pt`, 100 epochs, on `splits/train_100.txt`,
 validating against `splits/val.txt` during training (`configs/data/bdd100k_vehicle5.yaml`).

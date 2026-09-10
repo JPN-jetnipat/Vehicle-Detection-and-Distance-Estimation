@@ -37,7 +37,7 @@ The sampling math itself is not reimplemented here: it is imported from
 OUTPUTS
 -------
     dataset/yolo/splits/train_100_method3.txt      repeated image list
-    configs/data/bdd100k_vehicle5_method3.yaml     dataset yaml pointing at it
+    configs/archive/data/bdd100k_vehicle5_method3.yaml     dataset yaml pointing at it
     results/sampling_reports/method3_distribution.json
 
 Usage (from the repo root):
@@ -68,7 +68,7 @@ DEFAULT_ORIG_LABELS = "dataset/yolo/labels/train"
 DEFAULT_AUG_LABELS = "dataset/lowlight/labels/train"
 DEFAULT_BASE_DATA_YAML = "configs/data/bdd100k_vehicle5.yaml"
 DEFAULT_SPLIT_OUT = "dataset/yolo/splits/train_100_method3.txt"
-DEFAULT_DATA_YAML_OUT = "configs/data/bdd100k_vehicle5_method3.yaml"
+DEFAULT_DATA_YAML_OUT = "configs/archive/data/bdd100k_vehicle5_method3.yaml"
 DEFAULT_REPORT_OUT = "results/sampling_reports/method3_distribution.json"
 
 # t = 0.122 and the bike/motor restriction are NOT this script's choices --
@@ -353,7 +353,7 @@ def main() -> None:
     print(f"report      -> {repo_rel(report_out)}")
     print()
     print("Next (from the repo root):")
-    print("  python tools/train_yolo.py --hyp configs/hyp/set3_combined_smoke.yaml \\")
+    print("  python tools/train_yolo.py --hyp configs/archive/hyp/set3_combined_smoke.yaml \\")
     print(f"      --data {repo_rel(data_yaml_out)} --name set3_combined_smoke")
     print("  nohup python tools/train_yolo.py --hyp configs/hyp/set3_combined.yaml \\")
     print(f"      --data {repo_rel(data_yaml_out)} --name set3_combined > set3_combined.log 2>&1 &")

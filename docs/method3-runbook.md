@@ -269,7 +269,7 @@ Writes:
 
 ```
 dataset/yolo/splits/train_100_method3.txt        ~137,500 lines
-configs/data/bdd100k_vehicle5_method3.yaml       dataset yaml
+configs/archive/data/bdd100k_vehicle5_method3.yaml       dataset yaml
 results/sampling_reports/method3_distribution.json
 ```
 
@@ -293,12 +293,12 @@ expectation, not to the line.
 
 ## 5. Train
 
-**Smoke test first** — `configs/hyp/smoke_test.yaml` does not exercise any of
+**Smoke test first** — `configs/archive/hyp/smoke_test.yaml` does not exercise any of
 this arm's specific risks:
 
 ```bash
-python tools/train_yolo.py --hyp configs/hyp/set3_combined_smoke.yaml \
-    --data configs/data/bdd100k_vehicle5_method3.yaml --name set3_combined_smoke
+python tools/train_yolo.py --hyp configs/archive/hyp/set3_combined_smoke.yaml \
+    --data configs/archive/data/bdd100k_vehicle5_method3.yaml --name set3_combined_smoke
 free -h    # second pane — stay well clear of 32 GB
 ```
 
@@ -319,7 +319,7 @@ tmux attach -t train || tmux new -s train
 source .venv/bin/activate
 nvidia-smi && free -h
 nohup python tools/train_yolo.py --hyp configs/hyp/set3_combined.yaml \
-    --data configs/data/bdd100k_vehicle5_method3.yaml \
+    --data configs/archive/data/bdd100k_vehicle5_method3.yaml \
     --name set3_combined > set3_combined.log 2>&1 &
 # detach: Ctrl+b d ; resume next evening: same command + --resume
 ```
@@ -334,7 +334,7 @@ keyword argument 'name'`. Same for `model` and `data`.
 ## 6. Evaluation
 
 Identical to `RUNBOOK.md` §5 — nothing about this arm changes the protocol, and
-`configs/data/bdd100k_vehicle5_method3.yaml` deliberately copies `val:` from
+`configs/archive/data/bdd100k_vehicle5_method3.yaml` deliberately copies `val:` from
 `bdd100k_vehicle5.yaml` so every arm validates against the same split.
 
 ```bash
@@ -387,7 +387,7 @@ the split invalidates it automatically; delete it freely. It does not collide
 with `dataset/yolo/labels/train.cache`, which the other arms use.
 
 **Name collision with the earlier "Set 3".** `configs/hyp/set3_combined.yaml`
-(this arm) is not `configs/hyp/set3_merged_night_localization.yaml` (the
+(this arm) is not `configs/archive/hyp/set3_merged_night_localization.yaml` (the
 hyperparameter-search arm in `docs/set3-notes.md`). Different files, different
 run dirs, no runtime collision — but say "set3_combined" in full whenever you
 write about either.

@@ -1,6 +1,6 @@
 # Set 3 — merged night-localization arm
 
-Decision record for `configs/hyp/set3_merged_night_localization.yaml`.
+Decision record for `configs/archive/hyp/set3_merged_night_localization.yaml`.
 Written 2026-08-20 from the Set 1 vs Set 2 `splits/test.txt` results.
 
 ---
@@ -159,7 +159,7 @@ Worth raising with the team before the run, since it also affects how Set 3 is f
 
 ```bash
 # 1. smoke test first (2 epochs, real settings) - watch `free -h` in a second pane
-python tools/train_yolo.py --hyp configs/hyp/set3_smoke.yaml --name set3_smoke
+python tools/train_yolo.py --hyp configs/archive/hyp/set3_smoke.yaml --name set3_smoke
 #    PASS: optimizer line says MuSGD (not "optimizer=auto found ..."),
 #          "Closing dataloader mosaic" appears before epoch 2,
 #          weights/ has last.pt, best.pt AND epoch0.pt, RAM well clear of 32 GB
@@ -167,11 +167,11 @@ rm -rf runs/detect/set3_smoke
 
 # 2. the real arm - announce in the GPU group line first, launch in the evening
 nvidia-smi && free -h && df -h ~
-nohup python tools/train_yolo.py --hyp configs/hyp/set3_merged_night_localization.yaml \
+nohup python tools/train_yolo.py --hyp configs/archive/hyp/set3_merged_night_localization.yaml \
     --name set3_100 > set3_100.log 2>&1 &
 
 # 3. resume next evening (same command + --resume)
-nohup python tools/train_yolo.py --hyp configs/hyp/set3_merged_night_localization.yaml \
+nohup python tools/train_yolo.py --hyp configs/archive/hyp/set3_merged_night_localization.yaml \
     --name set3_100 --resume > set3_100.resume.log 2>&1 &
 
 # 4. score on val.txt during development (see §5 before scoring on test.txt)

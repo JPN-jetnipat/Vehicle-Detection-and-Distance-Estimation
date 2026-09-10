@@ -17,18 +17,30 @@ RAM note (32GB shared host, not A40 VRAM - same constraint the old
 project's RUNBOOK hit before): every finalized hyp YAML already sets
 workers=2 and cache=false. Don't override those from the command line.
 
-Usage:
-  python tools/train_yolo.py --hyp configs/hyp/set1_japan_night_aug.yaml --name set1_japan_night_aug
-  python tools/train_yolo.py --hyp configs/hyp/baseline.yaml --name baseline_default
-  python tools/train_yolo.py --hyp configs/hyp/set2_field_imbalance.yaml --name set2_field_imbalance
+Usage (LIVE configs only - the closed hyperparameter-search and augmentation
+recipes now live in configs/archive/, see configs/archive/README.md):
+
+  # a 100%-label arm - the shared cross-team recipe, model is the only variable
+  python tools/train_yolo.py --hyp configs/hyp/set3_combined.yaml \
+      --model yolo11s.pt --name base_100
+  python tools/train_yolo.py --hyp configs/hyp/set3_combined.yaml \
+      --model weights/init_t1.pt --name t1_jepa_100
+
+  # a 10%-label arm - NOTE the different hyp file. It pins the optimizer, which
+  # `auto` would otherwise switch to AdamW below 10,000 iterations. Pairing
+  # set3_combined.yaml with the 10% data yaml is a silent methodology bug.
+  # See docs/MASTER-RECORD.md section 3.5.
+  python tools/train_yolo.py --hyp configs/hyp/set3_combined_10.yaml \
+      --data configs/data/bdd100k_vehicle5_10.yaml \
+      --model yolo11s.pt --name base_10
 
   # resume after an interruption (auto-finds runs/detect/<name>/weights/last.pt):
-  python tools/train_yolo.py --hyp configs/hyp/set1_japan_night_aug.yaml --name set1_japan_night_aug --resume
+  python tools/train_yolo.py --hyp configs/hyp/set3_combined.yaml --name base_100 --resume
 
 Logging: this script only prints ultralytics' own progress output. Redirect
 it to a file yourself so it survives a dropped session, same as the old
 project's convention:
-  nohup python tools/train_yolo.py --hyp configs/hyp/set1_japan_night_aug.yaml \
+  nohup python tools/train_yolo.py --hyp configs/archive/hyp/set1_japan_night_aug.yaml \
       --name set1_japan_night_aug > set1_japan_night_aug.log 2>&1 &
 ultralytics also writes its own structured outputs (results.csv, args.yaml,
 weights/) into runs/detect/<name>/ regardless - that's the primary record,

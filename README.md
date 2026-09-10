@@ -38,9 +38,9 @@ the server to match this repo).
 | # | arm | weights | hyp recipe |
 |---|---|---|---|
 | 1 | vanilla pretrained | COCO `yolo11s.pt`, no fine-tuning | — (inference only) |
-| 2 | default | fine-tuned from COCO | `configs/hyp/default.yaml` |
-| 3 | set1 (low-light compensation) | fine-tuned from COCO | `configs/hyp/set1_japan_night_aug.yaml` |
-| 4 | set2 (class & scene diversity) | fine-tuned from COCO | `configs/hyp/set2_field_imbalance.yaml` |
+| 2 | default | fine-tuned from COCO | `configs/archive/hyp/default.yaml` |
+| 3 | set1 (low-light compensation) | fine-tuned from COCO | `configs/archive/hyp/set1_japan_night_aug.yaml` |
+| 4 | set2 (class & scene diversity) | fine-tuned from COCO | `configs/archive/hyp/set2_field_imbalance.yaml` |
 
 All four get scored the same way, per time-of-day (day/night/dawn-dusk) plus
 overall and rainy, on `splits/test.txt`. See RUNBOOK.md for exact commands.
