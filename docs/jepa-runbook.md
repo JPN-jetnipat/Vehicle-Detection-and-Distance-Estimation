@@ -71,9 +71,23 @@ is broken. Fix the data first.
 *context* encoder; the archived project burned a full run on it.
 
 ```bash
-df -h ~                                 # the tar is ~2.5 GB
+df -h ~     # the tar is 9.6 GB, NOT the ~2.5 GB an earlier draft of this file said
 wget https://dl.fbaipublicfiles.com/ijepa/IN1K-vit.h.14-300e.pth.tar -P weights/
 ```
+
+**Disk (measured 2026-09-09):** `/` was at 97% (32 GB free) before this download,
+so the tar alone takes a third of the headroom. Budget for the rest:
+
+| item | size | lifetime |
+|---|---|---|
+| `IN1K-vit.h.14-300e.pth.tar` | 9.6 GB | **delete after the T1 distill** - it is re-downloadable in <3 min at 60 MB/s and is never needed again once `backbone_distilled.pt` exists |
+| stage-2 `ckpt_latest.pt` (student+optimizer) | ~30 MB | overwritten each epoch |
+| stage-1 `ckpt_latest.pt` (encoder+predictor+target+optimizer) | ~1.6 GB | overwritten each epoch |
+| stage-1 `target_encoder_e{50,100,...}.pt` | ~350 MB x 6 | `keep_every: 50` - raise it to 100 if disk is tight |
+| each YOLO fine-tune run (`save_period: 10`) | ~250 MB | keep |
+
+Re-check `df -h ~` before launching stage 1 - it is the only job here that can
+fill a shared disk, and a disk-full at hour 12 of 15 loses the run.
 
 **3.2 Smoke, then distill** (~3 h, ~4 GB VRAM at the archived project's measured
 189 img/s):
