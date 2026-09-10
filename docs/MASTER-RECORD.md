@@ -32,19 +32,43 @@ VAL = 2.5% of *each* timeofday stratum of BDD's official train set, sampled per 
 so val mirrors train's mix. Remainder is the train pool. Weather is retained as
 image-level metadata for slicing, not as a stratification axis.
 
-### ⚠️ Naming hazard — three different things are called "set 3"
+### ⚠️ Naming hazard — FOUR different things are called "set 3"
 
 Get this wrong in the write-up and the whole methods section becomes unreadable.
+This is not hypothetical: it caused a live mix-up on 2026-09-10, when the teammate's
+`set3_combined` config was mistaken for this repo's `set3_combined` run.
 
 | name | what it is | in use? |
 |---|---|---|
-| **`set3_combined`** | the **shared cross-team hyperparameter recipe** — hsv_v 0.25, close_mosaic 20, box 9.0, copy_paste 0.2, cls 0.7, scale 0.7, translate 0.15, patience 0, seed 42, imgsz 640, batch 16, workers 2, cache false | ✅ **this is the recipe** |
+| **`configs/hyp/set3_combined.yaml`** | the **shared cross-team hyperparameter recipe** — hsv_v 0.25, close_mosaic 20, box 9.0, copy_paste 0.2, cls 0.7, scale 0.7, translate 0.15, patience 0, seed 42, imgsz 640, batch 16, workers 2, cache false | ✅ **this is the recipe** |
+| `runs/detect/set3_combined/` **(this repo)** | **Method 3** of the augmentation ablation — the recipe above run on the 137,519-image low-light × IRFS pool | ✅ a real arm — call it **M3**, never "set3_combined" |
+| `set3_combined` **(teammate's pipeline)** | the **BASE / no-augmentation control** — the same recipe on the plain 60,186 pool. This produced `weights/external/base_100_friend.pt` | ✅ a real arm — call it **BASE** |
+| `configs/archive/hyp/set3_merged_night_localization.yaml` | a **different, earlier** hyperparameter-search arm (dfl 1.8, cls 0.5, scale 0.55, hsv_s 0.60) | ❌ not the recipe, line closed |
 
-> `set3_combined` = **Set 2 + `hsv_v` 0.4→0.25 + `close_mosaic` 10→20 + `box` 7.5→9.0**.
-> Re-examined 2026-09-10 against Set 2 and confirmed as the recipe — see §3.11 for the
-> per-class decomposition and the defence. **Do not switch recipes mid-study.**
-| `set3_combined` (as a *run name*) | in this repo it also labels **Method 3** of the augmentation ablation; in the teammates' pipeline the same string labels the **no-augmentation baseline** | ⚠️ ambiguous — always say which |
-| `set3_merged_night_localization` | a **different, earlier** hyperparameter-search arm (dfl 1.8, cls 0.5, scale 0.55, hsv_s 0.60) | ❌ not the recipe |
+**The recipe is genuinely shared** — the teammate's config and `set3_combined.yaml` are
+byte-identical apart from `save_period`, and T1 used it too. What differs between the two
+`set3_combined` *arms* is the **data pool**, which is the entire point of the ablation.
+
+**The discriminator — one command, use it before trusting any run named `set3_combined`:**
+
+```bash
+grep -E "^(data|model):" runs/detect/<name>/args.yaml
+```
+
+- `data: .../bdd100k_vehicle5_method3.yaml` → **M3** (augmented pool)
+- `data: .../bdd100k_vehicle5.yaml` or `bdd100k_vehicle.yaml` → **BASE** (plain pool)
+
+**Rule for the write-up and for every scoring run:** never label an arm `set3_combined`.
+Use `BASE`, `M1`, `M2`, `M3`, `T1`, `T2`. The string `set3_combined` refers to the recipe
+file and nothing else. Run directories keep their historical names for provenance — do not
+rename them — but the `--arm` labels passed to `evaluation/score_slices.py` must be the
+unambiguous ones, because those strings become the permanent column headers in
+`results/*.csv`.
+
+> **Recipe provenance:** `set3_combined` = **Set 2 + `hsv_v` 0.4→0.25 + `close_mosaic`
+> 10→20 + `box` 7.5→9.0**. Re-examined 2026-09-10 against Set 2 and confirmed as the
+> recipe — see §3.11 for the per-class decomposition and the defence.
+> **Do not switch recipes mid-study.**
 
 ### What "no augmentation" means now
 
