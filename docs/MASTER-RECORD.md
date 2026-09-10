@@ -41,7 +41,7 @@ This is not hypothetical: it caused a live mix-up on 2026-09-10, when the teamma
 | name | what it is | in use? |
 |---|---|---|
 | **`configs/hyp/set3_combined.yaml`** | the **shared cross-team hyperparameter recipe** — hsv_v 0.25, close_mosaic 20, box 9.0, copy_paste 0.2, cls 0.7, scale 0.7, translate 0.15, patience 0, seed 42, imgsz 640, batch 16, workers 2, cache false | ✅ **this is the recipe** |
-| `runs/detect/set3_combined/` **(this repo)** | **Method 3** of the augmentation ablation — the recipe above run on the 137,519-image low-light × IRFS pool | ✅ a real arm — call it **M3**, never "set3_combined" |
+| `runs/detect/m3_lowlight_irfs/` **(this repo)** | **Method 3** of the augmentation ablation — the recipe above run on the 137,519-image low-light × IRFS pool. **Renamed 2026-09-10 from `set3_combined`** to end the collision; `runs/` is gitignored so this rename is server-side only, and the dir's own `args.yaml` still records `name: set3_combined` as provenance | ✅ a real arm — call it **M3** |
 | `set3_combined` **(teammate's pipeline)** | the **BASE / no-augmentation control** — the same recipe on the plain 60,186 pool. This produced `weights/external/base_100_friend.pt` | ✅ a real arm — call it **BASE** |
 | `configs/archive/hyp/set3_merged_night_localization.yaml` | a **different, earlier** hyperparameter-search arm (dfl 1.8, cls 0.5, scale 0.55, hsv_s 0.60) | ❌ not the recipe, line closed |
 
@@ -55,7 +55,7 @@ byte-identical apart from `save_period`, and T1 used it too. What differs betwee
 grep -E "^(data|model):" runs/detect/<name>/args.yaml
 ```
 
-- `data: .../bdd100k_vehicle5_method3.yaml` → **M3** (augmented pool)
+- `data: .../bdd100k_vehicle5_method3.yaml` → **M3** (augmented pool; dir now `m3_lowlight_irfs/`)
 - `data: .../bdd100k_vehicle5.yaml` or `bdd100k_vehicle.yaml` → **BASE** (plain pool)
 
 **Rule for the write-up and for every scoring run:** never label an arm `set3_combined`.

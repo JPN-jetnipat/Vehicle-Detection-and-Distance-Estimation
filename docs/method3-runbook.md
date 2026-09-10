@@ -1,5 +1,15 @@
 # Method 3 (Field) runbook — low-light augmentation × IRFS oversampling
 
+> **⚠️ RUN DIRECTORY RENAMED 2026-09-10.** This arm's outputs now live in
+> `runs/detect/m3_lowlight_irfs/`, not `runs/detect/set3_combined/`. The old name
+> collided with the teammate's `set3_combined` (which is the **BASE** control, plain
+> pool) and with the recipe file `configs/hyp/set3_combined.yaml`. See
+> `MASTER-RECORD.md` §1. The commands below keep their original `--name set3_combined`
+> for historical accuracy — **this line is closed and is not to be re-run.** If you ever
+> do re-run it, pass `--name m3_lowlight_irfs`. `runs/` is gitignored, so the rename
+> exists on the A40 server only.
+
+
 All commands run **from the repo root**, same as `RUNBOOK.md`. This document
 covers only the Method 3 arm; environment setup, dataset plumbing and the
 night-shift GPU protocol are in `RUNBOOK.md` §1–§3 and still apply.
