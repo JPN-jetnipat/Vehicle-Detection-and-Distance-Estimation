@@ -1,0 +1,69 @@
+{
+  "arm": "method3_lowlight_irfs",
+  "composition": "Method 1 (low-light on every image, original + augmented pool) x Method 2 (IRFS oversampling restricted to bike/motor)",
+  "mode": "irfs",
+  "threshold": 0.122,
+  "seed": 42,
+  "restricted_to": [
+    "bike",
+    "motor"
+  ],
+  "excluded_classes_forced_r1": [
+    "bus",
+    "car",
+    "truck"
+  ],
+  "pool": {
+    "original_images": 60186,
+    "lowlight_images": 60186,
+    "combined_images_before_repeat": 120372,
+    "samples_per_epoch_after_repeat": 137519
+  },
+  "per_class": {
+    "car": {
+      "f_i_c": 0.9893496826504503,
+      "f_b_c": 0.9355885816121949,
+      "repeat_factor_r_c": 1.0,
+      "image_count_before": 119090,
+      "instance_count_before": 1234758,
+      "image_count_after": 136069,
+      "instance_count_after": 1407551
+    },
+    "truck": {
+      "f_i_c": 0.2645631874522314,
+      "f_b_c": 0.038231019741378394,
+      "repeat_factor_r_c": 1.0,
+      "image_count_before": 31846,
+      "instance_count_before": 50456,
+      "image_count_after": 36963,
+      "instance_count_after": 58549
+    },
+    "bus": {
+      "f_i_c": 0.1222044993852391,
+      "f_b_c": 0.014429830742722574,
+      "repeat_factor_r_c": 1.0,
+      "image_count_before": 14710,
+      "instance_count_before": 19044,
+      "image_count_after": 17715,
+      "instance_count_after": 22953
+    },
+    "motor": {
+      "f_i_c": 0.030754660552287906,
+      "f_b_c": 0.003673378462545633,
+      "repeat_factor_r_c": 3.3879404024300688,
+      "image_count_before": 3702,
+      "instance_count_before": 4848,
+      "image_count_after": 12521,
+      "instance_count_after": 16392
+    },
+    "bike": {
+      "f_i_c": 0.05398265377330276,
+      "f_b_c": 0.008077189441158508,
+      "repeat_factor_r_c": 2.417137134475934,
+      "image_count_before": 6498,
+      "instance_count_before": 10660,
+      "image_count_after": 16268,
+      "instance_count_after": 26787
+    }
+  }
+}
