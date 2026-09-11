@@ -28,6 +28,8 @@ DCP_OMEGA = 0.95
 DCP_T0 = 0.1
 DCP_GUIDED_RADIUS = 40
 DCP_GUIDED_EPS = 1e-3
+DCP_ATM_BLUR_KSIZE = 41   # smooths out small point light sources before atmosphere estimation
+DCP_ATM_MAX = 220         # cap below full saturation (255) so glare pixels can't stand in for sky/airlight
 
 
 def identity(img: np.ndarray) -> np.ndarray:
@@ -76,14 +78,32 @@ def _atmospheric_light(img: np.ndarray, dark_channel: np.ndarray) -> np.ndarray:
     num_pixels = max(int(flat_dark.size * 0.001), 1)
     top_indices = np.argpartition(flat_dark, -num_pixels)[-num_pixels:]
     brightest = flat_img[top_indices]
-    return np.max(brightest, axis=0).astype(np.float64)
+    # Average the candidate pixels (not a per-channel max): taking the max of
+    # each channel independently stitches together mismatched channels from
+    # different candidate pixels (e.g. a red sign's R with a white lamp's B),
+    # synthesizing a color-biased atmosphere that causes colored halos around
+    # isolated bright light sources - exactly the artifact that shows up on
+    # foggy dawn/dusk street scenes with streetlights already on.
+    return np.mean(brightest, axis=0).astype(np.float64)
 
 
 def dcp_dehaze(img: np.ndarray) -> np.ndarray:
-    """Dark Channel Prior dehazing, transmission map refined with a guided filter."""
+    """Dark Channel Prior dehazing, transmission map refined with a guided filter.
+
+    Atmospheric light is estimated from a blurred copy of the image so that
+    small, isolated overexposed light sources (streetlights, headlights,
+    signage - a few pixels wide) don't get picked as "sky/airlight" just
+    because they're locally the brightest, least-hazy-looking patch. Without
+    the blur, a scene with no real hazy-sky region (e.g. a foggy dusk street
+    with the lights already on) hands the estimator a pool of pure
+    (255, 255, 255) glare pixels, and the resulting near-white atmosphere
+    crushes every darker pixel toward black when the haze equation is
+    inverted.
+    """
     img_f = img.astype(np.float64)
-    dark = _dark_channel(img_f, DCP_PATCH_SIZE)
-    atmosphere = np.clip(_atmospheric_light(img_f, dark), 1.0, 255.0)
+    blurred = cv2.blur(img, (DCP_ATM_BLUR_KSIZE, DCP_ATM_BLUR_KSIZE)).astype(np.float64)
+    atm_dark = _dark_channel(blurred, DCP_PATCH_SIZE)
+    atmosphere = np.clip(_atmospheric_light(blurred, atm_dark), 1.0, DCP_ATM_MAX)
 
     normalized = img_f / atmosphere
     transmission_raw = 1.0 - DCP_OMEGA * _dark_channel(normalized, DCP_PATCH_SIZE)
