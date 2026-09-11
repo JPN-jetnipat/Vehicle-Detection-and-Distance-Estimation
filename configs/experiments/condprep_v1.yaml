@@ -1,0 +1,29 @@
+arm_name: condprep_v1
+model: yolo11s.pt
+data: dataset/bdd100k_vehicle_preprocessed.yaml
+
+train:
+  epochs: 100
+  seed: 42
+  imgsz: 640
+  batch: 16
+  workers: 2
+  cache: false
+  hsv_v: 0.25
+  close_mosaic: 20
+  box: 9.0
+  copy_paste: 0.2
+  cls: 0.7
+  scale: 0.7
+  translate: 0.15
+  patience: 0  # disable early stopping so every arm trains the full 100 epochs
+  name: condprep_v1
+  exist_ok: true  # rerunning this arm overwrites runs/detect/condprep_v1 rather than incrementing
+
+eval_splits:
+  - name: val_day
+    data: dataset/bdd100k_test_day_preprocessed.yaml
+  - name: val_night
+    data: dataset/bdd100k_test_night_preprocessed.yaml
+  - name: val_dawndusk
+    data: dataset/bdd100k_test_dawndusk_preprocessed.yaml

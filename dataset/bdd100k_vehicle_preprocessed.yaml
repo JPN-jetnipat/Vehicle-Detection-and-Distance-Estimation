@@ -1,0 +1,17 @@
+# Conditionally-preprocessed copy of bdd100k_vehicle.yaml's train/val (see
+# scripts/build_preprocessed_dataset.py). Images here are photometrically
+# preprocessed per weather/timeofday; labels are unchanged copies of the
+# originals. Unlike the original yaml, train/val point straight at
+# directories (not *_resolved.txt split lists) since yolo_preprocessed/
+# already contains exactly the images that belong to each split.
+path: dataset/yolo_preprocessed
+
+train: images/train
+val: images/val
+
+names:
+  0: car
+  1: truck
+  2: bus
+  3: motor
+  4: bike
