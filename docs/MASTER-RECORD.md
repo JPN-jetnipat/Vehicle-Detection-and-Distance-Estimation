@@ -1,6 +1,6 @@
 # Master record — nighttime / adverse-environment vehicle detection
 
-**Owner:** Kanade · **Last updated:** 2026-09-10
+**Owner:** Kanade · **Last updated:** 2026-09-11
 **Purpose:** the single ordered record of what was run, what was found, why each choice
 was made, and how to defend it. Other project docs hold the detail; this one holds the
 argument. If a claim isn't in here with its defence, don't put it in the write-up.
@@ -173,6 +173,48 @@ the rare-class numbers they are not noise.
 bike +2.35, at a cost of −0.3 to −0.9 on the common classes. Still n=1 and under the
 800-instance threshold; treat as indicative.
 
+### 2.2.1 ⚠️ REVISION (2026-09-11) — the augmentation line was judged on the wrong slices
+
+When this ablation was written up, only the **time-of-day** slices existed. M3 was
+re-scored on 2026-09-11 across all 19 slices (arm `m3_lowlight_irfs`, same scorer, same
+NMS, same job as the T1 noise floor). Against BASE, mAP50, `all`:
+
+| slice | Δ vs BASE | floor | ratio | |
+|---|---|---|---|---|
+| **day_adverse** | **+3.39** | 0.52 | 6.5× | bad weather, good light |
+| **snowy** | **+2.60** | 0.65 | 4.0× | |
+| **adverse** | **+1.21** | 0.23 | 5.3× | rain+snow+fog |
+| rainy | +0.89 | 0.10–0.39 | ~2× | |
+| night_clear | +0.45 | 0.46 | 1.0× | inside noise |
+| overall | −0.17 | 0.31 | 0.5× | inside noise |
+| day | −0.11 | 0.58 | 0.2× | inside noise |
+| night | −0.16 | 0.36 | 0.4× | inside noise |
+| clear | −0.62 | 0.31 | 2.0× | weak |
+| night_adverse | −2.78 | 2.18 | 1.3× | weak |
+
+**The negative result stands exactly as stated — and it was stated about the wrong
+thing.** On time of day, M3 ≈ BASE (every one of day / night / dawndusk is inside the
+noise floor). But on *weather*, M3 is clearly ahead: **+3.39 on `day_adverse` at 6.5×
+the floor**, +2.60 on snow, +1.21 on adverse overall.
+
+**Reading that is consistent with §2.2's own mechanism.** The mechanism paragraph above
+says a gamma curve models *dusk*, not night. Push that one step further: gamma darkening
+plus Poisson–Gaussian noise is a **contrast-and-degradation** transform, and rain, snow
+and fog are contrast-and-degradation conditions. So the augmentation was doing something
+real the whole time — it just was not doing the thing it was named after. It fails at
+night (where the "already dark, made darker" problem of §2.2 bites) and succeeds in
+daytime bad weather. `night_adverse` −2.78 is where both effects meet, which fits.
+
+**What to claim, and what not to.** Claim: *"low-light augmentation did not improve
+night performance, but the same transform improved adverse-weather performance in
+daylight — it behaves as a degradation augmentation, not a night augmentation."* Do not
+claim a weather-robustness method: this is n=1, `day_adverse` is 823 images, the noise
+floor is borrowed from a different arm's run, and the recipe was never designed or tuned
+for weather. It is an observation that reframes a closed line, not a new result.
+
+**This does not reopen the augmentation line for the JEPA deliverable** — scope is still
+night — but it is the most interesting thing in §2.2 and belongs in the write-up.
+
 ### 2.3 The finding that motivates the JEPA phase
 
 Car day → night, **mAP75** (47,715 / 35,439 instances):
@@ -187,7 +229,26 @@ attempt made it marginally worse (−10.08).
 
 **This is the strongest result in the study, and it is the argument for JEPA.** Four data
 recipes and one loss-weight intervention could not move it, which points away from data
-distribution and toward either representation quality or input resolution. `imgsz: 768` is
+distribution and toward either representation quality or input resolution.
+
+**Update 2026-09-11 — now measured across seven arms, one scorer, one job:**
+
+| arm | day | night | Δ |
+|---|---|---|---|
+| base_100 (BASE) | 0.5076 | 0.4105 | **−9.71** |
+| t1_best | 0.5061 | 0.4102 | −9.60 |
+| t1_last | 0.5053 | 0.4093 | −9.60 |
+| t1_e90 | 0.5051 | 0.4102 | −9.48 |
+| t1_e80 | 0.5058 | 0.4101 | −9.56 |
+| set2_100 | 0.5088 | 0.4100 | −9.87 |
+| m3_lowlight_irfs (M3) | 0.5013 | 0.4031 | −9.82 |
+
+Full range **−9.48 to −9.87: 0.39 points**, against a within-run wobble of 0.12 among
+the four T1 checkpoints. Four training pools, two hyperparameter recipes and a
+JEPA-initialised backbone all land on the same number. **This is not a property of any
+arm — it is a property of the setup**, and it is the finding the write-up should be
+built around. The remaining untested lever is input resolution (`imgsz: 768`); every
+data-side and representation-side lever tried so far has left it untouched. `imgsz: 768` is
 the untried resolution lever (rejected so far on shared-RAM grounds); a better backbone
 initialization is the representation lever, and that is what the JEPA phase tests.
 
@@ -246,10 +307,42 @@ backbone initialisation have now failed to shift this number (§2.3).
    at localization, which is the axis JEPA was introduced to fix.
 3. T1 emits **more** boxes, not fewer.
 
-**What this is NOT yet.** −0.66 overall sits inside the ±1-point spread the
-augmentation ablation showed on `all` rows (§4.2), and both arms are n=1. Until a
-noise floor exists, write this as **"indistinguishable from BASE, trending down"** —
-not "worse". §5 lists two ways to get that floor without training anything.
+### 2.5.1 Verdict — the gap is real, and it is night-specific (2026-09-11)
+
+A noise floor now exists, obtained without training anything. `save_period: 10` left
+four checkpoints of the *same* `t1_jepa_100` run — epoch 80, epoch 90, best, last — all
+in the mosaic-free tail (`close_mosaic: 20`). Scoring all four in one
+`evaluation/score_slices.py` pass gives a within-run spread; `evaluation/noise_floor_report.py`
+compares each T1-vs-BASE delta against it. Because the floor is a *lower* bound (§4.2),
+a delta is only taken seriously at **>2× floor**, and headlined at **>4×**.
+
+| slice | Δ mAP50 | floor | ratio | verdict |
+|---|---|---|---|---|
+| **night** | **−2.27** | 0.36 | **6.3×** | holds clearly |
+| **snowy** | **−3.17** | 0.65 | **4.9×** | holds clearly |
+| **night_clear** | **−2.10** | 0.46 | **4.6×** | holds clearly |
+| adverse | −0.84 | 0.23 | 3.7× | holds |
+| clear | −0.95 | 0.31 | 3.1× | holds |
+| overall | −0.66 | 0.31 | 2.1× | holds, weakly |
+| night_adverse | −3.57 | 2.18 | 1.6× | **weak — do not headline** |
+| rainy | +0.71 | 0.10–0.39 | 1.8× | weak |
+| **day** | **−0.20** | 0.58 | 0.3× | **inside noise — no effect** |
+| **day_adverse** | **−0.48** | 0.52 | 0.9× | **inside noise — no effect** |
+| dawndusk | +0.06 | 0.27 | 0.2× | inside noise |
+
+mAP75 says the same thing louder: night −3.32 (floor 1.31), night_clear −2.90 (1.12),
+day −0.24 (0.56, inside noise).
+
+**So: T1 did not fail uniformly. Daytime is untouched — genuinely, measurably
+untouched — and every point of loss is concentrated at night and in snow.** That is a
+much sharper statement than "T1 scored 0.66 lower", and it is the one to write up.
+
+**What this still is not.** The floor is a *within-run* spread: four checkpoints, one
+seed, one data order. Between-seed variance includes head re-initialisation and
+different augmentation draws and is normally larger. So a delta that **fails** this test
+is definitely not a finding, while one that passes is *consistent with* being real
+rather than proven. Do not call this a seed study. §4.2 still stands; the repeated BASE
+run is still the thing that would settle it.
 
 **Candidate mechanism — inference, not measurement.** Two properties of the T1 setup
 would each predict damage concentrated in mAP75 and in the hardest slices:
@@ -373,6 +466,35 @@ Everything else — `cls` 0.7, `scale` 0.7, `translate` 0.15, `copy_paste` 0.2, 
 `mixup` 0.0 — is identical. Head-to-head on the test slices (2026-09-10; Set 2 via
 `eval_detections.py`, `set3_combined` via pycocotools, protocol-identical per §4.6):
 
+**Re-measured 2026-09-11** through `evaluation/score_slices.py`, both arms in one job,
+all 19 slices — so this no longer depends on two scripts agreeing. mAP50, `all`, with
+the T1 run's noise floor for scale:
+
+| slice | Set 2 | set3_combined | Δ (Set 2 −) | floor | |
+|---|---|---|---|---|---|
+| overall | **0.5521** | 0.5477 | +0.44 | 0.31 | weak |
+| day | **0.5497** | 0.5407 | +0.89 | 0.58 | weak |
+| **night** | 0.5558 | **0.5625** | −0.67 | 0.36 | holds |
+| **night_clear** | 0.5579 | **0.5655** | −0.75 | 0.46 | holds |
+| **snowy** | 0.4694 | **0.4813** | −1.18 | 0.65 | holds |
+| dawndusk | 0.5702 | **0.5739** | −0.37 | 0.27 | weak |
+| clear | 0.5507 | **0.5539** | −0.33 | 0.31 | inside noise |
+| rainy | **0.5740** | 0.5503 | +2.37 | 0.10–0.39 | holds |
+| adverse | **0.5215** | 0.5175 | +0.40 | 0.23 | weak |
+| night_adverse | **0.5458** | 0.5423 | +0.36 | 2.18 | inside noise |
+| day_adverse | **0.5289** | 0.5262 | +0.27 | 0.52 | inside noise |
+
+**The split is clean and it runs along exactly the axis this project is scoped on.**
+Set 2 is ahead in **daylight** (+0.89) and **rain** (+2.37). `set3_combined` is ahead at
+**night** (−0.67), **night_clear** (−0.75) and in **snow** (−1.18), each clearing the
+floor. Overall (+0.44 to Set 2) is weak and is the average of those opposing effects, so
+it is the least informative number in the table — which is why picking a recipe on
+`overall` would have been the wrong call.
+
+For a night-and-adverse-conditions study, `set3_combined` is the right recipe on the
+measurement, not merely on the inertia. (Earlier per-class decomposition, from the
+2026-09-10 two-script comparison, is retained below.)
+
 | slice | Set 2 | set3_combined | Δ |
 |---|---|---|---|
 | overall mAP50 | **0.5521** | 0.5478 | −0.44 |
@@ -425,10 +547,16 @@ the test set.
    which the runbook reserves for final scoring. **Every** `test.txt` number in this project
    — including the JEPA arms — carries the same optimistic bias. It is identical across
    arms, so *between-arm deltas remain fair*; absolute numbers do not. Say this explicitly.
-2. **n = 1 per arm.** Seed variance is unquantified, and the augmentation ablation's spread
-   on `all` rows was ±1 point. One repeated BASE run at a different seed would establish the
-   noise floor and settle whether a 1-point JEPA gain means anything. One night of GPU time;
-   the cheapest credibility available.
+2. **n = 1 per arm — PARTIALLY ADDRESSED 2026-09-11, still open.** A *within-run* floor
+   now exists, from four checkpoints of the same `t1_jepa_100` run (§2.5.1): roughly
+   **0.3 points on the large slices**, rising to 2.2 on `night_adverse` (566 images).
+   That is enough to rule deltas out, and it retired several apparent effects (day,
+   day_adverse, dawndusk all fell inside it). **It is a lower bound, not the noise
+   floor.** Between-seed variance also includes head re-initialisation, augmentation
+   draws and data order, and is normally larger. A repeated BASE run at a different seed
+   is still the only thing that converts "consistent with real" into "real" — one night
+   of GPU time, still the cheapest credibility available. Until then, no JEPA claim
+   should rest on a delta below ~2× the within-run floor.
 3. **T1 vs T2 confounds scale with domain.** ViT-H/14 (630M, ImageNet) vs ViT-B/16 (86M,
    BDD). Cannot be fixed within budget. Disclose.
 4. **T2 will be data-starved and there is no warm start.** Meta released I-JEPA weights only
@@ -468,58 +596,57 @@ the test set.
 ## 5. Current state and next steps
 
 **Done:** splits frozen · 19 test slices built and cross-verified · hyperparameter search ·
-four-arm augmentation ablation (closed, negative result) · JEPA code ported to YOLOv11 and
-verified · T1 distillation converged · `weights/init_t1.pt` grafted ·
-**`evaluation/score_slices.py` built and cross-validated against `eval_arm_coco.py` (§4.6)** ·
-**T1 fine-tuned and scored at 100% labels (§2.5)**.
+four-arm augmentation ablation (closed; negative on time-of-day, **positive on weather —
+§2.2.1**) · JEPA code ported to YOLOv11 · T1 distillation converged · `weights/init_t1.pt`
+grafted · `evaluation/score_slices.py` built and cross-validated (§4.6) · **T1 fine-tuned,
+scored, and adjudicated against a within-run noise floor (§2.5, §2.5.1)** · **recipe choice
+re-measured on one scorer (§3.11)** · **car day→night mAP75 confirmed constant across seven
+arms (§2.3)** · configs for closed lines archived to `configs/archive/`.
 
 **Deliverable being built — one table:**
 
 | arm (backbone init) | 100% labels | 10% labels |
 |---|---|---|
-| BASE — COCO `yolo11s.pt` | ✅ done | ⬜ |
-| T1 — I-JEPA ViT-H/14 distilled into a **random-init** student | ✅ done — §2.5 | ⬜ |
+| BASE — COCO `yolo11s.pt` | ✅ done (teammate's run, sha256 `f684bc11…7ff2`) | ⬜ **next** |
+| T1 — I-JEPA ViT-H/14 → **random-init** student | ✅ done — §2.5, loses at night | ⬜ **next** |
 | T1b — same teacher, **COCO-init** student (§3.10) | ⬜ not started | ⬜ |
-| T2 — I-JEPA ViT-B/16 pretrained on BDD, distilled | ⬜ not started | ⬜ |
-
-Scored on: overall · day · night · dawndusk · clear · rainy · snowy · adverse ·
-night_adverse · day_adverse · night_clear. Plus **car day→night mAP75 for every arm**.
+| T2 — I-JEPA ViT-B/16 pretrained on BDD | ⬜ not started | ⬜ |
 
 ### Immediate order
 
-**Free — no GPU training required:**
+**Blocking the 10% grid — do these first, both cheap:**
 
-1. `sha256sum weights/external/base_100_friend.pt`, and diff its `args.yaml` against the
-   T1 run's. Record both in §2.5.
-2. **Get a noise floor out of work already done.** Score `last.pt` alongside `best.pt`
-   for both arms in one `score_slices.py` call — the within-arm best/last gap bounds run
-   variance. Then read the last 20 rows of each `results.csv`: post-`close_mosaic`
-   epoch-to-epoch val fluctuation is a second free estimate. **§2.5's verdict depends on
-   this**, and it costs inference time only.
-3. Copy `results.csv` and `args.yaml` for `t1_jepa_100` into the tracked `results/`
-   directory — `runs/` is gitignored and `exist_ok: true` will overwrite it (§3.9).
-4. Count test images with more than 100 GT boxes (§4.8).
+1. Confirm `warmup_bias_lr` in ultralytics' `build_optimizer` auto branch. `set3_combined_10.yaml`
+   pins it to 0.0 on the strength of §3.5; if the source disagrees, fix the recipe before
+   burning a night on `base_10`.
+2. Smoke-test the optimizer pin: `configs/hyp/set3_combined_10_smoke.yaml`, 2 epochs. At
+   ~190 iterations `auto` would fall through to AdamW, so a log line reading **MuSGD**
+   proves the pin holds at 100 epochs too.
 
-**Cheap — about one night of shared A40 in total:**
+**The 10% grid (~1 night total) — now the core of the deliverable.** T1 lost at 100%
+labels where the labels are plentiful enough to overwrite the initialisation. The 10%
+column is the condition under which self-supervised pretraining is supposed to pay, and
+it is the remaining chance for a positive JEPA result.
 
-5. **Pin the optimizer explicitly (§3.5) before anything else in this block.**
-   `train_10.txt` works out to 9,500 iterations, below ultralytics' 10,000 threshold, so
-   `optimizer: auto` silently switches to AdamW and the label-fraction column would be
-   comparing optimizers instead of label fractions.
-6. Create `configs/data/bdd100k_vehicle5_10.yaml` (`train: splits/train_10.txt`). **It
-   does not exist yet and it blocks every 10% run.**
-7. Run `base_10` and `t1_jepa_10` (~3–4 h each) and score both.
+3. `base_10`, then `t1_jepa_10`, ~3–4 h each, then score both **together with `base_100`
+   and `t1_best` in one `score_slices.py` job** so all four columns share a protocol.
 
-**The fork — decide with the 10% numbers in hand.** T2 (the stated contribution;
-~15 h pretrain + ~1 h distill + ~2 nights fine-tune) or T1b (§3.10; ~3.7 h distill +
-~2 nights). There is not budget for both plus the 10% grid.
+**Then the fork, decided on the 10% numbers:** T2 (~15 h pretrain + ~1 h distill +
+~2 nights) or T1b (§3.10, ~3.7 h distill + ~2 nights). Not both, plus the grid.
 
-**Note on expectations, restated after §2.5.** BASE at 100% labels was already hard to
-beat, and T1 did not beat it. The 10% column is where self-supervised pretraining
-reliably shows its gain, which makes it the **core** of the deliverable now rather than
-an extension.
+**Cheap and still outstanding:**
 
-**Still open, and still the strongest result in the study:** the −9.7 car day→night
-mAP75 collapse. Five training-data recipes and one backbone initialisation have failed
-to move it. `imgsz: 768` is the untried resolution lever (§2.3), and it is now the most
-likely source of a positive finding if budget allows one more BASE run.
+4. Count test images with >100 GT boxes (§4.8).
+5. Copy `results.csv` / `args.yaml` of every run into tracked `results/runs/<name>/` — `runs/`
+   is gitignored and `exist_ok: true` overwrites silently (§3.9).
+6. M1 and M2 have **no run directory on this server**; like BASE they came from elsewhere.
+   §2.2 is a four-arm comparison with only two arms on local disk. Establish and record
+   their provenance before the write-up leans on them.
+
+**The seed repeat (§4.2) is now the highest-value single run in the project.** Every
+verdict in §2.5.1 and §3.11 rests on a within-run lower bound. One night converts them
+from "consistent with real" to "real".
+
+**Still open, and still the strongest result:** the −9.7 car day→night mAP75 collapse,
+now unmoved across seven arms spanning 0.39 points (§2.3). `imgsz: 768` is the one lever
+never tried.

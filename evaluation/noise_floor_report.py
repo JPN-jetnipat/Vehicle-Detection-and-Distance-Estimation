@@ -63,7 +63,12 @@ def load(csv_path):
             v = r["value"]
             d[r["arm"]][r["slice"]][r["class"]][r["metric"]] = (
                 None if v in ("", "None") else float(v))
-            meta[r["slice"]] = (int(r["n_images"]), r["reportable"] == "True")
+            # Only the class=='all' rows carry the SLICE-level reportable flag.
+            # Per-class rows AND it with the >=800-instance rule, so reading them
+            # here made every slice inherit the last class's flag (bike, almost
+            # always under 800) and flagged even `overall` as too few images.
+            if r["class"] == "all":
+                meta[r["slice"]] = (int(r["n_images"]), r["reportable"] == "True")
     return d, meta
 
 
@@ -118,14 +123,23 @@ def main():
             tight_pts = tight * 100 if tight is not None else None
             wide_pts = wide * 100 if wide is not None else None
 
-            if tight_pts is None:
+            # The floor is a LOWER bound on true noise, so clearing it by a hair
+            # is not enough. Ratio bands, not a threshold:
+            #   <=1x   inside noise, not a finding
+            #   1-2x   weak - would not survive a real seed study
+            #   2-4x   holds
+            #   >4x    holds clearly
+            ratio = (abs(delta) / tight_pts) if tight_pts else None
+            if ratio is None:
                 verdict = "n/a"
-            elif abs(delta) <= tight_pts:
+            elif ratio <= 1.0:
                 verdict = "INSIDE noise - not a finding"
-            elif wide_pts is not None and abs(delta) <= wide_pts:
-                verdict = "marginal - inside the wider spread"
+            elif ratio <= 2.0:
+                verdict = f"WEAK ({ratio:.1f}x floor) - do not headline"
+            elif ratio <= 4.0:
+                verdict = f"holds ({ratio:.1f}x floor)"
             else:
-                verdict = "outside noise - survives (tentatively)"
+                verdict = f"HOLDS CLEARLY ({ratio:.1f}x floor)"
 
             n_img, reportable = meta[sl]
             flag = "" if reportable else "  [too few images]"
