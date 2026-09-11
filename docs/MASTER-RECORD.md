@@ -215,6 +215,31 @@ for weather. It is an observation that reframes a closed line, not a new result.
 **This does not reopen the augmentation line for the JEPA deliverable** — scope is still
 night — but it is the most interesting thing in §2.2 and belongs in the write-up.
 
+#### The prediction that would confirm or kill this — registered 2026-09-11, before the data
+
+M3 = low-light copies **and** IRFS oversampling, so its weather gain could come from
+either. M1 and M2 separate them, and they have never been scored on the weather slices.
+Stating the outcome in advance, so this is a test and not a story fitted after the fact:
+
+| arm | what it isolates | **prediction if the degradation-augmentation reading is right** |
+|---|---|---|
+| **M1** (low-light only) | the transform | **should show the `day_adverse` / `snowy` / `adverse` gains** |
+| **M2** (IRFS only) | the oversampling | **should NOT show them** |
+
+**If M2 shows the gains too, the mechanism above is wrong** — the effect would be coming
+from rare-class oversampling, not from the transform — and §2.2.1's reframing must be
+retracted, not reworded. If M1 shows them and M2 does not, the reading is supported and
+can be stated as a mechanism rather than a reading.
+
+Cost: one `score_slices.py` job, ~40 min, no training. **Blocker:** neither M1 nor M2 has
+a run directory on this server (§5) — both came from the teammate, like BASE. Request
+`best.pt` for each, and confirm which data config each used rather than assuming M1 is
+low-light-only and M2 is IRFS-only.
+
+**If the weights cannot be obtained:** say in §2.2 that M1/M2 numbers are reported from
+the teammate's scoring and were never re-verified on this scorer, and keep §2.2.1's
+weather claim scoped to M3 alone. Weaker, but honest, and it costs nothing.
+
 ### 2.3 The finding that motivates the JEPA phase
 
 Car day → night, **mAP75** (47,715 / 35,439 instances):
@@ -389,13 +414,45 @@ attention block YOLOv5 didn't have; it sits after the tap and is COCO-initialize
 arms, so it is not part of what JEPA touches.**
 
 ### 3.5 Why the optimizer is pinned
-`optimizer: auto` in ultralytics 8.4.x selects MuSGD, momentum 0.9, warmup_bias_lr 0.0
-whenever iterations > 10,000 — not the SGD/0.937/0.1 printed as defaults. Every arm so far
-ran MuSGD without that being an explicit choice. **The knock-on that matters: the threshold
-is on iterations, not epochs.** `train_10.txt` (6,019 images) at 100 epochs = 9,500
-iterations, *below* the threshold, so on `auto` a 10%-label arm silently trains with AdamW
-at a different LR. **A label-fraction ablation left on `auto` would compare optimizers, not
-label fractions.** Pin it explicitly before running the 10% grid.
+**Verified at source level 2026-09-11**, not inferred. `BaseTrainer.build_optimizer`
+in the installed ultralytics 8.4.120:
+
+```python
+# engine/trainer.py:1120-1122
+lr_fit = round(0.002 * 5 / (4 + nc), 6)
+name, lr, momentum = ("MuSGD", 0.01, 0.9) if iterations > 10000 else ("AdamW", lr_fit, 0.9)
+self.args.warmup_bias_lr = 0.0
+```
+
+So `optimizer: auto` selects **MuSGD, lr0 0.01, momentum 0.9, warmup_bias_lr 0.0** when
+iterations > 10,000 — not the SGD / 0.937 / 0.1 printed as the yaml defaults. Every arm so
+far ran MuSGD without that ever being an explicit choice. Confirmed against
+`t1_jepa_100.log`: `optimizer: MuSGD(lr=0.01, momentum=0.9)`.
+
+**The knock-on that matters: the threshold is on iterations, not epochs**, and iterations
+use `nbs=64`, not `batch`:
+
+    iterations = ceil(N_images / max(batch, nbs=64)) x epochs
+
+| arm | images | iterations | `auto` picks | lr0 |
+|---|---|---|---|---|
+| 100% labels | 60,186 | ceil(60186/64)×100 = **94,100** | MuSGD | **0.01** |
+| 10% labels | 6,019 | ceil(6019/64)×100 = **9,500** | **AdamW** | **0.001111** |
+
+`lr_fit` at nc=5 is `0.002 × 5 / 9 = 0.001111`. So an unpinned 10% arm would have trained
+with **a different optimizer at a 9× lower learning rate** — and `warmup_bias_lr` would
+still have been forced to 0.0, so that one value is safe either way. **A label-fraction
+ablation left on `auto` would have compared optimizers, not label fractions**, and the
+BASE@100 → BASE@10 drop would have been uninterpretable.
+
+**Resolution:** `configs/hyp/set3_combined_10.yaml` pins `optimizer: MuSGD`, `lr0: 0.01`,
+`momentum: 0.9`, `warmup_bias_lr: 0.0` — all four now confirmed against the source above.
+`configs/hyp/set3_combined.yaml` is deliberately left on `auto` so the completed 100%
+arms keep a byte-identical recipe file; at 94,100 iterations `auto` resolves to exactly
+the pinned values, so the two columns are comparable.
+**Smoke-tested 2026-09-11:** the pinned recipe at 2 epochs (~190 iterations, deep in
+AdamW territory) printed `MuSGD(lr=0.01, momentum=0.9)` with parameter groups 81/88/87,
+identical to the 100% runs. The pin holds.
 
 ### 3.6 Why 30 distillation epochs
 **Honest provenance: a budget default**, carried from the archived project's
@@ -616,12 +673,13 @@ arms (§2.3)** · configs for closed lines archived to `configs/archive/`.
 
 **Blocking the 10% grid — do these first, both cheap:**
 
-1. Confirm `warmup_bias_lr` in ultralytics' `build_optimizer` auto branch. `set3_combined_10.yaml`
-   pins it to 0.0 on the strength of §3.5; if the source disagrees, fix the recipe before
-   burning a night on `base_10`.
-2. Smoke-test the optimizer pin: `configs/hyp/set3_combined_10_smoke.yaml`, 2 epochs. At
-   ~190 iterations `auto` would fall through to AdamW, so a log line reading **MuSGD**
-   proves the pin holds at 100 epochs too.
+1. ✅ **Done 2026-09-11.** All four pinned optimizer values verified against
+   `engine/trainer.py:1120-1122` — see §3.5. `set3_combined_10.yaml` is correct as written.
+2. ✅ **Done 2026-09-11.** Optimizer pin smoke-tested on `configs/hyp/set3_combined_10_smoke.yaml`:
+   printed `MuSGD(lr=0.01, momentum=0.9)` with parameter groups 81/88/87 — byte-identical
+   to what `auto` produced at 100% labels, at an iteration count (~190) where `auto` would
+   have fallen through to AdamW. The pin holds. `MuSGD` is a recognised optimizer name in
+   this build.
 
 **The 10% grid (~1 night total) — now the core of the deliverable.** T1 lost at 100%
 labels where the labels are plentiful enough to overwrite the initialisation. The 10%
