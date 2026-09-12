@@ -25,9 +25,14 @@ arm, identically. It is not part of what JEPA touches.
   "random" (default, matches the signed-off design) - backbone starts from
       scratch, so the fine-tuned backbone's initialization is purely
       JEPA-derived and the arm is a clean contrast with COCO init.
-  "coco" - start the student from yolo11s.pt before distilling. Cheaper to
-      converge, but the resulting arm is "COCO then JEPA", not "JEPA", and
-      must be labelled that way in the table.
+  "coco" - start the student from yolo11s.pt before distilling, so the arm is
+      "COCO PLUS JEPA", not "JEPA INSTEAD OF COCO". Used by the T1b arm
+      (configs/jepa/distill_t1b.yaml) to separate "the I-JEPA features are
+      unhelpful" from "discarding COCO is what hurt" - see
+      docs/MASTER-RECORD.md 3.10 and 2.6. Only layers 0..P4_LAYER are
+      transferred; everything past the tap is discarded, and the graft at
+      tools/make_init_weights.py supplies COCO weights there in every arm.
+      Label it T1b in the table, never T1.
 """
 import torch
 import torch.nn as nn
@@ -44,11 +49,52 @@ class BackboneStudent(nn.Module):
 
         full = DetectionModel(cfg=model_yaml, ch=3, nc=nc, verbose=False)
         if student_init == "coco":
-            from ultralytics.nn.tasks import attempt_load_one_weight
-            coco, _ = attempt_load_one_weight("yolo11s.pt")
-            transferred = full.load_state_dict(coco.state_dict(), strict=False)
-            print(f"student_init=coco: missing={len(transferred.missing_keys)} "
-                  f"unexpected={len(transferred.unexpected_keys)}")
+            # ---------------------------------------------------------------
+            # REWRITTEN 2026-09-12. This branch was dead code until the T1b arm
+            # needed it - T1 ran student_init: random - and it contained two
+            # bugs, both of which only surfaced the first time it executed:
+            #
+            #   1. `from ultralytics.nn.tasks import attempt_load_one_weight`
+            #      ImportError on ultralytics 8.4.120; that symbol is gone.
+            #      Now uses the public YOLO() entry point, the same one
+            #      tools/make_init_weights.py and tools/train_yolo.py use.
+            #
+            #   2. It loaded the ENTIRE COCO state dict into an nc=5 model.
+            #      torch's load_state_dict raises on a size mismatch even with
+            #      strict=False, and the COCO head is nc=80, so this would have
+            #      thrown regardless of (1). Only layers 0..P4_LAYER are loaded
+            #      now - everything past the tap is discarded two lines below
+            #      anyway, and the backbone's shapes do not depend on nc.
+            # ---------------------------------------------------------------
+            from ultralytics import YOLO
+
+            backbone_prefixes = tuple(f"model.{i}." for i in range(P4_LAYER + 1))
+            coco_sd = YOLO("yolo11s.pt").model.state_dict()
+            sub = {k: v for k, v in coco_sd.items() if k.startswith(backbone_prefixes)}
+            if not sub:
+                raise RuntimeError(
+                    "student_init=coco: yolo11s.pt yielded no tensors for layers "
+                    f"0-{P4_LAYER}. Key naming has changed; inspect "
+                    "YOLO('yolo11s.pt').model.state_dict().keys() before proceeding.")
+
+            report = full.load_state_dict(sub, strict=False)
+
+            # Verify bit-exactly rather than trusting the load. A silent failure
+            # here produces an arm that is T1 wearing a different name: the
+            # distillation would run, the loss would fall, the graft would pass
+            # --verify, and a day of GPU time would answer no question at all.
+            # Same discipline as tools/make_init_weights.py --verify.
+            full_sd = full.state_dict()
+            bad = [k for k in sub
+                   if k not in full_sd or not torch.equal(full_sd[k], sub[k])]
+            if bad or report.unexpected_keys:
+                raise RuntimeError(
+                    f"student_init=coco did NOT populate the distilled layers: "
+                    f"{len(bad)} of {len(sub)} tensors in layers 0-{P4_LAYER} differ "
+                    f"from yolo11s.pt, {len(report.unexpected_keys)} unexpected. "
+                    f"First few bad: {bad[:5]}. Refusing to run.")
+            print(f"student_init=coco: layers 0-{P4_LAYER} loaded from yolo11s.pt, "
+                  f"{len(sub)}/{len(sub)} tensors verified bit-exact")
         elif student_init != "random":
             raise ValueError(f"student_init must be 'random' or 'coco', got {student_init!r}")
 
