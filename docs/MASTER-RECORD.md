@@ -1,6 +1,6 @@
 # Master record — nighttime / adverse-environment vehicle detection
 
-**Owner:** Kanade · **Last updated:** 2026-09-11
+**Owner:** Kanade · **Last updated:** 2026-09-12
 **Purpose:** the single ordered record of what was run, what was found, why each choice
 was made, and how to defend it. Other project docs hold the detail; this one holds the
 argument. If a claim isn't in here with its defence, don't put it in the write-up.
@@ -383,6 +383,87 @@ Both are consistent with the table; neither is tested. §5 says what would test 
 
 ---
 
+### 2.6 The label-fraction grid — JEPA's best case, and it lost worse (2026-09-12)
+
+`base_10` and `t1_jepa_10` on `splits/train_10.txt` (6,019 images), optimizer pinned
+(§3.5), all four arms scored in **one** `score_slices.py` job.
+
+**The comparison that matters is `t1_10` vs `base_10`** — not against `base_100`, which
+is what the tool's delta column prints.
+
+| slice | T1 − BASE @100% | T1 − BASE @10% | gap widened by | cost of dropping to 10% labels |
+|---|---|---|---|---|
+| overall | −0.65 | **−3.29** | −2.64 | −11.15 |
+| day | −0.19 | **−2.76** | −2.57 | −10.59 |
+| **night** | −2.26 | **−4.40** | −2.14 | −12.02 |
+| dawndusk | +0.06 | **−5.17** | −5.23 | −11.83 |
+| clear | −0.95 | −2.22 | −1.27 | −12.38 |
+| rainy | +0.71 | **−5.40** | −6.11 | −8.55 |
+| snowy | −3.17 | −2.76 | +0.41 | −9.27 |
+| adverse | −0.84 | **−4.94** | −4.10 | −8.65 |
+| **night_adverse** | −3.57 | **−9.34** | −5.77 | −9.61 |
+| day_adverse | −0.49 | −1.43 | −0.94 | −8.77 |
+| night_clear | −2.10 | −3.11 | −1.01 | −12.13 |
+
+Consistent with the training logs' own val numbers (`splits/val.txt`, `all` mAP50):
+`base_10` **0.485**, `t1_jepa_10` **0.447**.
+
+**This was JEPA's best case and it is the worst result in the study.** §5 predicted the
+10% column as the place self-supervised pretraining reliably pays: with 6,019 labels the
+supervision can no longer overwrite whatever the backbone started as, so initialisation
+quality should dominate. It does dominate — in the wrong direction. T1's deficit grows
+**5× overall** (−0.65 → −3.29) and **2× at night** (−2.26 → −4.40), and `day`, which was
+inside the noise floor at 100% labels, becomes a clear −2.76 loss.
+
+**What this licenses saying — and what it does not.**
+
+✅ *"A YOLOv11s backbone initialised by distilling Meta's I-JEPA ViT-H/14 into a
+randomly-initialised student is a worse starting point for BDD100K vehicle detection than
+COCO pretraining, and the disadvantage grows as labelled data becomes scarce."*
+
+❌ *"JEPA does not work for vehicle detection."* T1 replaces COCO rather than adding to it
+(`student_init: random`, §3.10). The widening-with-scarcity pattern is the textbook
+signature of **a worse initialisation**, not of a useless objective: at 60k labels
+fine-tuning can repair what the backbone lacks, at 6k it cannot. Nothing here separates
+"the I-JEPA features are bad" from "not having COCO is bad" — **T1b is exactly that
+experiment**, and this result promotes it from optional to the single most informative
+run left (§5).
+
+**Caveat carried forward.** The noise floor in §2.5.1 was measured on the `t1_jepa_100`
+run. A 10%-label run trains on a tenth of the data and should be *more* variable, so that
+floor is not transferable. `t1_jepa_10` has its own `epoch80/90/best/last` checkpoints;
+measuring a 10%-specific floor costs ~30 min of scoring and no training, and should be
+done before §2.6 is quoted in the write-up. That said, −3.29 and −9.34 are far outside
+any plausible floor — the conclusion is not in doubt, only its stated precision.
+
+### 2.6.1 A cleaner invariant than −9.7: the night/day mAP75 **ratio**
+
+§2.3 reported the car day→night mAP75 gap as constant near −9.7 across seven arms. The
+10% arms show that framing was slightly wrong — the *absolute* gap shrinks when overall
+performance falls:
+
+| arm | day | night | absolute Δ | **night/day ratio** |
+|---|---|---|---|---|
+| base_100 | 0.5076 | 0.4105 | −9.71 | **0.809** |
+| t1_100 | 0.5061 | 0.4102 | −9.59 | **0.811** |
+| base_10 | 0.4571 | 0.3742 | −8.29 | **0.819** |
+| t1_10 | 0.4499 | 0.3687 | −8.12 | **0.820** |
+
+The absolute delta moves 1.6 points between label fractions; **the ratio moves 0.011.**
+Night mAP75 is ~81% of day mAP75 regardless of arm *or* label fraction — across four
+training pools, two hyperparameter recipes, two backbone initialisations and a 10×
+change in labelled data.
+
+**Report the ratio, not the absolute delta.** The absolute gap compresses toward zero as
+performance drops, so it is partly an artefact of scale; the ratio is not. This is the
+most robust quantity the project has produced and it is the right anchor for the
+write-up. It also sharpens the claim: night degradation is **multiplicative**, which is
+what one expects from a sensing/resolution limit rather than from a data-distribution or
+initialisation problem — and it is consistent with every intervention tried so far
+failing to move it.
+
+---
+
 ## 3. Decisions and how to defend each one
 
 ### 3.1 Why JEPA at all
@@ -652,59 +733,79 @@ the test set.
 
 ## 5. Current state and next steps
 
-**Done:** splits frozen · 19 test slices built and cross-verified · hyperparameter search ·
-four-arm augmentation ablation (closed; negative on time-of-day, **positive on weather —
-§2.2.1**) · JEPA code ported to YOLOv11 · T1 distillation converged · `weights/init_t1.pt`
-grafted · `evaluation/score_slices.py` built and cross-validated (§4.6) · **T1 fine-tuned,
-scored, and adjudicated against a within-run noise floor (§2.5, §2.5.1)** · **recipe choice
-re-measured on one scorer (§3.11)** · **car day→night mAP75 confirmed constant across seven
-arms (§2.3)** · configs for closed lines archived to `configs/archive/`.
-
-**Deliverable being built — one table:**
+**Done:** splits frozen · 19 slices built and cross-verified · hyperparameter search ·
+augmentation ablation (negative on time-of-day, **positive on weather — §2.2.1**) · JEPA
+ported to YOLOv11 · T1 distilled, grafted, fine-tuned and scored at **both** label
+fractions · noise floor established without extra training (§2.5.1) · recipe choice
+re-measured on one scorer (§3.11) · optimizer pin source-verified (§3.5) · **the
+night/day mAP75 ratio identified as the project's most robust invariant (§2.6.1)** ·
+configs for closed lines archived.
 
 | arm (backbone init) | 100% labels | 10% labels |
 |---|---|---|
-| BASE — COCO `yolo11s.pt` | ✅ done (teammate's run, sha256 `f684bc11…7ff2`) | ⬜ **next** |
-| T1 — I-JEPA ViT-H/14 → **random-init** student | ✅ done — §2.5, loses at night | ⬜ **next** |
-| T1b — same teacher, **COCO-init** student (§3.10) | ⬜ not started | ⬜ |
-| T2 — I-JEPA ViT-B/16 pretrained on BDD | ⬜ not started | ⬜ |
+| BASE — COCO `yolo11s.pt` | ✅ 0.5477 | ✅ 0.4362 |
+| T1 — I-JEPA ViT-H/14 → **random-init** student | ✅ 0.5412 (−0.65) | ✅ 0.4033 (**−3.29**) |
+| **T1b — same teacher, COCO-init student (§3.10)** | ⬜ | ⬜ **← do this next** |
+| T2 — I-JEPA ViT-B/16 pretrained on BDD | ⬜ | ⬜ |
+
+### The fork is decided: T1b before T2
+
+The 10% grid was the condition most favourable to self-supervised pretraining and T1 lost
+there by 5× its 100% margin (§2.6). The pattern — deficit widening as labels grow scarce
+— is the signature of **a worse initialisation**, and T1's backbone is the only one in
+the study that never saw COCO. Three reasons T1b now outranks T2:
+
+1. **It tests the actual hypothesis.** T1b (`student_init: coco`) separates "the I-JEPA
+   features are unhelpful" from "not having COCO is harmful". Nothing else does.
+2. **T2 inherits the same design.** `configs/jepa/distill_t2.yaml` also uses a
+   random-init student. If random-init is what sank T1, T2 fails identically and 10–15 h
+   of Stage-1 pretraining is spent proving it twice.
+3. **It is cheaper**, and a positive T1b is the only path left to a *positive* JEPA
+   result: "JEPA refines COCO features" is a defensible contribution; "JEPA replaces COCO
+   badly" is already established.
+
+**Run T1b at 10% labels FIRST.** §2.6 shows the initialisation effect is ~5× larger at
+10% than at 100%, so the 10% column is both the most sensitive test and the cheapest:
+~3.7 h distillation + ~4 h fine-tune = one day, versus two nights at 100%. Only if
+T1b@10% beats T1@10% materially is the 100% run worth booking.
 
 ### Immediate order
 
-**Blocking the 10% grid — do these first, both cheap:**
+1. **Measure a 10%-specific noise floor** (~30 min, no training). §2.5.1's floor came
+   from the 100% run and does not transfer. `t1_jepa_10` has its own
+   `epoch80/90/best/last`; strip and score them exactly as before. Do this before
+   quoting §2.6.
+2. **T1b:** set `student_init: coco` in a **new** config (`configs/jepa/distill_t1b.yaml`
+   — do not edit `distill_t1.yaml`, T1's provenance depends on it), distil, graft to
+   `weights/init_t1b.pt`, `--verify`, then fine-tune at 10% labels as `t1b_jepa_10`.
+3. **Seed repeat of BASE@100** — still the highest-value single night. Every verdict in
+   §2.5.1 and §3.11 rests on a within-run lower bound.
+4. **M1 / M2 weights from the teammate** — the §2.2.1 prediction is registered and
+   waiting. ~40 min of scoring once they arrive.
+5. Copy every run's `results.csv` / `args.yaml` into tracked `results/runs/<name>/`
+   (§3.9), and count test images with >100 GT boxes (§4.8).
 
-1. ✅ **Done 2026-09-11.** All four pinned optimizer values verified against
-   `engine/trainer.py:1120-1122` — see §3.5. `set3_combined_10.yaml` is correct as written.
-2. ✅ **Done 2026-09-11.** Optimizer pin smoke-tested on `configs/hyp/set3_combined_10_smoke.yaml`:
-   printed `MuSGD(lr=0.01, momentum=0.9)` with parameter groups 81/88/87 — byte-identical
-   to what `auto` produced at 100% labels, at an iteration count (~190) where `auto` would
-   have fallen through to AdamW. The pin holds. `MuSGD` is a recognised optimizer name in
-   this build.
+### ⚠️ Server housekeeping — checked 2026-09-12
 
-**The 10% grid (~1 night total) — now the core of the deliverable.** T1 lost at 100%
-labels where the labels are plentiful enough to overwrite the initialisation. The 10%
-column is the condition under which self-supervised pretraining is supposed to pay, and
-it is the remaining chance for a positive JEPA result.
+- **Disk at 98% (24 GB free).** T2's Stage-1 pretraining and its checkpoints will not
+  fit comfortably. Clear space before any T2 decision; `runs/detect/*/weights/epoch*.pt`
+  are ~57 MB each and several arms hold ten apiece.
+- **The A40 is shared and contended** — a co-tenant VLLM process was holding 38 GB and
+  100% utilisation during these runs. `base_10` took 7.7 h and `t1_jepa_10` 4.1 h for
+  identical workloads; **that difference is contention, not a property of either arm.**
+  Never quote wall-clock as a result.
+- Host RAM is under pressure (17 GB of swap in use). Keep `workers: 2` / `cache: false`.
 
-3. `base_10`, then `t1_jepa_10`, ~3–4 h each, then score both **together with `base_100`
-   and `t1_best` in one `score_slices.py` job** so all four columns share a protocol.
+### What the deliverable actually is now
 
-**Then the fork, decided on the 10% numbers:** T2 (~15 h pretrain + ~1 h distill +
-~2 nights) or T1b (§3.10, ~3.7 h distill + ~2 nights). Not both, plus the grid.
+An honest, well-instrumented negative result with one robust positive finding:
 
-**Cheap and still outstanding:**
-
-4. Count test images with >100 GT boxes (§4.8).
-5. Copy `results.csv` / `args.yaml` of every run into tracked `results/runs/<name>/` — `runs/`
-   is gitignored and `exist_ok: true` overwrites silently (§3.9).
-6. M1 and M2 have **no run directory on this server**; like BASE they came from elsewhere.
-   §2.2 is a four-arm comparison with only two arms on local disk. Establish and record
-   their provenance before the write-up leans on them.
-
-**The seed repeat (§4.2) is now the highest-value single run in the project.** Every
-verdict in §2.5.1 and §3.11 rests on a within-run lower bound. One night converts them
-from "consistent with real" to "real".
-
-**Still open, and still the strongest result:** the −9.7 car day→night mAP75 collapse,
-now unmoved across seven arms spanning 0.39 points (§2.3). `imgsz: 768` is the one lever
-never tried.
+1. Night localization degrades **multiplicatively** — night mAP75 ≈ 0.81 × day mAP75 —
+   and that ratio is invariant across four training pools, two recipes, two backbone
+   initialisations and a 10× change in labelled data (§2.6.1).
+2. Data-side interventions do not move it (§2.2), though the low-light transform turns
+   out to help *daytime adverse weather* (§2.2.1).
+3. A representation-side intervention does not move it either, and replacing COCO with
+   distilled I-JEPA actively hurts, increasingly so as labels grow scarce (§2.5, §2.6).
+4. Untested levers, in order of promise: **T1b** (JEPA *plus* COCO), then **`imgsz: 768`**
+   — a resolution lever, which is what §2.6.1's multiplicative signature points at.
