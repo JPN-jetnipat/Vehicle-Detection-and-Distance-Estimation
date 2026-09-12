@@ -1,0 +1,89 @@
+# Stage 2, T1b arm: IDENTICAL to distill_t1.yaml except `student_init: coco`.
+#
+# WHY THIS ARM EXISTS
+# -------------------
+# T1 lost to BASE at both label fractions, and the deficit WIDENED as labels grew
+# scarce (MASTER-RECORD.md 2.5.1, 2.6, 2.6.2):
+#
+#     overall mAP50, T1 - BASE:   100% labels  -0.65      10% labels  -3.29
+#     night   mAP50, T1 - BASE:   100% labels  -2.26      10% labels  -4.40
+#
+# Widening-with-scarcity is the signature of a WORSE INITIALISATION, not of a useless
+# objective: at 60,186 labels fine-tuning can repair what the backbone lacks; at 6,019
+# it cannot. And T1's layers 0-6 are the only backbone in the study that never saw COCO
+# - `student_init: random` makes T1 "JEPA INSTEAD OF COCO", not "COCO PLUS JEPA".
+#
+# That leaves two hypotheses the T1 result cannot separate:
+#   (a) the distilled I-JEPA features are themselves unhelpful for this task
+#   (b) discarding COCO initialisation is what hurts, regardless of what replaces it
+#
+# T1b changes exactly one thing - the student starts from COCO weights and is then
+# refined by the distillation objective - so it separates them:
+#
+#   T1b ~ BASE or better  -> (b). JEPA can refine COCO features; the earlier loss was
+#                            the cost of throwing COCO away. This is the only remaining
+#                            path to a POSITIVE JEPA result in this project.
+#   T1b ~ T1 (still down) -> (a). The I-JEPA features actively conflict with what the
+#                            detector needs, and the JEPA line is closed with a clean,
+#                            two-arm negative result.
+#
+# Either outcome is publishable. That is what makes this the right next run.
+#
+# RUN IT AT 10% LABELS FIRST. 2.6.2 shows the initialisation effect is ~5x larger at
+# 10% than at 100%, so that column is simultaneously the most sensitive test and the
+# cheapest: ~3.7 h distill + ~4 h fine-tune = one day, vs two nights at 100%. Only
+# escalate to 100% labels if T1b@10% materially beats T1@10%.
+#
+# DO NOT EDIT distill_t1.yaml TO MAKE THIS ARM. T1's numbers in 2.5/2.6 depend on that
+# file staying byte-identical to what ran. This is a separate arm with its own run dir,
+# its own grafted weights (weights/init_t1b.pt) and its own --name.
+#
+# Commands:
+#   python jepa_distill/train_distill.py --config configs/jepa/distill_t1b.yaml --smoke
+#   nohup python jepa_distill/train_distill.py --config configs/jepa/distill_t1b.yaml \
+#       > distill_t1b.log 2>&1 &
+#   python tools/make_init_weights.py \
+#       --distilled runs_jepa/stage2/distill_t1b/backbone_distilled.pt \
+#       --base yolo11s.pt --out weights/init_t1b.pt
+#   python tools/make_init_weights.py \
+#       --distilled runs_jepa/stage2/distill_t1b/backbone_distilled.pt \
+#       --base yolo11s.pt --verify weights/init_t1b.pt      # expect 126/126
+#   nohup python tools/train_yolo.py --hyp configs/hyp/set3_combined_10.yaml \
+#       --data configs/data/bdd100k_vehicle5_10.yaml \
+#       --model weights/init_t1b.pt --name t1b_jepa_10 > t1b_jepa_10.log 2>&1 &
+#
+name: distill_t1b
+project: runs_jepa/stage2
+
+teacher:
+  kind: t2_ijepa            # IJepaCheckpointTeacher - reads the 'target_encoder' key
+  kwargs:
+    checkpoint: weights/IN1K-vit.h.14-300e.pth.tar
+    arch: vit_huge
+    patch_size: 14
+    image_size: 224         # -> 16x16 teacher grid, dim 1280, resized to the student's 14x14
+
+model_yaml: yolo11s.yaml
+nc: 5                       # only shapes the discarded head; the backbone is unaffected
+student_init: coco          # <-- THE ONLY DIFFERENCE FROM T1. Backbone starts from
+                            # yolo11s.pt COCO weights, then the distillation objective
+                            # refines them. Makes this arm "COCO PLUS JEPA".
+
+train_list: splits/pretrain.txt          # same 60,186 unlabeled images; val/test never
+images_dir: dataset/yolo/images/train
+attr_index: dataset/yolo/attr_index.json
+
+loss: cosine                # fallback: smooth_l1
+epochs: 30
+batch_size: 128             # effective = micro_batch x grad-accum
+micro_batch: 64
+lr: 1.0e-3
+lr_floor: 1.0e-5
+warmup_epochs: 3
+weight_decay: 0.05
+amp_dtype: bf16
+workers: 2
+seed: 0
+ckpt_every: 500
+probe_every: 5
+device: cuda:0

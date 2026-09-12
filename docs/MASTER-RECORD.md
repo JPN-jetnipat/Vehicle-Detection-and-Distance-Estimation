@@ -429,12 +429,10 @@ fine-tuning can repair what the backbone lacks, at 6k it cannot. Nothing here se
 experiment**, and this result promotes it from optional to the single most informative
 run left (§5).
 
-**Caveat carried forward.** The noise floor in §2.5.1 was measured on the `t1_jepa_100`
-run. A 10%-label run trains on a tenth of the data and should be *more* variable, so that
-floor is not transferable. `t1_jepa_10` has its own `epoch80/90/best/last` checkpoints;
-measuring a 10%-specific floor costs ~30 min of scoring and no training, and should be
-done before §2.6 is quoted in the write-up. That said, −3.29 and −9.34 are far outside
-any plausible floor — the conclusion is not in doubt, only its stated precision.
+**Caveat, now resolved — see §2.6.2, which corrects an overclaim made here.** The floor
+in §2.5.1 came from the `t1_jepa_100` run and does not transfer to a run trained on a
+tenth of the data. This section originally asserted that "−3.29 and −9.34 are far outside
+any plausible floor". **That was wrong**, and the measured 10% floor says so.
 
 ### 2.6.1 A cleaner invariant than −9.7: the night/day mAP75 **ratio**
 
@@ -454,13 +452,81 @@ Night mAP75 is ~81% of day mAP75 regardless of arm *or* label fraction — acros
 training pools, two hyperparameter recipes, two backbone initialisations and a 10×
 change in labelled data.
 
-**Report the ratio, not the absolute delta.** The absolute gap compresses toward zero as
+**Report the ratio, not the absolute delta.** (Now confirmed across nine measurements —
+see the end of §2.6.2.) The absolute gap compresses toward zero as
 performance drops, so it is partly an artefact of scale; the ratio is not. This is the
 most robust quantity the project has produced and it is the right anchor for the
 write-up. It also sharpens the claim: night degradation is **multiplicative**, which is
 what one expects from a sensing/resolution limit rather than from a data-distribution or
 initialisation problem — and it is consistent with every intervention tried so far
 failing to move it.
+
+### 2.6.2 The 10% noise floor — and a correction to §2.6 (2026-09-12)
+
+`t1_jepa_10`'s own `epoch80 / epoch90 / best / last`, stripped to EMA and scored in one
+job with `base_10`. **The 10%-label noise floor is ~5× the 100%-label floor**, exactly as
+a tenth of the training data predicts:
+
+| slice | Δ (t1_10 − base_10) | floor@10% | ratio | floor@100% | 10% floor is |
+|---|---|---|---|---|---|
+| overall | −3.29 | 1.55 | 2.1× | 0.31 | 5.0× bigger |
+| day | −2.76 | 1.35 | 2.0× | 0.58 | 2.3× |
+| **night** | −4.40 | 1.80 | **2.4×** | 0.36 | 5.0× |
+| dawndusk | −5.17 | 1.35 | **3.8×** | 0.27 | 5.0× |
+| clear | −2.22 | 1.69 | 1.3× | 0.31 | 5.5× |
+| rainy | −5.40 | 2.07 | 2.6× | 0.10 | 20.7× |
+| snowy | −2.76 | 2.86 | **1.0×** | 0.65 | 4.4× |
+| adverse | −4.94 | 1.40 | **3.5×** | 0.23 | 6.1× |
+| night_adverse | −9.34 | 2.96 | **3.2×** | 2.18 | 1.4× |
+| day_adverse | −1.43 | 3.00 | **0.5×** | 0.52 | 5.8× |
+| night_clear | −3.11 | 2.59 | 1.2× | 0.46 | 5.6× |
+
+**The correction.** §2.6 as first written called −3.29 and −9.34 "far outside any
+plausible floor". Against the measured floor they are **2.1×** and **3.2×** — real, but
+"holds" rather than "holds clearly" under the §2.5.1 bands. And four slices that looked
+dramatic are **at or inside** the 10% floor: `day_adverse` (0.5×), `snowy` (1.0×),
+`night_clear` (1.2×), `clear` (1.3×). **No per-slice claim should be made for those four.**
+Recording the error rather than quietly restating the numbers: the lesson is that a noise
+floor is not transferable across training-set sizes, and assuming it was would have put
+four unsupported slice-level claims into the write-up.
+
+**Why the headline conclusion survives anyway — a better argument than ratio-to-floor.**
+
+> **All four T1 checkpoints sit below `base_10` on all eleven slices. 44 of 44.**
+
+Per-slice ratios ask whether *one* number clears the noise. This asks whether the
+*direction* is consistent, and it is, without a single exception, across four independent
+checkpoints spanning twenty epochs of training and eleven disjoint-ish evaluation
+subsets. Even `day_adverse`, whose −1.43 is half the floor, has all four T1 checkpoints
+below BASE. A noise process producing that pattern by chance is not plausible.
+
+**So state it this way:** T1@10% is *uniformly* below BASE@10%; the aggregate deficit is
+roughly **−3 points mAP50 overall and −4 at night**; and individual slice magnitudes
+beyond `night`, `dawndusk`, `adverse` and `night_adverse` are not separable from noise at
+this sample size. That is both weaker and more defensible than §2.6's first draft, and it
+does not change the conclusion or the decision to run T1b.
+
+**Methodological note for the write-up.** The 10% floor is the reason a label-fraction
+study needs its own floor per fraction. It is also a reason to be sceptical of *any*
+small-data ablation in the literature that reports single-seed deltas of 1–3 points
+without one.
+
+#### The ratio invariant, now across nine measurements
+
+| arm | night/day mAP75 ratio |
+|---|---|
+| base_100 | 0.809 |
+| t1_100 | 0.811 |
+| base_10 | 0.819 |
+| t1_10_best | 0.820 |
+| t1_10_last | 0.813 |
+| t1_10_e90 | 0.815 |
+| t1_10_e80 | 0.811 |
+
+Full range **0.809 – 0.820**, width **0.011**, across two label fractions, two backbone
+initialisations, and four checkpoints of one run — while the *absolute* day→night delta
+ranges over 1.6 points across the same set. §2.6.1's claim strengthens: the ratio is the
+invariant, the absolute gap is not.
 
 ---
 
@@ -695,6 +761,11 @@ the test set.
    is still the only thing that converts "consistent with real" into "real" — one night
    of GPU time, still the cheapest credibility available. Until then, no JEPA claim
    should rest on a delta below ~2× the within-run floor.
+   **Extended 2026-09-12 (§2.6.2):** a floor is **not transferable across training-set
+   sizes**. The 10%-label floor measured ~1.2–3.0 points against the 100%-label floor's
+   ~0.3 — roughly 5×. Every label fraction needs its own floor, measured from that
+   fraction's own checkpoints. Assuming otherwise put four unsupported slice-level claims
+   into a first draft of §2.6 before the measurement caught them.
 3. **T1 vs T2 confounds scale with domain.** ViT-H/14 (630M, ImageNet) vs ViT-B/16 (86M,
    BDD). Cannot be fixed within budget. Disclose.
 4. **T2 will be data-starved and there is no warm start.** Meta released I-JEPA weights only
@@ -771,10 +842,10 @@ T1b@10% beats T1@10% materially is the 100% run worth booking.
 
 ### Immediate order
 
-1. **Measure a 10%-specific noise floor** (~30 min, no training). §2.5.1's floor came
-   from the 100% run and does not transfer. `t1_jepa_10` has its own
-   `epoch80/90/best/last`; strip and score them exactly as before. Do this before
-   quoting §2.6.
+1. ✅ **Done 2026-09-12 — §2.6.2.** The 10% floor is ~5× the 100% floor and it corrected
+   an overclaim in §2.6; four slice-level claims were withdrawn. The conclusion survives
+   on a consistency argument (44/44 checkpoint×slice comparisons below BASE), not on
+   per-slice ratios.
 2. **T1b:** set `student_init: coco` in a **new** config (`configs/jepa/distill_t1b.yaml`
    — do not edit `distill_t1.yaml`, T1's provenance depends on it), distil, graft to
    `weights/init_t1b.pt`, `--verify`, then fine-tune at 10% labels as `t1b_jepa_10`.
