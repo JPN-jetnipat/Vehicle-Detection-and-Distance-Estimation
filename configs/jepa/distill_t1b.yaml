@@ -38,6 +38,33 @@
 # file staying byte-identical to what ran. This is a separate arm with its own run dir,
 # its own grafted weights (weights/init_t1b.pt) and its own --name.
 #
+# WHAT TO EXPECT WHEN IT STARTS - and a trap
+# ------------------------------------------
+# The initial loss is ~1.0 for BOTH student_init values. That is NOT evidence the
+# COCO init failed. The cosine distance is measured AFTER `self.proj`, a randomly
+# initialised 1x1 conv that maps the student's 256 channels into the teacher's
+# 1280-dim space; a random linear map into 1280 dims gives features roughly
+# orthogonal to the teacher (cos sim ~ 0, cos distance ~ 1.0) no matter how good
+# the backbone beneath it is. Smoke run on 2026-09-12 printed loss 1.0054, and
+# T1's random-init student started at ~1.007 - indistinguishable, as expected.
+#
+# The real early read is the EPOCH-AVERAGE loss against T1's curve
+# (docs/jepa-t1-distill-record.md):
+#
+#     epoch    T1 (random init)     T1b should be...
+#       0          0.50423          lower, if COCO init helps convergence
+#       1          0.31361
+#       2          0.26681
+#       4          0.22979
+#      29          0.17975          final
+#
+# CAVEAT, and it is the same one as MASTER-RECORD.md 3.7: a lower distillation
+# loss is NOT evidence of a better backbone. Cosine distance is not comparable
+# across student initialisations any more than across architectures, and a
+# falling loss can be earned cheaply by matching brightness and gross layout.
+# The only verdict that counts is the Stage-3 fine-tune mAP against base_10.
+# Do not report the loss curve as a result.
+#
 # Commands:
 #   python jepa_distill/train_distill.py --config configs/jepa/distill_t1b.yaml --smoke
 #   nohup python jepa_distill/train_distill.py --config configs/jepa/distill_t1b.yaml \
