@@ -1,6 +1,6 @@
 # Master record — nighttime / adverse-environment vehicle detection
 
-**Owner:** Kanade · **Last updated:** 2026-09-12
+**Owner:** Kanade · **Last updated:** 2026-09-13
 **Purpose:** the single ordered record of what was run, what was found, why each choice
 was made, and how to defend it. Other project docs hold the detail; this one holds the
 argument. If a claim isn't in here with its defence, don't put it in the write-up.
@@ -528,6 +528,98 @@ initialisations, and four checkpoints of one run — while the *absolute* day→
 ranges over 1.6 points across the same set. §2.6.1's claim strengthens: the ratio is the
 invariant, the absolute gap is not.
 
+### 2.7 T1b — COCO-init student. The JEPA line closes (2026-09-13)
+
+The arm §3.10 and §2.6 called for: `student_init: coco`, so the backbone is **COCO plus
+JEPA** rather than **JEPA instead of COCO**. Everything else byte-identical to T1
+(`configs/jepa/distill_t1b.yaml` differs from `distill_t1.yaml` in `name` and that one
+key — verified by diff). Distilled 2.9 h, grafted 126/126, fine-tuned at 10% labels,
+scored with its own four checkpoints for a T1b-specific floor.
+
+| slice | T1 − BASE | **T1b − BASE** | T1b floor | ratio | T1b − T1 |
+|---|---|---|---|---|---|
+| overall | −3.29 | **−2.37** | 1.62 | 1.5× | +0.92 |
+| day | −2.76 | −1.75 | 1.40 | 1.2× | +1.01 |
+| **night** | **−4.40** | **−4.29** | 2.16 | 2.0× | **+0.11** |
+| dawndusk | −5.17 | −2.19 | 3.13 | 0.7× | +2.98 |
+| clear | −2.22 | −1.57 | 1.84 | 0.9× | +0.65 |
+| rainy | −5.40 | −2.75 | 3.45 | 0.8× | +2.65 |
+| snowy | −2.76 | −5.15 | 4.16 | 1.2× | **−2.39** |
+| adverse | −4.94 | −4.00 | 2.19 | 1.8× | +0.94 |
+| night_adverse | −9.34 | −5.74 | 2.33 | 2.5× | +3.60 |
+| day_adverse | −1.43 | −3.57 | 1.78 | 2.0× | **−2.14** |
+| night_clear | −3.11 | −4.07 | 1.93 | 2.1× | **−0.96** |
+
+**All four T1b checkpoints sit below `base_10` on all eleven slices — 44/44**, the same
+consistency test §2.6.2 used. T1b is *uniformly* below BASE, exactly as T1 was.
+
+**Mean deficit across the eleven slices: T1 −4.07, T1b −3.40. COCO initialisation
+recovers 16% of it** (28% on the `overall` slice alone), and on three slices — `snowy`,
+`day_adverse`, `night_clear` — T1b is *worse* than T1.
+
+**The number that closes the line: `night` went −4.40 → −4.29.** A 0.11-point change
+against a 2.16-point floor. **Retaining COCO made no difference at night whatsoever**,
+and night is the entire scope of this project.
+
+#### Resolving the registered prediction
+
+`configs/jepa/distill_t1b.yaml` set the rule before the run:
+
+> `T1b ~ BASE or better` → **(b)** discarding COCO is what hurt
+> `T1b ~ T1, still down` → **(a)** the I-JEPA features actively conflict
+
+**The answer is predominantly (a).** T1b is far closer to T1 than to BASE, and identical
+to T1 on the slice that matters. Discarding COCO explains a *minority* of the deficit;
+the majority is attributable to the distillation objective itself degrading the backbone
+for this task. The honest statement:
+
+> *Distilling Meta's I-JEPA ViT-H/14 into a YOLOv11s backbone degrades BDD100K vehicle
+> detection at 10% labels, by roughly 2–4 mAP50 points depending on slice. Initialising
+> the student from COCO recovers a minority of that loss overall and none of it at night.
+> The harm is in the distilled representation, not merely in the discarded COCO weights.*
+
+**Therefore the JEPA line is closed.** T2 (Stage-1 I-JEPA pretraining on BDD) would use
+the same distillation-into-YOLO mechanism that both arms just showed to be harmful, and
+its only new variable — a domain-matched, 7× smaller, data-starved teacher (§4.3, §4.4) —
+is not a plausible route from −4 to positive. **Do not spend 10–15 h on it.** Record it
+as deliberately not run, with this table as the reason.
+
+### 2.7.1 ⚠️ METHODOLOGICAL FINDING — `val` and `test` disagreed, and `val` was wrong
+
+This was nearly a reported error and it is worth more than the arm that produced it.
+
+| arm | **val** mAP50 (`splits/val.txt`, n=1,542) | **test** mAP50 (n=8,841) |
+|---|---|---|
+| base_10 | 0.485 | 0.4362 |
+| t1b_10 | **0.481  (−0.4)** | **0.4125  (−2.37)** |
+| t1_10 | 0.447  (−3.8) | 0.4033  (−3.29) |
+
+Read on val, T1b recovered **89%** of T1's deficit and sat level with BASE. Read on test
+it recovered **16%** and sat clearly below. The first reading was written down, and is
+retracted here.
+
+**The cause is circular evaluation, and it is structural, not bad luck.** ultralytics
+selects `best.pt` by **val** mAP. So every arm's val score is the maximum over 100 epochs
+*on the very set being reported* — an argmax, not a sample. It is optimistically biased
+by construction, and there is no reason the bias should be equal across arms: an arm
+whose val curve is noisier gets a larger upward kick. T1b's val curve evidently caught a
+favourable epoch.
+
+**Rules this establishes, to be followed for the rest of the project:**
+
+1. **Never adjudicate an arm on `splits/val.txt`.** It selected the checkpoint; it cannot
+   also judge it. Use it for training-time monitoring and nothing else, exactly as
+   `docs/jepa-runbook.md` already says — this is that rule earning its keep.
+2. **No conclusion is recorded until `evaluation/score_slices.py` has run on
+   `splits/test.txt`.** A val preview may guide what to run next; it may not be written
+   into §2.
+3. When val and test disagree, **test wins**, and the disagreement itself gets recorded
+   rather than quietly dropped.
+
+This pairs with §4.1 (test-set selection bias, which inflates all test numbers equally
+and so preserves between-arm deltas) as the two evaluation hazards this project has hit.
+They point in opposite directions and both belong in the write-up.
+
 ---
 
 ## 3. Decisions and how to defend each one
@@ -804,79 +896,70 @@ the test set.
 
 ## 5. Current state and next steps
 
-**Done:** splits frozen · 19 slices built and cross-verified · hyperparameter search ·
-augmentation ablation (negative on time-of-day, **positive on weather — §2.2.1**) · JEPA
-ported to YOLOv11 · T1 distilled, grafted, fine-tuned and scored at **both** label
-fractions · noise floor established without extra training (§2.5.1) · recipe choice
-re-measured on one scorer (§3.11) · optimizer pin source-verified (§3.5) · **the
-night/day mAP75 ratio identified as the project's most robust invariant (§2.6.1)** ·
-configs for closed lines archived.
+### The JEPA line is closed (2026-09-13)
 
 | arm (backbone init) | 100% labels | 10% labels |
 |---|---|---|
 | BASE — COCO `yolo11s.pt` | ✅ 0.5477 | ✅ 0.4362 |
-| T1 — I-JEPA ViT-H/14 → **random-init** student | ✅ 0.5412 (−0.65) | ✅ 0.4033 (**−3.29**) |
-| **T1b — same teacher, COCO-init student (§3.10)** | ⬜ | ⬜ **← do this next** |
-| T2 — I-JEPA ViT-B/16 pretrained on BDD | ⬜ | ⬜ |
+| T1 — I-JEPA ViT-H/14 → **random** student | ✅ 0.5412 (−0.65) | ✅ 0.4033 (−3.29) |
+| T1b — I-JEPA ViT-H/14 → **COCO** student | — | ✅ 0.4125 (**−2.37**) |
+| T2 — I-JEPA ViT-B/16 pretrained on BDD | ❌ **deliberately not run — §2.7** | ❌ |
 
-### The fork is decided: T1b before T2
+Two backbone initialisations, two label fractions, per-arm noise floors, 44/44
+consistency checks on both JEPA arms. The answer is stable and negative, and §2.7 states
+it. **T2 is cancelled on evidence, not on budget** — that distinction matters in the
+defence, and §2.7 is the citation.
 
-The 10% grid was the condition most favourable to self-supervised pretraining and T1 lost
-there by 5× its 100% margin (§2.6). The pattern — deficit widening as labels grow scarce
-— is the signature of **a worse initialisation**, and T1's backbone is the only one in
-the study that never saw COCO. Three reasons T1b now outranks T2:
+### What remains — all cheap, none of it JEPA
 
-1. **It tests the actual hypothesis.** T1b (`student_init: coco`) separates "the I-JEPA
-   features are unhelpful" from "not having COCO is harmful". Nothing else does.
-2. **T2 inherits the same design.** `configs/jepa/distill_t2.yaml` also uses a
-   random-init student. If random-init is what sank T1, T2 fails identically and 10–15 h
-   of Stage-1 pretraining is spent proving it twice.
-3. **It is cheaper**, and a positive T1b is the only path left to a *positive* JEPA
-   result: "JEPA refines COCO features" is a defensible contribution; "JEPA replaces COCO
-   badly" is already established.
+1. **Seed repeat of BASE@100** (~1 night). Still the highest-value single run. Every
+   verdict in §2.5.1, §2.6.2, §3.11 and §2.7 rests on within-run floors, which are lower
+   bounds. One repeat converts "consistent with real" into "real" across the whole record.
+2. **M1 / M2 weights from the teammate** (~40 min scoring, no training). The §2.2.1
+   prediction is registered and still open: if M1 shows the `day_adverse` gain and M2 does
+   not, the degradation-augmentation reframing is supported; if M2 shows it too, that
+   reframing must be retracted. This is now the **only open positive claim** in the study.
+3. **`imgsz: 768` on BASE** (~2 nights). The one untried lever. §2.6.1's multiplicative
+   night penalty (ratio 0.81, invariant across nine measurements) points at a resolution
+   limit, and resolution is the only thing never varied. **If budget allows exactly one
+   more training run after the seed repeat, this is it** — it is the sole remaining
+   candidate for a positive result in the whole project.
+4. Housekeeping: copy each run's `results.csv`/`args.yaml` into tracked
+   `results/runs/<name>/` (§3.9); count test images with >100 GT boxes (§4.8); the disk
+   was at 98% on 2026-09-12.
 
-**Run T1b at 10% labels FIRST.** §2.6 shows the initialisation effect is ~5× larger at
-10% than at 100%, so the 10% column is both the most sensitive test and the cheapest:
-~3.7 h distillation + ~4 h fine-tune = one day, versus two nights at 100%. Only if
-T1b@10% beats T1@10% materially is the 100% run worth booking.
+### The deliverable, stated plainly
 
-### Immediate order
+A negative result on JEPA, instrumented well enough to be trusted, plus one robust
+positive finding and one live open question:
 
-1. ✅ **Done 2026-09-12 — §2.6.2.** The 10% floor is ~5× the 100% floor and it corrected
-   an overclaim in §2.6; four slice-level claims were withdrawn. The conclusion survives
-   on a consistency argument (44/44 checkpoint×slice comparisons below BASE), not on
-   per-slice ratios.
-2. **T1b:** set `student_init: coco` in a **new** config (`configs/jepa/distill_t1b.yaml`
-   — do not edit `distill_t1.yaml`, T1's provenance depends on it), distil, graft to
-   `weights/init_t1b.pt`, `--verify`, then fine-tune at 10% labels as `t1b_jepa_10`.
-3. **Seed repeat of BASE@100** — still the highest-value single night. Every verdict in
-   §2.5.1 and §3.11 rests on a within-run lower bound.
-4. **M1 / M2 weights from the teammate** — the §2.2.1 prediction is registered and
-   waiting. ~40 min of scoring once they arrive.
-5. Copy every run's `results.csv` / `args.yaml` into tracked `results/runs/<name>/`
-   (§3.9), and count test images with >100 GT boxes (§4.8).
+1. **Night localization degrades multiplicatively.** night mAP75 ≈ **0.81 ×** day mAP75,
+   range 0.809–0.820 across nine measurements spanning four training pools, two
+   hyperparameter recipes, two backbone initialisations and a 10× change in labelled data
+   (§2.6.1, §2.6.2). Nothing tried has moved it.
+2. **Data-side interventions do not move it** (§2.2) — but the low-light transform helps
+   *daytime adverse weather*, +3.39 on `day_adverse` at 6.5× the floor, which reframes it
+   as a degradation augmentation rather than a night one (§2.2.1, prediction open).
+3. **Representation-side intervention does not move it either, and costs accuracy**
+   (§2.5, §2.6, §2.7). Both the "replace COCO" and "augment COCO" variants lose, and both
+   lose identically at night.
+4. **Untested:** input resolution. Item 3 above.
 
-### ⚠️ Server housekeeping — checked 2026-09-12
+### Evaluation hazards this project hit — both belong in the write-up
 
-- **Disk at 98% (24 GB free).** T2's Stage-1 pretraining and its checkpoints will not
-  fit comfortably. Clear space before any T2 decision; `runs/detect/*/weights/epoch*.pt`
-  are ~57 MB each and several arms hold ten apiece.
-- **The A40 is shared and contended** — a co-tenant VLLM process was holding 38 GB and
-  100% utilisation during these runs. `base_10` took 7.7 h and `t1_jepa_10` 4.1 h for
-  identical workloads; **that difference is contention, not a property of either arm.**
-  Never quote wall-clock as a result.
-- Host RAM is under pressure (17 GB of swap in use). Keep `workers: 2` / `cache: false`.
+- **§4.1 test-set selection bias.** The recipe was chosen while looking at `test.txt`, so
+  every absolute test number is optimistic. It is identical across arms, so between-arm
+  deltas stay fair.
+- **§2.7.1 val/test divergence.** `best.pt` is selected by val mAP, so val scores are an
+  argmax on the reported set and are biased upward by an arm-dependent amount. Adjudicating
+  T1b on val gave "recovered 89%"; test gave 16%. **Test wins; val monitors.**
+- **§2.5.1 / §2.6.2 noise floors.** Within-run spreads are lower bounds and do not transfer
+  across label fractions (0.3 pts at 100%, 1.2–3.0 at 10%). Measure one per fraction, per
+  arm.
 
-### What the deliverable actually is now
-
-An honest, well-instrumented negative result with one robust positive finding:
-
-1. Night localization degrades **multiplicatively** — night mAP75 ≈ 0.81 × day mAP75 —
-   and that ratio is invariant across four training pools, two recipes, two backbone
-   initialisations and a 10× change in labelled data (§2.6.1).
-2. Data-side interventions do not move it (§2.2), though the low-light transform turns
-   out to help *daytime adverse weather* (§2.2.1).
-3. A representation-side intervention does not move it either, and replacing COCO with
-   distilled I-JEPA actively hurts, increasingly so as labels grow scarce (§2.5, §2.6).
-4. Untested levers, in order of promise: **T1b** (JEPA *plus* COCO), then **`imgsz: 768`**
-   — a resolution lever, which is what §2.6.1's multiplicative signature points at.
+Three bugs were found in JEPA code paths, every one on first execution and every one
+caught by a verification step that refused to proceed rather than by code appearing to
+run correctly: the `--verify` fp16 tolerance (§3.8), the missing
+`attempt_load_one_weight` import, and an nc=80 state dict loaded into an nc=5 model.
+That is the argument for verifying rather than trusting, and it is a methods paragraph,
+not an apology.
