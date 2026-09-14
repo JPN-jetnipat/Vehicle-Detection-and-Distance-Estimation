@@ -1,0 +1,182 @@
+nohup: ignoring input
+test pool: 8841 images, 5 classes ['car', 'truck', 'bus', 'motor', 'bike']
+slices: 20
+building GT ...
+  97,193 GT instances
+
+=== base_100 (/home/st6622770442/vehicle-detection/weights/external/base_100_friend.pt) ===
+    inference 640/8841
+    inference 1280/8841
+    inference 1920/8841
+    inference 2560/8841
+    inference 3200/8841
+    inference 3840/8841
+    inference 4480/8841
+    inference 5120/8841
+    inference 5760/8841
+    inference 6400/8841
+    inference 7040/8841
+    inference 7680/8841
+    inference 8320/8841
+    inference 8841/8841
+    622,150 detections
+  overall         n= 8841 inst=  97193  mAP50=0.54775  mAP75=0.34743  mAP50-95=0.34383
+  adverse         n= 1519 inst=  15765  mAP50=0.5175  mAP75=0.35437  mAP50-95=0.33675
+  benign          n= 7322 inst=  81428  mAP50=0.55357  mAP75=0.34786  mAP50-95=0.34623
+  clear           n= 5345 inst=  56667  mAP50=0.55393  mAP75=0.34691  mAP50-95=0.34428
+  dawndusk        n=  714 inst=   8512  mAP50=0.5739  mAP75=0.37275  mAP50-95=0.36457
+  day             n= 4264 inst=  51930  mAP50=0.54074  mAP75=0.3494  mAP50-95=0.34463
+  day_adverse     n=  823 inst=   9252  mAP50=0.52615  mAP75=0.35173  mAP50-95=0.34023
+  day_clear       n= 1764 inst=  21352  mAP50=0.54073  mAP75=0.35772  mAP50-95=0.3486
+  day_rainy       n=  396 inst=   4356  mAP50=0.56309  mAP75=0.38318  mAP50-95=0.3642
+  day_snowy       n=  422 inst=   4842  mAP50=0.47357  mAP75=0.3041  mAP50-95=0.30285
+  foggy           n=   13 inst=    144  mAP50=0.6461  mAP75=0.2242  mAP50-95=0.27822   <-- too few images, DO NOT REPORT
+  night           n= 3863 inst=  36751  mAP50=0.56255  mAP75=0.34598  mAP50-95=0.34317
+  night_adverse   n=  566 inst=   4986  mAP50=0.54226  mAP75=0.39808  mAP50-95=0.36742
+  night_clear     n= 3274 inst=  31550  mAP50=0.56546  mAP75=0.33804  mAP50-95=0.34004
+  night_rainy     n=  286 inst=   2535  mAP50=0.59713  mAP75=0.46287  mAP50-95=0.41754
+  night_snowy     n=  273 inst=   2374  mAP50=0.53014  mAP75=0.37832  mAP50-95=0.35919
+  overcast        n= 1239 inst=  15505  mAP50=0.56194  mAP75=0.3463  mAP50-95=0.35073
+  partlycloudy    n=  738 inst=   9256  mAP50=0.54793  mAP75=0.3678  mAP50-95=0.3597
+  rainy           n=  737 inst=   7541  mAP50=0.55034  mAP75=0.38705  mAP50-95=0.36336
+  snowy           n=  769 inst=   8080  mAP50=0.48125  mAP75=0.32193  mAP50-95=0.31344
+
+=== m1_lowlight (/home/st6622770442/vehicle-detection/weights/external/m1_lowlight_friend.pt) ===
+    inference 640/8841
+    inference 1280/8841
+    inference 1920/8841
+    inference 2560/8841
+    inference 3200/8841
+    inference 3840/8841
+    inference 4480/8841
+    inference 5120/8841
+    inference 5760/8841
+    inference 6400/8841
+    inference 7040/8841
+    inference 7680/8841
+    inference 8320/8841
+    inference 8841/8841
+    634,707 detections
+  overall         n= 8841 inst=  97193  mAP50=0.538  mAP75=0.34224  mAP50-95=0.33639
+  adverse         n= 1519 inst=  15765  mAP50=0.52798  mAP75=0.34324  mAP50-95=0.33539
+  benign          n= 7322 inst=  81428  mAP50=0.53961  mAP75=0.34347  mAP50-95=0.3373
+  clear           n= 5345 inst=  56667  mAP50=0.53851  mAP75=0.34302  mAP50-95=0.33599
+  dawndusk        n=  714 inst=   8512  mAP50=0.5611  mAP75=0.35389  mAP50-95=0.34874
+  day             n= 4264 inst=  51930  mAP50=0.53162  mAP75=0.34783  mAP50-95=0.33886
+  day_adverse     n=  823 inst=   9252  mAP50=0.54207  mAP75=0.35579  mAP50-95=0.34525
+  day_clear       n= 1764 inst=  21352  mAP50=0.52436  mAP75=0.35892  mAP50-95=0.3412
+  day_rainy       n=  396 inst=   4356  mAP50=0.5827  mAP75=0.39571  mAP50-95=0.37044
+  day_snowy       n=  422 inst=   4842  mAP50=0.48082  mAP75=0.29744  mAP50-95=0.30695
+  foggy           n=   13 inst=    144  mAP50=0.65673  mAP75=0.21878  mAP50-95=0.26632   <-- too few images, DO NOT REPORT
+  night           n= 3863 inst=  36751  mAP50=0.55059  mAP75=0.33442  mAP50-95=0.3349
+  night_adverse   n=  566 inst=   4986  mAP50=0.52318  mAP75=0.34627  mAP50-95=0.34144
+  night_clear     n= 3274 inst=  31550  mAP50=0.55592  mAP75=0.33188  mAP50-95=0.33375
+  night_rainy     n=  286 inst=   2535  mAP50=0.5697  mAP75=0.39573  mAP50-95=0.38801
+  night_snowy     n=  273 inst=   2374  mAP50=0.52552  mAP75=0.38229  mAP50-95=0.33737
+  overcast        n= 1239 inst=  15505  mAP50=0.54465  mAP75=0.34195  mAP50-95=0.34057
+  partlycloudy    n=  738 inst=   9256  mAP50=0.54394  mAP75=0.35972  mAP50-95=0.35059
+  rainy           n=  737 inst=   7541  mAP50=0.55733  mAP75=0.37518  mAP50-95=0.36103
+  snowy           n=  769 inst=   8080  mAP50=0.49025  mAP75=0.31605  mAP50-95=0.31226
+
+=== m2_irfs (/home/st6622770442/vehicle-detection/weights/external/m2_irfs_friend.pt) ===
+    inference 640/8841
+    inference 1280/8841
+    inference 1920/8841
+    inference 2560/8841
+    inference 3200/8841
+    inference 3840/8841
+    inference 4480/8841
+    inference 5120/8841
+    inference 5760/8841
+    inference 6400/8841
+    inference 7040/8841
+    inference 7680/8841
+    inference 8320/8841
+    inference 8841/8841
+    685,101 detections
+  overall         n= 8841 inst=  97193  mAP50=0.55391  mAP75=0.35299  mAP50-95=0.34645
+  adverse         n= 1519 inst=  15765  mAP50=0.53608  mAP75=0.35065  mAP50-95=0.33522
+  benign          n= 7322 inst=  81428  mAP50=0.55697  mAP75=0.35453  mAP50-95=0.34898
+  clear           n= 5345 inst=  56667  mAP50=0.55325  mAP75=0.35183  mAP50-95=0.34617
+  dawndusk        n=  714 inst=   8512  mAP50=0.57949  mAP75=0.3857  mAP50-95=0.37112
+  day             n= 4264 inst=  51930  mAP50=0.55029  mAP75=0.35452  mAP50-95=0.34788
+  day_adverse     n=  823 inst=   9252  mAP50=0.5552  mAP75=0.35261  mAP50-95=0.34562
+  day_clear       n= 1764 inst=  21352  mAP50=0.54206  mAP75=0.35939  mAP50-95=0.34979
+  day_rainy       n=  396 inst=   4356  mAP50=0.60232  mAP75=0.38639  mAP50-95=0.3738
+  day_snowy       n=  422 inst=   4842  mAP50=0.48578  mAP75=0.30024  mAP50-95=0.30605
+  foggy           n=   13 inst=    144  mAP50=0.66103  mAP75=0.22782  mAP50-95=0.28589   <-- too few images, DO NOT REPORT
+  night           n= 3863 inst=  36751  mAP50=0.55864  mAP75=0.3501  mAP50-95=0.34202
+  night_adverse   n=  566 inst=   4986  mAP50=0.54019  mAP75=0.38421  mAP50-95=0.35036
+  night_clear     n= 3274 inst=  31550  mAP50=0.56344  mAP75=0.34538  mAP50-95=0.34143
+  night_rainy     n=  286 inst=   2535  mAP50=0.59883  mAP75=0.44895  mAP50-95=0.40542
+  night_snowy     n=  273 inst=   2374  mAP50=0.52907  mAP75=0.37376  mAP50-95=0.33917
+  overcast        n= 1239 inst=  15505  mAP50=0.56715  mAP75=0.35797  mAP50-95=0.35374
+  partlycloudy    n=  738 inst=   9256  mAP50=0.56823  mAP75=0.37562  mAP50-95=0.36574
+  rainy           n=  737 inst=   7541  mAP50=0.57567  mAP75=0.38409  mAP50-95=0.36629
+  snowy           n=  769 inst=   8080  mAP50=0.48933  mAP75=0.31385  mAP50-95=0.30855
+
+=== m3_lowlight_irfs (/home/st6622770442/vehicle-detection/runs/detect/m3_lowlight_irfs/weights/best.pt) ===
+    inference 640/8841
+    inference 1280/8841
+    inference 1920/8841
+    inference 2560/8841
+    inference 3200/8841
+    inference 3840/8841
+    inference 4480/8841
+    inference 5120/8841
+    inference 5760/8841
+    inference 6400/8841
+    inference 7040/8841
+    inference 7680/8841
+    inference 8320/8841
+    inference 8841/8841
+    665,782 detections
+  overall         n= 8841 inst=  97193  mAP50=0.54601  mAP75=0.34573  mAP50-95=0.34015
+  adverse         n= 1519 inst=  15765  mAP50=0.52961  mAP75=0.33748  mAP50-95=0.33359
+  benign          n= 7322 inst=  81428  mAP50=0.54917  mAP75=0.34761  mAP50-95=0.34178
+  clear           n= 5345 inst=  56667  mAP50=0.54775  mAP75=0.3518  mAP50-95=0.341
+  dawndusk        n=  714 inst=   8512  mAP50=0.57585  mAP75=0.36497  mAP50-95=0.36117
+  day             n= 4264 inst=  51930  mAP50=0.5396  mAP75=0.34786  mAP50-95=0.3408
+  day_adverse     n=  823 inst=   9252  mAP50=0.56003  mAP75=0.34569  mAP50-95=0.34935
+  day_clear       n= 1764 inst=  21352  mAP50=0.52807  mAP75=0.36144  mAP50-95=0.3404
+  day_rainy       n=  396 inst=   4356  mAP50=0.58618  mAP75=0.37148  mAP50-95=0.36887
+  day_snowy       n=  422 inst=   4842  mAP50=0.53446  mAP75=0.30491  mAP50-95=0.32364
+  foggy           n=   13 inst=    144  mAP50=0.64207  mAP75=0.22328  mAP50-95=0.27728   <-- too few images, DO NOT REPORT
+  night           n= 3863 inst=  36751  mAP50=0.56099  mAP75=0.34685  mAP50-95=0.34171
+  night_adverse   n=  566 inst=   4986  mAP50=0.51444  mAP75=0.34912  mAP50-95=0.33562
+  night_clear     n= 3274 inst=  31550  mAP50=0.56994  mAP75=0.34651  mAP50-95=0.34357
+  night_rainy     n=  286 inst=   2535  mAP50=0.58107  mAP75=0.40829  mAP50-95=0.39114
+  night_snowy     n=  273 inst=   2374  mAP50=0.51576  mAP75=0.3598  mAP50-95=0.32366
+  overcast        n= 1239 inst=  15505  mAP50=0.55357  mAP75=0.33272  mAP50-95=0.34283
+  partlycloudy    n=  738 inst=   9256  mAP50=0.55053  mAP75=0.36819  mAP50-95=0.35278
+  rainy           n=  737 inst=   7541  mAP50=0.55928  mAP75=0.36332  mAP50-95=0.35982
+  snowy           n=  769 inst=   8080  mAP50=0.50725  mAP75=0.31779  mAP50-95=0.31381
+
+wrote 1440 rows -> /home/st6622770442/vehicle-detection/results/slice_scores_augmentation.csv
+
+==============================================================================
+mAP50, 'all' classes   (delta vs base_100)
+==============================================================================
+slice                    base_100       m1_lowlight           m2_irfs  m3_lowlight_irfs
+---------------------------------------------------------------------------------------
+overall                    0.5477    0.5380 (-0.97)    0.5539 (+0.62)    0.5460 (-0.17)
+day                        0.5407    0.5316 (-0.91)    0.5503 (+0.95)    0.5396 (-0.11)
+night                      0.5625    0.5506 (-1.20)    0.5586 (-0.39)    0.5610 (-0.16)
+dawndusk                   0.5739    0.5611 (-1.28)    0.5795 (+0.56)    0.5758 (+0.20)
+clear                      0.5539    0.5385 (-1.54)    0.5533 (-0.07)    0.5477 (-0.62)
+rainy                      0.5503    0.5573 (+0.70)    0.5757 (+2.53)    0.5593 (+0.89)
+snowy                      0.4813    0.4903 (+0.90)    0.4893 (+0.81)    0.5072 (+2.60)
+adverse                    0.5175    0.5280 (+1.05)    0.5361 (+1.86)    0.5296 (+1.21)
+night_adverse              0.5423    0.5232 (-1.91)    0.5402 (-0.21)    0.5144 (-2.78)
+day_adverse                0.5262    0.5421 (+1.59)    0.5552 (+2.91)    0.5600 (+3.39)
+night_clear                0.5655    0.5559 (-0.95)    0.5634 (-0.20)    0.5699 (+0.45)
+
+==============================================================================
+car day->night mAP75  (the localization collapse; BASE/M1/M2/M3 all -9.6 to -9.8)
+==============================================================================
+  base_100             day 0.5076  night 0.4105   delta -9.71 pts
+  m1_lowlight          day 0.5049  night 0.4078   delta -9.72 pts
+  m2_irfs              day 0.5024  night 0.4060   delta -9.64 pts
+  m3_lowlight_irfs     day 0.5013  night 0.4031   delta -9.82 pts
+
+full per-slice/per-class summary -> /home/st6622770442/vehicle-detection/results/slice_scores_augmentation.json
