@@ -1,6 +1,6 @@
 # Master record — nighttime / adverse-environment vehicle detection
 
-**Owner:** Kanade · **Last updated:** 2026-09-13
+**Owner:** Kanade · **Last updated:** 2026-09-14
 **Purpose:** the single ordered record of what was run, what was found, why each choice
 was made, and how to defend it. Other project docs hold the detail; this one holds the
 argument. If a claim isn't in here with its defence, don't put it in the write-up.
@@ -104,6 +104,13 @@ matched exactly.**
   where it contributes ~1%.
 - **No per-class numbers on `night_rainy` / `night_snowy`** — motor and bike are single
   digits there. Per-class needs ≥800 instances.
+- **`all` is an UNWEIGHTED mean over the five classes, so a class with 30 instances votes
+  as loudly as `car` with 91,118. Never report an `all`-level delta without decomposing
+  it by class first.** This trap produced two false findings in this project before it
+  was caught each time: §3.11 (80% of an apparent Set 2 daytime win came from `motor` at
+  262 instances) and §2.2.3 (the entire adverse-weather "gain" came from motor and bike
+  while `car` moved the other way in 12/12 cells). Decomposition is one command against
+  the scorer's JSON; it is not optional.
 - `night` and `rainy` overlap, so improving on both says nothing about *which* factor was
   fixed. The triple that separates them is **`day_adverse`** (bad weather, good light) vs
   **`night_clear`** (good weather, bad light) vs **`night_adverse`** (both).
@@ -173,7 +180,7 @@ the rare-class numbers they are not noise.
 bike +2.35, at a cost of −0.3 to −0.9 on the common classes. Still n=1 and under the
 800-instance threshold; treat as indicative.
 
-### 2.2.1 ⚠️ REVISION (2026-09-11) — the augmentation line was judged on the wrong slices
+### 2.2.1 ⚠️ RETRACTED 2026-09-14 — the degradation-augmentation reading was wrong
 
 When this ablation was written up, only the **time-of-day** slices existed. M3 was
 re-scored on 2026-09-11 across all 19 slices (arm `m3_lowlight_irfs`, same scorer, same
@@ -215,6 +222,35 @@ for weather. It is an observation that reframes a closed line, not a new result.
 **This does not reopen the augmentation line for the JEPA deliverable** — scope is still
 night — but it is the most interesting thing in §2.2 and belongs in the write-up.
 
+---
+
+## ⛔ RETRACTION (2026-09-14). Everything above in §2.2.1 is withdrawn.
+
+The prediction registered below was **falsified**. M1 and M2 were obtained from teammates
+and scored (§2.2.2, §2.2.3). The rule was: *M1 shows the weather gains, M2 does not.*
+
+**M2 shows them on 4 of 4 weather slices, and beats M1 on 3 of 4.**
+
+| slice | M1 (low-light only) | **M2 (IRFS only)** | floor | |
+|---|---|---|---|---|
+| day_adverse | +1.59 (3.1×) | **+2.91 (5.6×)** | 0.52 | M2 wins |
+| adverse | +1.05 (4.6×) | **+1.86 (8.1×)** | 0.23 | M2 wins |
+| rainy | +0.70 (1.8×) | **+2.53 (6.5×)** | 0.39 | M2 wins |
+| snowy | +0.90 (1.4×) | +0.81 (1.2×) | 0.65 | tie |
+
+The low-light transform is therefore **not** the cause of the weather gains, and calling
+it "a degradation augmentation rather than a night augmentation" was wrong. The text
+above is kept, struck through by this notice, because the retraction is part of the
+record — a registered prediction that fails is evidence the method was honest, and
+deleting it would destroy that evidence.
+
+**What is NOT retracted:** §2.2's original finding. Every time-of-day slice is still
+negative or inside noise for all three arms (night: M1 −1.20, M2 −0.39, M3 −0.16;
+night_adverse negative for all three). **Nothing helps night.** That conclusion is
+untouched and is the one the JEPA phase was built on.
+
+**What replaces the reading — nothing yet, and deliberately so.** See §2.2.3.
+
 #### The prediction that would confirm or kill this — registered 2026-09-11, before the data
 
 M3 = low-light copies **and** IRFS oversampling, so its weather gain could come from
@@ -239,6 +275,132 @@ low-light-only and M2 is IRFS-only.
 **If the weights cannot be obtained:** say in §2.2 that M1/M2 numbers are reported from
 the teammate's scoring and were never re-verified on this scorer, and keep §2.2.1's
 weather claim scoped to M3 alone. Weaker, but honest, and it costs nothing.
+
+### 2.2.2 Provenance of the four arms — verified from the checkpoints (2026-09-14)
+
+The four arms of §2.2 were trained by **three different people on three different
+machines**. M1 and M2 were obtained from teammates on 2026-09-14 and audited by reading
+their embedded `train_args` directly, rather than taking the filenames on trust.
+
+| arm | trained by | machine / repo | data config | sha256 (first 8) |
+|---|---|---|---|---|
+| BASE | teammate | server | plain 5-class pool | `f684bc11` |
+| **M1** | "baby" | **Windows**, `…\baby\Augment_method1\` | `data_original_plus_aug.yaml` | `ec86bc8b` |
+| **M2** | `st6622780318` | Linux, `Vehicle-Detection-and-Distance-Estimation` | `dataset/bdd100k_vehicle_irfs.yaml` | `d46fd586` |
+| M3 | Kanade | `cngpu-vm001`, this repo | `bdd100k_vehicle5_method3.yaml` | — |
+
+**Checked before scoring, all passed:**
+
+- **Class mapping identical.** Both checkpoints carry `names = {0: car, 1: truck, 2: bus,
+  3: motor, 4: bike}` — same classes, same order as `configs/data/bdd100k_vehicle5.yaml`.
+  A different order would have silently scrambled every per-class number.
+- **Recipe identical.** Every hyperparameter in both checkpoints matches `set3_combined`
+  exactly: epochs 100, seed 42, imgsz 640, batch 16, workers 2, cache false, hsv_v 0.25,
+  hsv_s 0.7, hsv_h 0.015, close_mosaic 20, box 9.0, cls 0.7, dfl 1.5, scale 0.7,
+  translate 0.15, copy_paste 0.2, mixup 0.0, patience 0, optimizer auto, fraction 1.0.
+  **§2.2's "identical recipe" claim is now verified rather than asserted.**
+- **Same ultralytics build** — 8.4.120 in both, matching every arm in this repo.
+- Training dates: M1 2026-08-24, M2 2026-08-23.
+
+**Disclose as a limitation:** identical recipe, seed and data do not make three machines
+equivalent. Driver, CUDA and hardware differences remain uncontrolled across BASE / M1 /
+M2 / M3. The pinned ultralytics version and verified recipe make this a minor concern
+rather than a confound, but it should be stated, not hidden.
+
+**A useful by-product for §3.5.** The checkpoints' saved `train_args` show
+`warmup_bias_lr: 0.0`, while `runs/detect/t1_jepa_100/args.yaml` shows `0.1`. Both are
+correct: `args.yaml` is written *before* `build_optimizer` runs, and the checkpoint is
+saved *after* the `auto` branch overwrites it. This is independent confirmation that
+`optimizer: auto` forces `warmup_bias_lr = 0.0`, and therefore that
+`configs/hyp/set3_combined_10.yaml` pins the right value. Note the args dict is only
+*partially* post-override — it still records `momentum: 0.937` although the log shows the
+optimizer was constructed with 0.9, because `_smart_optimizer` passes lr and momentum
+straight to the constructor without writing them back.
+
+### 2.2.3 All four augmentation arms, one scorer (2026-09-14)
+
+M1 and M2 obtained from teammates, verified (§2.2.2), and scored together with BASE and
+M3 in a single `evaluation/score_slices.py` job. **This closes §4.6** — every arm in the
+augmentation ablation has now passed through one scorer with one NMS setting.
+
+mAP50, `all` classes, delta vs `base_100`. Floors from §2.5.1 (100%-label, t1_jepa_100).
+
+| slice | M1 low-light | M2 IRFS | M3 both | floor |
+|---|---|---|---|---|
+| overall | −0.97 | +0.62 | −0.17 | 0.31 |
+| day | −0.91 | +0.95 | −0.11 | 0.58 |
+| **night** | **−1.20** | **−0.39** | **−0.16** | 0.36 |
+| dawndusk | −1.28 | +0.56 | +0.20 | 0.27 |
+| clear | −1.54 | −0.07 | −0.62 | 0.31 |
+| rainy | +0.70 | **+2.53** | +0.89 | 0.39 |
+| snowy | +0.90 | +0.81 | **+2.60** | 0.65 |
+| adverse | +1.05 | **+1.86** | +1.21 | 0.23 |
+| **night_adverse** | **−1.91** | −0.21 | **−2.78** | 2.18 |
+| day_adverse | +1.59 | **+2.91** | **+3.39** | 0.52 |
+| night_clear | −0.95 | −0.20 | +0.45 | 0.46 |
+
+**The original §2.2 conclusion is confirmed and strengthened.** M1 — the arm built to fix
+night — is the *worst* arm on night (−1.20), on dawndusk (−1.28), on clear (−1.54) and on
+night_adverse (−1.91). Every arm is at or below BASE on every time-of-day slice. Four
+training pools, one scorer: **no data-side intervention improves night.**
+
+#### The open question, and why no claim is being made yet
+
+All three arms gain on adverse weather, and M2 — which contains **no synthetic imagery at
+all**, only repeated sampling of real bike/motor images — gains the most on three of four
+weather slices. That needs an explanation before anything is claimed, and there is a
+strong candidate that would dissolve the finding entirely:
+
+**`all` is an unweighted mean over five classes.** §3.11 already caught this exact
+artifact in the Set 2 comparison, where 80% of an apparent daytime win came from `motor`
+at 262 instances. IRFS oversamples **bike ×2.42 and motor ×3.39** — precisely the two
+weakest, rarest classes — so M2's `all` gain may be almost entirely those two classes,
+each of which sits far below the ≥800-instance reporting threshold on `day_adverse`
+(823 images) and `adverse` (1,519 images).
+
+#### The decomposition, run 2026-09-14 — there is no weather finding
+
+Per-class mAP50 on each weather slice, all four arms:
+
+| slice | arm | `all` gain | of which motor+bike | share | **`car`** |
+|---|---|---|---|---|---|
+| day_adverse | M1 | +1.59 | +1.03 | 65% | **−0.38** |
+| day_adverse | M2 | +2.90 | +2.73 | **94%** | **−0.10** |
+| day_adverse | M3 | +3.39 | +3.03 | **89%** | **−0.53** |
+| adverse | M1 | +1.05 | +0.47 | 45% | **−0.37** |
+| adverse | M2 | +1.86 | +1.95 | **105%** | **−0.48** |
+| adverse | M3 | +1.21 | +0.94 | 78% | **−0.66** |
+| rainy | M1 | +0.70 | −0.15 | — | **−0.33** |
+| rainy | M2 | +2.53 | +1.81 | 72% | **−0.49** |
+| rainy | M3 | +0.89 | +0.19 | 21% | **−0.69** |
+| snowy | M1 | +0.90 | +0.76 | 85% | **−0.67** |
+| snowy | M2 | +0.81 | +1.80 | **223%** | **−0.64** |
+| snowy | M3 | +2.60 | +2.83 | **109%** | **−0.79** |
+
+(Shares above 100% mean the remaining classes were *negative*, so motor and bike had to
+overcome them to produce a positive `all`.)
+
+> ### **`car` is below `base_100` in 12 of 12 arm × weather-slice cells.**
+
+`car` is the only class with adequate instance support anywhere — 91,118 instances across
+the test set against 377 for `motor` and 739 for `bike`, and those two split further
+across each weather slice into a few dozen apiece, an order of magnitude below the
+project's own ≥800-instance reporting threshold (§1).
+
+**Conclusion: the adverse-weather gains are an artifact of the unweighted five-class
+mean, not a weather effect.** Every apparent gain is carried by two classes that the
+project's own reporting rules say cannot support a number, while the class that *can*
+support one moves consistently in the opposite direction.
+
+**So the augmentation line is negative everywhere.** Not just at night (§2.2), but on
+day, on dawn/dusk, on clear, and — once decomposed — on weather too. M1, M2 and M3 all
+fail to beat BASE on any slice on any class with the instances to prove it. That is the
+finished, defensible statement, and it is simpler than anything that came before it.
+
+**What this cost, and why it was worth it.** A weather claim was written into this
+document on 2026-09-11, survived four days, and was wrong. It was caught by a registered
+prediction (§2.2.1, falsified) followed by a decomposition the project's own §1 rules
+demanded all along. Both steps belong in the write-up as method, not as embarrassment.
 
 ### 2.3 The finding that motivates the JEPA phase
 
@@ -269,7 +431,12 @@ distribution and toward either representation quality or input resolution.
 | m3_lowlight_irfs (M3) | 0.5013 | 0.4031 | −9.82 |
 
 Full range **−9.48 to −9.87: 0.39 points**, against a within-run wobble of 0.12 among
-the four T1 checkpoints. Four training pools, two hyperparameter recipes and a
+the four T1 checkpoints.
+
+**Extended 2026-09-14 with M1 and M2 on the same scorer:** base_100 −9.71, m1_lowlight
+−9.72, m2_irfs −9.64, m3_lowlight_irfs −9.82 — the four augmentation arms span **0.18
+points**. Across every 100%-label arm now measured (BASE, M1, M2, M3, Set 2, T1×4) the
+range is −9.48 to −9.87. Four training pools, two hyperparameter recipes and a
 JEPA-initialised backbone all land on the same number. **This is not a property of any
 arm — it is a property of the setup**, and it is the finding the write-up should be
 built around. The remaining untested lever is input resolution (`imgsz: 768`); every
@@ -788,7 +955,12 @@ it is the least informative number in the table — which is why picking a recip
 `overall` would have been the wrong call.
 
 For a night-and-adverse-conditions study, `set3_combined` is the right recipe on the
-measurement, not merely on the inertia. (Earlier per-class decomposition, from the
+measurement, not merely on the inertia.
+
+**Note added 2026-09-14:** the per-class decomposition this section pioneered caught a
+second, larger false finding three days later — the entire adverse-weather result in
+§2.2.3. Two for two. The rule it establishes is now in §1's reporting discipline.
+Decompose every `all`-level delta before believing it. (Earlier per-class decomposition, from the
 2026-09-10 two-script comparison, is retained below.)
 
 | slice | Set 2 | set3_combined | Δ |
@@ -869,7 +1041,12 @@ the test set.
    can keep improving downstream after the matching loss plateaus. Testing costs one full
    fine-tune per length (~2 nights each). Also `backbone_distilled.pt` is overwritten each
    epoch, so no intermediate snapshots exist — an ablation needs a fresh run.
-6. **Two evaluators existed historically — partially RESOLVED 2026-09-10.** M3 was
+6. **Two evaluators existed historically — FULLY RESOLVED 2026-09-14.** All four
+   augmentation arms (BASE/M1/M2/M3) plus Set 2 and every JEPA arm have now been scored
+   through `evaluation/score_slices.py` in shared jobs (§2.2.3). No cross-pipeline delta
+   remains in the record. Original text below, kept for provenance.
+
+   ~~**Partially resolved 2026-09-10.**~~ M3 was
    scored with `eval_detections.py`; M1/M2/BASE with pycocotools via `eval_arm_coco.py`;
    `evaluation/score_slices.py` is a third entry point. The common arm has now been
    scored through **both pycocotools paths and they agree exactly**: `score_slices.py`
@@ -915,10 +1092,10 @@ defence, and §2.7 is the citation.
 1. **Seed repeat of BASE@100** (~1 night). Still the highest-value single run. Every
    verdict in §2.5.1, §2.6.2, §3.11 and §2.7 rests on within-run floors, which are lower
    bounds. One repeat converts "consistent with real" into "real" across the whole record.
-2. **M1 / M2 weights from the teammate** (~40 min scoring, no training). The §2.2.1
-   prediction is registered and still open: if M1 shows the `day_adverse` gain and M2 does
-   not, the degradation-augmentation reframing is supported; if M2 shows it too, that
-   reframing must be retracted. This is now the **only open positive claim** in the study.
+2. ✅ **Closed 2026-09-14.** M1/M2 obtained, verified (§2.2.2), scored (§2.2.3), and the
+   weather gains decomposed by class. The registered prediction was **falsified**, §2.2.1
+   is retracted, and the weather finding is withdrawn — it was a rare-class artifact.
+   §4.6 fully closed. **The augmentation line is finished; nothing further is owed to it.**
 3. **`imgsz: 768` on BASE** (~2 nights). The one untried lever. §2.6.1's multiplicative
    night penalty (ratio 0.81, invariant across nine measurements) points at a resolution
    limit, and resolution is the only thing never varied. **If budget allows exactly one
@@ -937,9 +1114,13 @@ positive finding and one live open question:
    range 0.809–0.820 across nine measurements spanning four training pools, two
    hyperparameter recipes, two backbone initialisations and a 10× change in labelled data
    (§2.6.1, §2.6.2). Nothing tried has moved it.
-2. **Data-side interventions do not move it** (§2.2) — but the low-light transform helps
-   *daytime adverse weather*, +3.39 on `day_adverse` at 6.5× the floor, which reframes it
-   as a degradation augmentation rather than a night one (§2.2.1, prediction open).
+2. **Data-side interventions do not move it — anywhere** (§2.2, §2.2.3). All four arms,
+   one scorer, decomposed by class: every arm is at or below BASE on every time-of-day
+   slice, M1 (the arm built to fix night) is the worst of them at night, and the apparent
+   adverse-weather gain dissolved on decomposition — `car` is below BASE in **12 of 12**
+   arm × weather-slice cells, with the gains carried entirely by motor and bike at a few
+   dozen instances each. The augmentation line is negative on every slice and every class
+   with the support to prove it.
 3. **Representation-side intervention does not move it either, and costs accuracy**
    (§2.5, §2.6, §2.7). Both the "replace COCO" and "augment COCO" variants lose, and both
    lose identically at night.
