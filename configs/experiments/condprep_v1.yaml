@@ -27,3 +27,15 @@ eval_splits:
     data: dataset/bdd100k_test_night_preprocessed.yaml
   - name: val_dawndusk
     data: dataset/bdd100k_test_dawndusk_preprocessed.yaml
+  - name: val_clear
+    data: dataset/bdd100k_test_clear_preprocessed.yaml
+  - name: val_overcast
+    data: dataset/bdd100k_test_overcast_preprocessed.yaml
+  - name: val_snowy
+    data: dataset/bdd100k_test_snowy_preprocessed.yaml
+  - name: val_partlycloudy
+    data: dataset/bdd100k_test_partlycloudy_preprocessed.yaml
+  - name: val_rainy
+    data: dataset/bdd100k_test_rainy_preprocessed.yaml
+  - name: val_foggy   # n=13 in the whole test pool - report with caveat, not a reliable mAP
+    data: dataset/bdd100k_test_foggy_preprocessed.yaml

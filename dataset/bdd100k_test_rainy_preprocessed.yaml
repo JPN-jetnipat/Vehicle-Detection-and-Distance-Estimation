@@ -1,0 +1,13 @@
+path: dataset/yolo_preprocessed
+
+# train: unused (this yaml is for eval only) - set to satisfy ultralytics' required-key check
+train: images/test_rainy
+val: images/test_rainy
+test: images/test_rainy
+
+names:
+  0: car
+  1: truck
+  2: bus
+  3: motor
+  4: bike

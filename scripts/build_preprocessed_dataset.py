@@ -18,8 +18,12 @@ Split-naming trap (see bdd100k_split_handoff/README.md and project memory):
 splits/val.txt (the real ~1542-image validation carve-out) lists filenames
 that physically live under images/train/, NOT images/val/. images/val/ is
 BDD's official val set, used here as the held-out test pool and already
-bucketed into images/test_{day,night,dawndusk}/ by materialize_test_splits.py.
-SUB_SPLITS below encodes the correct source directory for each case.
+bucketed into images/test_{day,night,dawndusk}/ by materialize_test_splits.py
+and images/test_{clear,overcast,snowy,partlycloudy,rainy,foggy}/ by
+materialize_test_weather_splits.py (run both before this script's test_*
+splits - it only reads what's already materialized under images/test_*/, it
+does not bucket dataset/yolo/images/val/ itself). SUB_SPLITS below encodes
+the correct source directory for each case.
 
 Must be run with the repo root as the working directory.
 """
@@ -51,6 +55,12 @@ SUB_SPLITS = {
     "test_day": (YOLO_DIR / "images" / "test_day", YOLO_DIR / "labels" / "test_day", ("glob", None)),
     "test_night": (YOLO_DIR / "images" / "test_night", YOLO_DIR / "labels" / "test_night", ("glob", None)),
     "test_dawndusk": (YOLO_DIR / "images" / "test_dawndusk", YOLO_DIR / "labels" / "test_dawndusk", ("glob", None)),
+    "test_clear": (YOLO_DIR / "images" / "test_clear", YOLO_DIR / "labels" / "test_clear", ("glob", None)),
+    "test_overcast": (YOLO_DIR / "images" / "test_overcast", YOLO_DIR / "labels" / "test_overcast", ("glob", None)),
+    "test_snowy": (YOLO_DIR / "images" / "test_snowy", YOLO_DIR / "labels" / "test_snowy", ("glob", None)),
+    "test_partlycloudy": (YOLO_DIR / "images" / "test_partlycloudy", YOLO_DIR / "labels" / "test_partlycloudy", ("glob", None)),
+    "test_rainy": (YOLO_DIR / "images" / "test_rainy", YOLO_DIR / "labels" / "test_rainy", ("glob", None)),
+    "test_foggy": (YOLO_DIR / "images" / "test_foggy", YOLO_DIR / "labels" / "test_foggy", ("glob", None)),
 }
 
 
