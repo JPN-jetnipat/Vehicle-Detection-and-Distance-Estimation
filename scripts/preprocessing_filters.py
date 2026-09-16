@@ -13,19 +13,33 @@ change.
 import cv2
 import numpy as np
 
-CLAHE_CLIP_LIMIT = 2.0
+CLAHE_CLIP_LIMIT = 3.0
 CLAHE_TILE_GRID = (8, 8)
 
-BILATERAL_D = 9
-BILATERAL_SIGMA_COLOR = 75
-BILATERAL_SIGMA_SPACE = 75
+BILATERAL_D = 7
+BILATERAL_SIGMA_COLOR = 40
+BILATERAL_SIGMA_SPACE = 40
 
 MEDIAN_KSIZE = 5
+DERAIN_GUIDED_RADIUS = 9   # base/detail split point: bigger than a rain streak, smaller than real structure
+DERAIN_GUIDED_EPS = 1e-2
+
+# Gamma target: raise mean L (0-255, LAB) toward this before CLAHE.
+# CLAHE alone only redistributes *local* contrast - on a genuinely dark frame
+# (mean L well under this) it leaves the frame looking almost as dark as the
+# input because there's no local contrast to redistribute in the first place.
+ENHANCE_TARGET_MEAN = 110.0
+ENHANCE_GAMMA_MIN = 1.0   # never darken (gamma < 1 would darken already-bright frames)
+ENHANCE_GAMMA_MAX = 3.5   # cap so near-black frames don't get pushed into flat gray
 
 # Dark Channel Prior defaults (He, Sun & Tang, 2011)
 DCP_PATCH_SIZE = 15
-DCP_OMEGA = 0.95
-DCP_T0 = 0.1
+DCP_OMEGA = 0.85          # softer than the textbook 0.95: less over-darkening on
+                          # frames that are mostly sky/road with only mild haze
+DCP_T0 = 0.2              # higher transmission floor than the textbook 0.1: the
+                          # haze equation divides by transmission, so a low floor
+                          # amplifies ordinary JPEG block noise in flat sky/haze
+                          # regions into visible blockiness ("ภาพแตก")
 DCP_GUIDED_RADIUS = 40
 DCP_GUIDED_EPS = 1e-3
 DCP_ATM_BLUR_KSIZE = 41   # smooths out small point light sources before atmosphere estimation
@@ -38,8 +52,31 @@ def identity(img: np.ndarray) -> np.ndarray:
 
 
 def derain(img: np.ndarray) -> np.ndarray:
-    """Median blur to knock down rain streaks."""
-    return cv2.medianBlur(img, MEDIAN_KSIZE)
+    """Remove rain-streak-like high-frequency noise without blurring the whole frame.
+
+    A single global median blur (the previous implementation) can't tell a
+    rain streak from a building edge or license-plate text - it softens
+    everything uniformly, which is why the output looked "blurry/broken" but
+    the streaks themselves barely moved (median blur only erases noise
+    *thinner* than its kernel; on frames with no visible streaks it just
+    destroys detail for nothing).
+
+    Instead: split the image into a base layer (edge-preserving guided
+    filter - keeps real structure sharp) and a detail layer (base minus
+    original - carries thin streak-like noise plus fine texture). Median-blur
+    only the detail layer to knock out the streak-like component, then add it
+    back onto the untouched base. Real edges live mostly in the base layer
+    and pass through unblurred; only the noise-like residual gets filtered.
+    """
+    guide = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    base = cv2.ximgproc.guidedFilter(
+        guide=guide, src=img, radius=DERAIN_GUIDED_RADIUS, eps=DERAIN_GUIDED_EPS
+    )
+    detail = img.astype(np.int16) - base.astype(np.int16)
+    detail_u8 = np.clip(detail + 128, 0, 255).astype(np.uint8)
+    detail_denoised = cv2.medianBlur(detail_u8, MEDIAN_KSIZE).astype(np.int16) - 128
+    result = base.astype(np.int16) + detail_denoised
+    return np.clip(result, 0, 255).astype(np.uint8)
 
 
 def _apply_on_l_channel(img: np.ndarray, fn) -> np.ndarray:
@@ -50,18 +87,47 @@ def _apply_on_l_channel(img: np.ndarray, fn) -> np.ndarray:
     return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
 
 
-def histeq_lab(img: np.ndarray) -> np.ndarray:
-    """Global histogram equalization on the LAB L channel."""
-    return _apply_on_l_channel(img, cv2.equalizeHist)
+def _gamma_correct_l(l_chan: np.ndarray) -> np.ndarray:
+    """Power-law brighten the L channel so its mean approaches ENHANCE_TARGET_MEAN.
+
+    This is what actually fixes "light is still low": CLAHE only reshuffles
+    *local* contrast and cannot raise the overall brightness of a frame that
+    is dark everywhere (a real night frame has little local contrast to
+    redistribute in the first place). Gamma correction lifts every pixel
+    (dark pixels more than bright ones) before CLAHE sharpens local detail.
+
+    Self-limiting: a frame already at or above the target is returned
+    untouched, so this is safe to run on well-exposed daytime frames too.
+    """
+    mean_l = float(l_chan.mean())
+    if mean_l < 1.0:
+        mean_l = 1.0
+    if mean_l >= ENHANCE_TARGET_MEAN:
+        return l_chan
+    gamma = np.log(mean_l / 255.0) / np.log(ENHANCE_TARGET_MEAN / 255.0)
+    gamma = float(np.clip(gamma, ENHANCE_GAMMA_MIN, ENHANCE_GAMMA_MAX))
+    normalized = l_chan.astype(np.float64) / 255.0
+    brightened = np.power(normalized, 1.0 / gamma) * 255.0
+    return np.clip(brightened, 0, 255).astype(np.uint8)
 
 
-def clahe_bilateral(img: np.ndarray) -> np.ndarray:
-    """CLAHE on the LAB L channel, followed by a bilateral filter.
+def adaptive_enhance(img: np.ndarray) -> np.ndarray:
+    """Gamma-brighten, then CLAHE, then a gentle bilateral denoise.
 
-    The bilateral pass suppresses the noise CLAHE amplifies while keeping
-    edges (needed for small objects like motor/bike) intact.
+    Order matters: gamma first raises overall exposure so CLAHE has real
+    local contrast to work with; CLAHE second sharpens local detail (needed
+    for small objects like motor/bike); bilateral last cleans up the noise
+    CLAHE amplifies. sigmaColor/sigmaSpace are kept low (40) so the filter
+    doesn't blur across the strong edges around streetlights and headlights,
+    which produces a smeared halo look.
+
+    Named "adaptive" rather than "low_light" because the gamma stage scales
+    itself to the input and no-ops on an already-bright frame - so the same
+    function serves genuinely dark night frames and merely flat overcast
+    daytime ones, doing only as much as each needs.
     """
     clahe = cv2.createCLAHE(clipLimit=CLAHE_CLIP_LIMIT, tileGridSize=CLAHE_TILE_GRID)
+    img = _apply_on_l_channel(img, _gamma_correct_l)
     img = _apply_on_l_channel(img, clahe.apply)
     return cv2.bilateralFilter(img, BILATERAL_D, BILATERAL_SIGMA_COLOR, BILATERAL_SIGMA_SPACE)
 

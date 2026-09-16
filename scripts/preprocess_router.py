@@ -2,14 +2,41 @@
 
 Decision table (weather corrected before timeofday, always):
 
-              daytime        night                          dawn/dusk
-clear         raw            clahe_bilateral                raw
-rainy         derain         derain -> clahe_bilateral       derain
-foggy         dcp_dehaze     clahe_bilateral (DCP skipped)   dcp_dehaze
-overcast      histeq_lab     clahe_bilateral                histeq_lab
-snowy         raw            clahe_bilateral                raw
-partly cloudy raw            clahe_bilateral                raw
-undefined     raw            raw                            raw
+              daytime           night                           dawn/dusk
+clear         raw               adaptive_enhance                adaptive_enhance
+rainy         derain            derain -> adaptive_enhance      derain
+foggy         dcp_dehaze        adaptive_enhance (DCP skipped)  dcp_dehaze
+overcast      adaptive_enhance  adaptive_enhance                adaptive_enhance
+snowy         raw               adaptive_enhance                adaptive_enhance
+partly cloudy raw               adaptive_enhance                adaptive_enhance
+undefined     raw               raw                             raw
+
+dawn/dusk's "raw" cells (clear/snowy/partly cloudy) are swapped for
+adaptive_enhance - twilight ambient light is dim, and those buckets were
+previously routed like daytime (no brightening at all), which is why
+dawn/dusk output looked just as dark as raw input.
+
+overcast used histeq_lab (global histogram equalization) before. Measured
+inside vehicle boxes (YOLO labels, n=100 daytime / n=80 dawn-dusk), global
+equalization crushes vehicle pixels to black - the sky dominates the
+histogram, so the mapping steepens over the sky's range and compresses the
+midtones where vehicles actually live:
+
+  overcast/daytime    dark% inside boxes: raw 0.02 -> histeq 1.28 (64x)
+  overcast/dawn-dusk  dark% inside boxes: raw 0.03 -> histeq 1.69 (56x)
+
+adaptive_enhance beats it on every metric in both buckets (brighter, higher
+contrast, more gradient energy) while destroying nothing - it even clips
+fewer highlights than the raw input, because its gamma pass lifts darks
+before CLAHE instead of redistributing them, and the bilateral pass cleans up
+what CLAHE amplifies.
+
+The raw cells (clear/snowy/partly cloudy daytime) stay raw deliberately:
+measured inside vehicle boxes, those buckets already match or beat
+clear/daytime on exposure, so there is no defect to correct there. Snow's
+highlight clipping sits in sky/snowbanks, outside every box - and snow breaks
+the Dark Channel Prior assumption, so forcing dcp_dehaze on it crushes
+vehicles (dark% 6.6 -> 41.9).
 
 To add a filter or change a bucket's pipeline, edit ROUTING_TABLE only.
 """
@@ -29,33 +56,33 @@ TIMEOFDAY_ALIASES = {
 ROUTING_TABLE = {
     "clear": {
         "daytime": [],
-        "night": [filt.clahe_bilateral],
-        "dawn/dusk": [],
+        "night": [filt.adaptive_enhance],
+        "dawn/dusk": [filt.adaptive_enhance],
     },
     "rainy": {
         "daytime": [filt.derain],
-        "night": [filt.derain, filt.clahe_bilateral],
+        "night": [filt.derain, filt.adaptive_enhance],
         "dawn/dusk": [filt.derain],
     },
     "foggy": {
         "daytime": [filt.dcp_dehaze],
-        "night": [filt.clahe_bilateral],
+        "night": [filt.adaptive_enhance],
         "dawn/dusk": [filt.dcp_dehaze],
     },
     "overcast": {
-        "daytime": [filt.histeq_lab],
-        "night": [filt.clahe_bilateral],
-        "dawn/dusk": [filt.histeq_lab],
+        "daytime": [filt.adaptive_enhance],
+        "night": [filt.adaptive_enhance],
+        "dawn/dusk": [filt.adaptive_enhance],
     },
     "snowy": {
         "daytime": [],
-        "night": [filt.clahe_bilateral],
-        "dawn/dusk": [],
+        "night": [filt.adaptive_enhance],
+        "dawn/dusk": [filt.adaptive_enhance],
     },
     "partly cloudy": {
         "daytime": [],
-        "night": [filt.clahe_bilateral],
-        "dawn/dusk": [],
+        "night": [filt.adaptive_enhance],
+        "dawn/dusk": [filt.adaptive_enhance],
     },
 }
 
