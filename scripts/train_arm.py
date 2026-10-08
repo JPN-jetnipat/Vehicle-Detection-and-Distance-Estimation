@@ -193,6 +193,11 @@ def main() -> None:
             split="val",
             imgsz=train_kwargs["imgsz"],
             batch=train_kwargs["batch"],
+            # keep each split's plots under this arm's run dir instead of
+            # ultralytics' default anonymous runs/detect/val-N folders
+            project=str(model.trainer.save_dir / "eval"),
+            name=split["name"],
+            exist_ok=True,
         )
         rows.extend(metrics_to_rows(arm_name, split["name"], split_metrics, timestamp))
         with log_path.open("a", encoding="utf-8") as f:

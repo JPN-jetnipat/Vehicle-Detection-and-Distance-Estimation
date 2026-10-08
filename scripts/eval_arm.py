@@ -15,6 +15,12 @@ protocol, and the only scorer that reports mAP75 - ultralytics' val() exposes
 only mAP50 and mAP50-95). Rows are tagged with their scorer, so the two never
 get conflated.
 
+--plots-only reruns ultralytics' val() just to regenerate each split's plots
+(<run_dir>/eval/<split>/), without the pycocotools pass and without appending
+any rows to the metrics CSV. --samples N instead only draws the first N images
+of each split one per file (<run_dir>/test_pred_separate/<split>/), which is
+cheap enough to run on the local laptop.
+
 Must be run with the repo root as the working directory (same as train_arm.py).
 """
 
@@ -31,6 +37,30 @@ import train_arm
 ROOT = Path(__file__).resolve().parent.parent
 
 
+def save_samples(model: YOLO, splits: list[dict], out_root: Path, n: int, imgsz: int) -> None:
+    """Draw predictions on the first n images (by filename) of each split, one file per image."""
+    for split in splits:
+        data = yaml.safe_load((ROOT / split["data"]).read_text(encoding="utf-8"))
+        image_dir = ROOT / data["path"] / data["val"]
+        images = sorted(p for p in image_dir.iterdir() if p.suffix.lower() in {".jpg", ".jpeg", ".png"})[:n]
+        if not images:
+            print(f"[{split['name']}] no images found in {image_dir}, skipping")
+            continue
+        # line_width=1 keeps boxes and labels small enough to read on crowded street scenes
+        model.predict(
+            [str(p) for p in images],
+            imgsz=imgsz,
+            conf=0.25,
+            save=True,
+            project=str(out_root),
+            name=split["name"],
+            exist_ok=True,
+            line_width=1,
+            verbose=False,
+        )
+        print(f"[{split['name']}] saved {len(images)} images to {out_root / split['name']}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, type=Path)
@@ -39,6 +69,18 @@ def main() -> None:
         type=Path,
         default=None,
         help="Path to a .pt checkpoint. Defaults to runs/detect/<train.name>/weights/best.pt from the config.",
+    )
+    parser.add_argument(
+        "--plots-only",
+        action="store_true",
+        help="Regenerate each split's val plots only; skip pycocotools and write no metric rows.",
+    )
+    parser.add_argument(
+        "--samples",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Only save per-image predictions for the first N images of each split, then exit.",
     )
     args = parser.parse_args()
 
@@ -51,6 +93,12 @@ def main() -> None:
         raise FileNotFoundError(f"No weights at {weights} - train this arm first, or pass --weights explicitly.")
 
     model = YOLO(weights)
+    run_dir = weights.resolve().parent.parent
+
+    if args.samples:
+        save_samples(model, cfg["eval_splits"], run_dir / "test_pred_separate", args.samples, train_kwargs["imgsz"])
+        return
+
     timestamp = train_arm.now_th()
     rows: list[dict] = []
     for split in cfg["eval_splits"]:
@@ -59,8 +107,16 @@ def main() -> None:
             split="val",
             imgsz=train_kwargs["imgsz"],
             batch=train_kwargs["batch"],
+            # weights live at <run_dir>/weights/best.pt; save plots next to them
+            project=str(run_dir / "eval"),
+            name=split["name"],
+            exist_ok=True,
         )
         rows.extend(train_arm.metrics_to_rows(arm_name, split["name"], split_metrics, timestamp))
+
+    if args.plots_only:
+        print(f"Saved plots for {len(cfg['eval_splits'])} splits under {run_dir / 'eval'} (no metric rows written)")
+        return
 
     coco_device = "0" if torch.cuda.is_available() else "cpu"
     for split in cfg["eval_splits"]:
