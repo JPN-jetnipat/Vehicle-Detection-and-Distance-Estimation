@@ -3,6 +3,7 @@
 Usage:
     python scripts/eval_arm.py --config configs/experiments/set1_night_aug.yaml
     python scripts/eval_arm.py --config configs/experiments/set1_night_aug.yaml --weights runs/detect/set1_night_aug/weights/best.pt
+    python scripts/eval_arm.py --config configs/experiments/set1_night_aug.yaml --splits val_clear val_overcast val_snowy
 
 Reuses train_arm.py's metrics_to_rows/append_metrics/export_excel, so results
 land in the same results/metrics_all_arms.csv|xlsx under the config's
@@ -20,6 +21,9 @@ get conflated.
 any rows to the metrics CSV. --samples N instead only draws the first N images
 of each split one per file (<run_dir>/test_pred_separate/<split>/), which is
 cheap enough to run on the local laptop.
+
+--splits restricts scoring to the named eval_splits (e.g. only the weather
+splits an arm is missing). Other splits' existing rows are left untouched.
 
 Must be run with the repo root as the working directory (same as train_arm.py).
 """
@@ -82,11 +86,25 @@ def main() -> None:
         metavar="N",
         help="Only save per-image predictions for the first N images of each split, then exit.",
     )
+    parser.add_argument(
+        "--splits",
+        nargs="+",
+        default=None,
+        metavar="NAME",
+        help="Only evaluate these eval_splits by name (e.g. val_clear val_snowy). Defaults to all.",
+    )
     args = parser.parse_args()
 
     cfg = yaml.safe_load(args.config.read_text(encoding="utf-8"))
     arm_name = cfg["arm_name"]
     train_kwargs = cfg["train"]
+
+    if args.splits:
+        known = {split["name"] for split in cfg["eval_splits"]}
+        unknown = sorted(set(args.splits) - known)
+        if unknown:
+            raise ValueError(f"Unknown split(s) {unknown} - {args.config} defines {sorted(known)}")
+        cfg["eval_splits"] = [split for split in cfg["eval_splits"] if split["name"] in args.splits]
 
     weights = args.weights or ROOT / "runs" / "detect" / train_kwargs["name"] / "weights" / "best.pt"
     if not weights.exists():
