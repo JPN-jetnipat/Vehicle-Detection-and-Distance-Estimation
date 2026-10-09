@@ -64,3 +64,5 @@ dataset/lowlight
 
 # review diffs generated during doc edits - git history is the real record
 docs/*.diff
+
+domain_examples/
