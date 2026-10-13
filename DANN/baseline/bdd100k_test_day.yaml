@@ -1,0 +1,10 @@
+﻿# Evaluation config: test_day
+path: C:/Users/USER/OneDrive/เดสก์ท็อป/baby/bdd100k_split_handoff/dataset/yolo
+train: images/train_day
+val: images/test_day
+names:
+  0: car
+  1: truck
+  2: bus
+  3: motor
+  4: bike

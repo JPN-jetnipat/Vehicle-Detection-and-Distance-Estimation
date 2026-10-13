@@ -16,3 +16,24 @@ datasets/
 
 # VS Code settings
 .vscode/
+# --- BDD100K handoff additions ---
+*.jpg
+*.jpeg
+*.png
+*.pt
+*.pth
+*.onnx
+*.cache
+*.zip
+*.sqlite
+*.bin
+dataset/
+_coco_remap/
+pycoco_cache/
+.vs/
+__pycache__/
+New folder/
+
+# Keep split definitions
+!**/splits/**
+!**/weather_splits/**

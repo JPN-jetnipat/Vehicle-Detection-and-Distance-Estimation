@@ -1,0 +1,15 @@
+# Day-only (source domain) dataset for DANN baseline
+# Used with: yolo detect train model=yolo11s.pt data=bdd100k_day.yaml cfg=train_params_day.yaml
+#
+# NOTE: adjust 'path' if the dataset root differs on your machine.
+# Forward slashes are safe on Windows and avoid backslash escaping issues.
+
+path: C:/Users/USER/OneDrive/เดสก์ท็อป/baby/bdd100k_split_handoff/dataset/yolo
+train: images/train_day
+val: images/val_day
+names:
+  0: car
+  1: truck
+  2: bus
+  3: motor
+  4: bike

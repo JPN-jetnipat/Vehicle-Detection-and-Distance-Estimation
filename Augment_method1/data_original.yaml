@@ -1,0 +1,13 @@
+# Dataset config — ORIGINAL BDD100K ONLY (no augmentation)
+# Same as run1-2's data_bdd100k_vehicle5_local.yaml
+
+train: C:\Users\USER\OneDrive\เดสก์ท็อป\baby\YOLO11s_TrainByDefault\splits_local\train_100_images.txt
+val: C:\Users\USER\OneDrive\เดสก์ท็อป\baby\YOLO11s_TrainByDefault\splits_local\val_images.txt
+
+nc: 5
+names:
+  0: car
+  1: truck
+  2: bus
+  3: motor
+  4: bike

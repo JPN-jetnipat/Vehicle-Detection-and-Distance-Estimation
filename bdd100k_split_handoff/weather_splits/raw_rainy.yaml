@@ -1,0 +1,10 @@
+names:
+- car
+- truck
+- bus
+- motor
+- bike
+nc: 5
+path: C:/Users/USER/OneDrive/เดสก์ท็อป/baby/bdd100k_split_handoff/weather_splits
+train: C:/Users/USER/OneDrive/เดสก์ท็อป/baby/bdd100k_split_handoff/weather_splits/raw_rainy.txt
+val: C:/Users/USER/OneDrive/เดสก์ท็อป/baby/bdd100k_split_handoff/weather_splits/raw_rainy.txt

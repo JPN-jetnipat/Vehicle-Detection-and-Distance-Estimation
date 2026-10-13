@@ -1,0 +1,19 @@
+# Training hyperparameters — copied from colleague's set3_combined config
+# Used with: yolo detect train model=yolo11s.pt data=data.yaml cfg=train_params.yaml
+
+epochs: 100
+seed: 42
+imgsz: 640
+batch: 16
+workers: 2
+cache: false
+hsv_v: 0.25
+close_mosaic: 20
+box: 9.0
+copy_paste: 0.2
+cls: 0.7
+scale: 0.7
+translate: 0.15
+patience: 0        # disable early stopping so every arm trains the full 100 epochs
+name: method1_lowlight
+exist_ok: true      # rerunning this arm overwrites runs/detect/method1_lowlight rather than incrementing
