@@ -1,0 +1,41 @@
+arm_name: baseline_yolov5s
+model: yolov5su.pt  # ultralytics YOLOv5s (anchor-free "u" head) - architecture baseline vs yolo11s
+data: dataset/bdd100k_vehicle.yaml
+
+train:
+  epochs: 100
+  seed: 42
+  imgsz: 640
+  batch: 16
+  workers: 2
+  cache: false
+  hsv_v: 0.25
+  close_mosaic: 20
+  box: 9.0
+  copy_paste: 0.2
+  cls: 0.7
+  scale: 0.7
+  translate: 0.15
+  patience: 0  # disable early stopping so every arm trains the full 100 epochs
+  name: baseline_yolov5s
+  exist_ok: true  # rerunning this arm overwrites runs/detect/baseline_yolov5s rather than incrementing
+
+eval_splits:
+  - name: val_day
+    data: dataset/bdd100k_test_day.yaml
+  - name: val_night
+    data: dataset/bdd100k_test_night.yaml
+  - name: val_dawndusk
+    data: dataset/bdd100k_test_dawndusk.yaml
+  - name: val_clear
+    data: dataset/bdd100k_test_clear.yaml
+  - name: val_overcast
+    data: dataset/bdd100k_test_overcast.yaml
+  - name: val_snowy
+    data: dataset/bdd100k_test_snowy.yaml
+  - name: val_partlycloudy
+    data: dataset/bdd100k_test_partlycloudy.yaml
+  - name: val_rainy
+    data: dataset/bdd100k_test_rainy.yaml
+  - name: val_foggy   # n=13 in the whole test pool - report with caveat, not a reliable mAP
+    data: dataset/bdd100k_test_foggy.yaml
