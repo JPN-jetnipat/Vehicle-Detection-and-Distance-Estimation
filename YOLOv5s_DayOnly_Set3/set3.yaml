@@ -1,0 +1,17 @@
+# Set 3 (set3_combined) - same train config as the YOLO11 set3_combined arm.
+# Only model and data differ in this run.
+epochs: 100
+seed: 42
+imgsz: 640
+batch: 16
+workers: 2
+cache: false
+hsv_v: 0.25
+close_mosaic: 20
+box: 9.0
+copy_paste: 0.2
+cls: 0.7
+scale: 0.7
+translate: 0.15
+patience: 0      # disable early stopping so the run trains the full 100 epochs
+exist_ok: true   # rerun overwrites the same folder instead of incrementing

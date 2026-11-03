@@ -1,0 +1,4 @@
+﻿splits_local/
+data_bdd100k_vehicle5_day.yaml
+set3_combined_v5_day/
+*.pt
