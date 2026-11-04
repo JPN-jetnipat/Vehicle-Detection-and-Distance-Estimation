@@ -125,7 +125,8 @@ def main():
         teacher = teacher.to(dt)
     student = BackboneStudent(cfg.get("model_yaml", "yolo11s.yaml"),
                               nc=cfg.get("nc", 5), teacher_dim=teacher.embed_dim,
-                              student_init=cfg.get("student_init", "random")).to(device)
+                              student_init=cfg.get("student_init", "random"),
+                              coco_weights=cfg.get("coco_weights", "yolo11s.pt")).to(device)
     print(f"teacher: {cfg['teacher']['kind']} dim={teacher.embed_dim} grid={teacher.grid}; "
           f"student P4: {student.p4_channels}ch {student.p4_grid}x{student.p4_grid}; "
           f"eff.batch={cfg.get('batch_size',128)} (micro {cfg.get('micro_batch',64)} x{accum})")

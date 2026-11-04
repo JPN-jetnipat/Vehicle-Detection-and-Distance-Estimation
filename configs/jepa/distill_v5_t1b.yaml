@@ -1,0 +1,58 @@
+# Stage 2, YOLOv5 line (advisor request 2026-11-05), T1b-style arm:
+# IDENTICAL to distill_t1b.yaml except the student is YOLOv5s instead of YOLOv11s.
+#
+# Student = ultralytics YOLOv5s (yolov5s.yaml / yolov5su.pt): YOLOv5's CSP-Darknet
+# backbone (C3 + SPPF) and PAN neck, with the anchor-free decoupled head. Chosen over
+# the original ultralytics/yolov5 repo so the trainer, recipe (set3_combined), MuSGD,
+# and scorer stay identical to the YOLOv11 arms - the backbone/neck is the only change.
+#
+# Tap verified 2026-11-05 at 224px: layer 6 = C3, (256, 14, 14), stride 16, layers 0-6
+# all sequential. Same shape and index as YOLOv11, so teacher/loss/grid are unchanged.
+# Layers 7-9 (P5 Conv, C3, SPPF), neck and head take yolov5su.pt COCO weights.
+#
+# Compare ONLY against v5_base_* (yolov5su.pt, COCO start), never against the v11 BASE.
+#
+# Commands (server, ~/vehicle-detection):
+#   python jepa_distill/train_distill.py --config configs/jepa/distill_v5_t1b.yaml --smoke
+#   nohup python jepa_distill/train_distill.py --config configs/jepa/distill_v5_t1b.yaml \
+#       > distill_v5_t1b.log 2>&1 &
+#   python tools/make_init_weights.py \
+#       --distilled runs_jepa/stage2/distill_v5_t1b/backbone_distilled.pt \
+#       --base yolov5su.pt --out weights/init_v5_t1b.pt
+#   python tools/make_init_weights.py \
+#       --distilled runs_jepa/stage2/distill_v5_t1b/backbone_distilled.pt \
+#       --base yolov5su.pt --verify weights/init_v5_t1b.pt     # expect 150/150, 0 differing
+name: distill_v5_t1b
+project: runs_jepa/stage2
+
+teacher:
+  kind: t2_ijepa            # IJepaCheckpointTeacher - reads the 'target_encoder' key
+  kwargs:
+    checkpoint: weights/IN1K-vit.h.14-300e.pth.tar
+    arch: vit_huge
+    patch_size: 14
+    image_size: 224         # -> 16x16 teacher grid, dim 1280, resized to the student's 14x14
+
+model_yaml: yolov5s.yaml    # <-- YOLOv5 student
+nc: 5                       # only shapes the discarded head
+student_init: coco          # COCO PLUS JEPA (T1b-style)
+coco_weights: yolov5su.pt   # must match model_yaml
+
+train_list: splits/pretrain.txt          # same 60,186 unlabeled images; val/test never
+images_dir: dataset/yolo/images/train
+attr_index: dataset/yolo/attr_index.json
+
+loss: cosine
+epochs: 30
+batch_size: 128             # effective = micro_batch x grad-accum
+micro_batch: 64
+lr: 1.0e-3
+lr_floor: 1.0e-5
+warmup_epochs: 3
+weight_decay: 0.05
+amp_dtype: bf16
+workers: 2
+seed: 0
+ckpt_every: 500
+probe_every: 5
+device: cuda:0

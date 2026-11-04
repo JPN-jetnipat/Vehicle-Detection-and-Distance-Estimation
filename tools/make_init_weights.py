@@ -62,7 +62,10 @@ def main():
         if a.shape != b.shape:
             return False
         if a.is_floating_point() and b.is_floating_point():
-            return torch.allclose(a.float(), b.float(), atol=1e-3)
+            # rtol added 2026-11-05: fp16 keeps ~3 significant digits, so values
+            # above ~2 (yolov5su layers 0-1 BN reach 5.5) miss a pure atol=1e-3
+            # by rounding alone (seen: rel err 4e-4). The v11 graft is unaffected.
+            return torch.allclose(a.float(), b.float(), atol=1e-3, rtol=1e-3)
         return bool(torch.equal(a.long(), b.long()))
 
     if args.verify:

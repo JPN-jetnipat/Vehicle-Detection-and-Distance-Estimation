@@ -14,6 +14,11 @@ matching in the design note carries over with no change:
   - T1 ViT-H/14 @224 -> 16x16 grid, dim 1280 -> bilinearly resized to 14x14
   - T2 ViT-B/16 @224 -> 14x14 grid, dim  768 -> exact match, no resize
 
+YOLOv5 (added 2026-11-05, advisor request): model_yaml yolov5s.yaml builds
+ultralytics' YOLOv5s (the 'u' variant, anchor-free head). Verified at 224px:
+layer 5 Conv (256,14,14), layer 6 C3 (256,14,14) <-- same tap, layers 0-6 all
+f=-1. Pass coco_weights: yolov5su.pt for the COCO-start (T1b-style) arm.
+
 Layers 0-6 receive distillation gradient. Layers 7-10 (P5 Conv, C3k2, SPPF,
 C2PSA), neck and head get no distillation signal and are taken from the COCO
 checkpoint at graft time - see tools/make_init_weights.py. NOTE for the
@@ -43,7 +48,7 @@ P4_LAYER = 6  # index of the C3k2 block at stride 16 in the yolo11 backbone yaml
 
 class BackboneStudent(nn.Module):
     def __init__(self, model_yaml="yolo11s.yaml", nc=5, teacher_dim=1280,
-                 student_init="random"):
+                 student_init="random", coco_weights="yolo11s.pt"):
         super().__init__()
         from ultralytics.nn.tasks import DetectionModel
 
@@ -69,13 +74,16 @@ class BackboneStudent(nn.Module):
             from ultralytics import YOLO
 
             backbone_prefixes = tuple(f"model.{i}." for i in range(P4_LAYER + 1))
-            coco_sd = YOLO("yolo11s.pt").model.state_dict()
+            # coco_weights must match model_yaml (yolo11s.pt <-> yolo11s.yaml,
+            # yolov5su.pt <-> yolov5s.yaml). A mismatch fails the bit-exact
+            # check below rather than running silently.
+            coco_sd = YOLO(coco_weights).model.state_dict()
             sub = {k: v for k, v in coco_sd.items() if k.startswith(backbone_prefixes)}
             if not sub:
                 raise RuntimeError(
-                    "student_init=coco: yolo11s.pt yielded no tensors for layers "
+                    f"student_init=coco: {coco_weights} yielded no tensors for layers "
                     f"0-{P4_LAYER}. Key naming has changed; inspect "
-                    "YOLO('yolo11s.pt').model.state_dict().keys() before proceeding.")
+                    "YOLO(coco_weights).model.state_dict().keys() before proceeding.")
 
             report = full.load_state_dict(sub, strict=False)
 
@@ -91,9 +99,9 @@ class BackboneStudent(nn.Module):
                 raise RuntimeError(
                     f"student_init=coco did NOT populate the distilled layers: "
                     f"{len(bad)} of {len(sub)} tensors in layers 0-{P4_LAYER} differ "
-                    f"from yolo11s.pt, {len(report.unexpected_keys)} unexpected. "
+                    f"from {coco_weights}, {len(report.unexpected_keys)} unexpected. "
                     f"First few bad: {bad[:5]}. Refusing to run.")
-            print(f"student_init=coco: layers 0-{P4_LAYER} loaded from yolo11s.pt, "
+            print(f"student_init=coco: layers 0-{P4_LAYER} loaded from {coco_weights}, "
                   f"{len(sub)}/{len(sub)} tensors verified bit-exact")
         elif student_init != "random":
             raise ValueError(f"student_init must be 'random' or 'coco', got {student_init!r}")
