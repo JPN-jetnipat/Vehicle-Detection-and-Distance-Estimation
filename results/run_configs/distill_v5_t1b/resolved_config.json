@@ -1,0 +1,43 @@
+{
+  "config": {
+    "name": "distill_v5_t1b",
+    "project": "runs_jepa/stage2",
+    "teacher": {
+      "kind": "t2_ijepa",
+      "kwargs": {
+        "checkpoint": "weights/IN1K-vit.h.14-300e.pth.tar",
+        "arch": "vit_huge",
+        "patch_size": 14,
+        "image_size": 224
+      }
+    },
+    "model_yaml": "yolov5s.yaml",
+    "nc": 5,
+    "student_init": "coco",
+    "coco_weights": "yolov5su.pt",
+    "train_list": "splits/pretrain.txt",
+    "images_dir": "dataset/yolo/images/train",
+    "attr_index": "dataset/yolo/attr_index.json",
+    "loss": "cosine",
+    "epochs": 30,
+    "batch_size": 128,
+    "micro_batch": 64,
+    "lr": 0.001,
+    "lr_floor": 1e-05,
+    "warmup_epochs": 3,
+    "weight_decay": 0.05,
+    "amp_dtype": "bf16",
+    "workers": 2,
+    "seed": 0,
+    "ckpt_every": 500,
+    "probe_every": 5,
+    "device": "cuda:0"
+  },
+  "git_hash": "fe28e3c64743c76706fa0672956374ed12b99e36",
+  "argv": [
+    "jepa_distill/train_distill.py",
+    "--config",
+    "configs/jepa/distill_v5_t1b.yaml"
+  ],
+  "amp_dtype": "torch.bfloat16"
+}
