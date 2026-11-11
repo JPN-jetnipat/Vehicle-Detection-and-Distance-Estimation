@@ -1,0 +1,458 @@
+ExDark eval pool: 7362 images, 5825 vehicle boxes, truck_as_car=True
+
+=== base_100 (/home/st6622770442/vehicle-detection/weights/external/base_100_friend.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    17441 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.50995  mAP75=0.29809  mAP50-95=0.29312
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.52866  mAP75=0.30348  mAP50-95=0.3012
+  indoor           n= 2821 inst=   147  mAP50=0.27008  mAP75=0.22546  mAP50-95=0.20293
+  light_ambient    n= 2097 inst=   684  mAP50=0.4272  mAP75=0.29762  mAP50-95=0.26885
+  light_low        n=  241 inst=    25  mAP50=0.30513  mAP75=0.23495  mAP50-95=0.19076
+  light_object     n=  498 inst=   284  mAP50=0.48704  mAP75=0.35021  mAP50-95=0.30303
+  light_screen     n=  165 inst=     6  mAP50=0.1961  mAP75=0.0  mAP50-95=0.07908
+  light_shadow     n=   56 inst=    60  mAP50=0.64262  mAP75=0.37376  mAP50-95=0.4062   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.48632  mAP75=0.31867  mAP50-95=0.294
+  light_strong     n= 2059 inst=  3491  mAP50=0.54553  mAP75=0.30522  mAP50-95=0.30845
+  light_twilight   n=  416 inst=   269  mAP50=0.59448  mAP75=0.29457  mAP50-95=0.33021
+  light_weak       n=  705 inst=   643  mAP50=0.4946  mAP75=0.29801  mAP50-95=0.28536
+  light_window     n=  363 inst=     9  mAP50=0.44913  mAP75=0.40827  mAP50-95=0.34041
+  official_test    n= 2563 inst=  1743  mAP50=0.4808  mAP75=0.29591  mAP50-95=0.28339
+  official_train   n= 3000 inst=  2524  mAP50=0.51299  mAP75=0.29749  mAP50-95=0.29333
+  official_val     n= 1799 inst=  1558  mAP50=0.53774  mAP75=0.3062  mAP50-95=0.30618
+  outdoor          n= 4541 inst=  5678  mAP50=0.52388  mAP75=0.30162  mAP50-95=0.29901
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.53428  mAP75=0.30496  mAP50-95=0.30373
+
+=== t1_100 (/home/st6622770442/vehicle-detection/runs/detect/t1_jepa_100/weights/best.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    15076 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.50032  mAP75=0.28812  mAP50-95=0.28255
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.52039  mAP75=0.29399  mAP50-95=0.29118
+  indoor           n= 2821 inst=   147  mAP50=0.28266  mAP75=0.2336  mAP50-95=0.19022
+  light_ambient    n= 2097 inst=   684  mAP50=0.43024  mAP75=0.28687  mAP50-95=0.26291
+  light_low        n=  241 inst=    25  mAP50=0.27855  mAP75=0.06631  mAP50-95=0.12607
+  light_object     n=  498 inst=   284  mAP50=0.48242  mAP75=0.32288  mAP50-95=0.29386
+  light_screen     n=  165 inst=     6  mAP50=0.19444  mAP75=0.18771  mAP50-95=0.15076
+  light_shadow     n=   56 inst=    60  mAP50=0.5858  mAP75=0.30966  mAP50-95=0.34987   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.44364  mAP75=0.30884  mAP50-95=0.26778
+  light_strong     n= 2059 inst=  3491  mAP50=0.5335  mAP75=0.29623  mAP50-95=0.29686
+  light_twilight   n=  416 inst=   269  mAP50=0.55699  mAP75=0.29455  mAP50-95=0.30536
+  light_weak       n=  705 inst=   643  mAP50=0.50056  mAP75=0.29101  mAP50-95=0.28181
+  light_window     n=  363 inst=     9  mAP50=0.44094  mAP75=0.39969  mAP50-95=0.30747
+  official_test    n= 2563 inst=  1743  mAP50=0.47843  mAP75=0.29852  mAP50-95=0.27995
+  official_train   n= 3000 inst=  2524  mAP50=0.5121  mAP75=0.28649  mAP50-95=0.28729
+  official_val     n= 1799 inst=  1558  mAP50=0.51233  mAP75=0.28546  mAP50-95=0.28412
+  outdoor          n= 4541 inst=  5678  mAP50=0.51419  mAP75=0.29105  mAP50-95=0.28826
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.52538  mAP75=0.2946  mAP50-95=0.29322
+
+=== base_10 (/home/st6622770442/vehicle-detection/runs/detect/base_10/weights/best.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    24054 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.37125  mAP75=0.20249  mAP50-95=0.20328
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.40794  mAP75=0.21528  mAP50-95=0.21966
+  indoor           n= 2821 inst=   147  mAP50=0.16699  mAP75=0.13546  mAP50-95=0.10925
+  light_ambient    n= 2097 inst=   684  mAP50=0.29031  mAP75=0.19199  mAP50-95=0.17678
+  light_low        n=  241 inst=    25  mAP50=0.18899  mAP75=0.15295  mAP50-95=0.1015
+  light_object     n=  498 inst=   284  mAP50=0.3162  mAP75=0.21256  mAP50-95=0.19401
+  light_screen     n=  165 inst=     6  mAP50=0.01391  mAP75=0.0005  mAP50-95=0.00577
+  light_shadow     n=   56 inst=    60  mAP50=0.50883  mAP75=0.31762  mAP50-95=0.30808   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.37379  mAP75=0.2395  mAP50-95=0.22612
+  light_strong     n= 2059 inst=  3491  mAP50=0.41692  mAP75=0.21058  mAP50-95=0.22077
+  light_twilight   n=  416 inst=   269  mAP50=0.35688  mAP75=0.19399  mAP50-95=0.20603
+  light_weak       n=  705 inst=   643  mAP50=0.37466  mAP75=0.21361  mAP50-95=0.20485
+  light_window     n=  363 inst=     9  mAP50=0.22845  mAP75=0.20127  mAP50-95=0.16027
+  official_test    n= 2563 inst=  1743  mAP50=0.33054  mAP75=0.18863  mAP50-95=0.18324
+  official_train   n= 3000 inst=  2524  mAP50=0.3828  mAP75=0.21168  mAP50-95=0.21069
+  official_val     n= 1799 inst=  1558  mAP50=0.39754  mAP75=0.20214  mAP50-95=0.21341
+  outdoor          n= 4541 inst=  5678  mAP50=0.39354  mAP75=0.21004  mAP50-95=0.21354
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.41093  mAP75=0.21537  mAP50-95=0.22091
+
+=== t1_10 (/home/st6622770442/vehicle-detection/runs/detect/t1_jepa_10/weights/best.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    19709 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.28523  mAP75=0.15159  mAP50-95=0.15385
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.31457  mAP75=0.16  mAP50-95=0.16615
+  indoor           n= 2821 inst=   147  mAP50=0.08048  mAP75=0.0693  mAP50-95=0.06337
+  light_ambient    n= 2097 inst=   684  mAP50=0.2311  mAP75=0.15148  mAP50-95=0.14028
+  light_low        n=  241 inst=    25  mAP50=0.11521  mAP75=0.04415  mAP50-95=0.05164
+  light_object     n=  498 inst=   284  mAP50=0.26483  mAP75=0.17684  mAP50-95=0.15724
+  light_screen     n=  165 inst=     6  mAP50=4e-05  mAP75=4e-05  mAP50-95=3e-05
+  light_shadow     n=   56 inst=    60  mAP50=0.50612  mAP75=0.32489  mAP50-95=0.2993   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.29211  mAP75=0.17888  mAP50-95=0.16517
+  light_strong     n= 2059 inst=  3491  mAP50=0.3133  mAP75=0.15667  mAP50-95=0.16339
+  light_twilight   n=  416 inst=   269  mAP50=0.31175  mAP75=0.14728  mAP50-95=0.16918
+  light_weak       n=  705 inst=   643  mAP50=0.27193  mAP75=0.14416  mAP50-95=0.14765
+  light_window     n=  363 inst=     9  mAP50=0.10844  mAP75=0.06312  mAP50-95=0.0537
+  official_test    n= 2563 inst=  1743  mAP50=0.26451  mAP75=0.13675  mAP50-95=0.14097
+  official_train   n= 3000 inst=  2524  mAP50=0.29722  mAP75=0.16475  mAP50-95=0.16239
+  official_val     n= 1799 inst=  1558  mAP50=0.29095  mAP75=0.14922  mAP50-95=0.15412
+  outdoor          n= 4541 inst=  5678  mAP50=0.30151  mAP75=0.15603  mAP50-95=0.16063
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.31788  mAP75=0.16066  mAP50-95=0.16747
+
+=== t1b_10 (/home/st6622770442/vehicle-detection/runs/detect/t1b_jepa_10/weights/best.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    27579 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.31099  mAP75=0.16675  mAP50-95=0.16907
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.34259  mAP75=0.17728  mAP50-95=0.18299
+  indoor           n= 2821 inst=   147  mAP50=0.1237  mAP75=0.10949  mAP50-95=0.09987
+  light_ambient    n= 2097 inst=   684  mAP50=0.24446  mAP75=0.16569  mAP50-95=0.15294
+  light_low        n=  241 inst=    25  mAP50=0.06361  mAP75=0.04812  mAP50-95=0.03819
+  light_object     n=  498 inst=   284  mAP50=0.26451  mAP75=0.18773  mAP50-95=0.15922
+  light_screen     n=  165 inst=     6  mAP50=0.00564  mAP75=7e-05  mAP50-95=0.00164
+  light_shadow     n=   56 inst=    60  mAP50=0.45144  mAP75=0.24275  mAP50-95=0.25351   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.33307  mAP75=0.21278  mAP50-95=0.19686
+  light_strong     n= 2059 inst=  3491  mAP50=0.34498  mAP75=0.17438  mAP50-95=0.18207
+  light_twilight   n=  416 inst=   269  mAP50=0.31359  mAP75=0.17353  mAP50-95=0.17212
+  light_weak       n=  705 inst=   643  mAP50=0.32245  mAP75=0.16471  mAP50-95=0.17407
+  light_window     n=  363 inst=     9  mAP50=0.1661  mAP75=0.12749  mAP50-95=0.10439
+  official_test    n= 2563 inst=  1743  mAP50=0.28367  mAP75=0.14816  mAP50-95=0.15365
+  official_train   n= 3000 inst=  2524  mAP50=0.32771  mAP75=0.18573  mAP50-95=0.18242
+  official_val     n= 1799 inst=  1558  mAP50=0.31457  mAP75=0.15818  mAP50-95=0.1659
+  outdoor          n= 4541 inst=  5678  mAP50=0.33052  mAP75=0.17273  mAP50-95=0.17731
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.34602  mAP75=0.17758  mAP50-95=0.18399
+
+=== v5_base_100 (/home/st6622770442/vehicle-detection/weights/external/v5_base_100_friend.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    13192 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.50922  mAP75=0.28479  mAP50-95=0.28246
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.52739  mAP75=0.28996  mAP50-95=0.29015
+  indoor           n= 2821 inst=   147  mAP50=0.29013  mAP75=0.23004  mAP50-95=0.21201
+  light_ambient    n= 2097 inst=   684  mAP50=0.41642  mAP75=0.2736  mAP50-95=0.25032
+  light_low        n=  241 inst=    25  mAP50=0.36319  mAP75=0.09209  mAP50-95=0.14172
+  light_object     n=  498 inst=   284  mAP50=0.48381  mAP75=0.33701  mAP50-95=0.29761
+  light_screen     n=  165 inst=     6  mAP50=0.19745  mAP75=0.00518  mAP50-95=0.06591
+  light_shadow     n=   56 inst=    60  mAP50=0.63008  mAP75=0.40159  mAP50-95=0.3811   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.46624  mAP75=0.30131  mAP50-95=0.27532
+  light_strong     n= 2059 inst=  3491  mAP50=0.5446  mAP75=0.29449  mAP50-95=0.29712
+  light_twilight   n=  416 inst=   269  mAP50=0.57037  mAP75=0.31539  mAP50-95=0.31809
+  light_weak       n=  705 inst=   643  mAP50=0.50016  mAP75=0.27843  mAP50-95=0.28097
+  light_window     n=  363 inst=     9  mAP50=0.44831  mAP75=0.43648  mAP50-95=0.31869
+  official_test    n= 2563 inst=  1743  mAP50=0.4992  mAP75=0.28406  mAP50-95=0.28249
+  official_train   n= 3000 inst=  2524  mAP50=0.51859  mAP75=0.2871  mAP50-95=0.28555
+  official_val     n= 1799 inst=  1558  mAP50=0.51371  mAP75=0.28817  mAP50-95=0.2851
+  outdoor          n= 4541 inst=  5678  mAP50=0.52336  mAP75=0.28827  mAP50-95=0.2881
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.53242  mAP75=0.29099  mAP50-95=0.29201
+
+=== v5_t1b_100 (/home/st6622770442/vehicle-detection/runs/detect/v5_t1b_100/weights/best.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    13375 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.49609  mAP75=0.26809  mAP50-95=0.27405
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.51441  mAP75=0.27368  mAP50-95=0.28208
+  indoor           n= 2821 inst=   147  mAP50=0.2698  mAP75=0.18291  mAP50-95=0.18536
+  light_ambient    n= 2097 inst=   684  mAP50=0.40922  mAP75=0.25271  mAP50-95=0.24375
+  light_low        n=  241 inst=    25  mAP50=0.38306  mAP75=0.13365  mAP50-95=0.18971
+  light_object     n=  498 inst=   284  mAP50=0.45836  mAP75=0.25883  mAP50-95=0.27254
+  light_screen     n=  165 inst=     6  mAP50=0.05566  mAP75=0.01961  mAP50-95=0.02162
+  light_shadow     n=   56 inst=    60  mAP50=0.66203  mAP75=0.40961  mAP50-95=0.38655   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.44723  mAP75=0.30317  mAP50-95=0.26647
+  light_strong     n= 2059 inst=  3491  mAP50=0.53353  mAP75=0.27928  mAP50-95=0.28892
+  light_twilight   n=  416 inst=   269  mAP50=0.55583  mAP75=0.28546  mAP50-95=0.3032
+  light_weak       n=  705 inst=   643  mAP50=0.48486  mAP75=0.26826  mAP50-95=0.27164
+  light_window     n=  363 inst=     9  mAP50=0.42907  mAP75=0.42698  mAP50-95=0.30413
+  official_test    n= 2563 inst=  1743  mAP50=0.48677  mAP75=0.27182  mAP50-95=0.27541
+  official_train   n= 3000 inst=  2524  mAP50=0.49996  mAP75=0.27587  mAP50-95=0.27784
+  official_val     n= 1799 inst=  1558  mAP50=0.51015  mAP75=0.26231  mAP50-95=0.27496
+  outdoor          n= 4541 inst=  5678  mAP50=0.50956  mAP75=0.27125  mAP50-95=0.27942
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.51996  mAP75=0.27478  mAP50-95=0.28417
+
+=== v5_base_10 (/home/st6622770442/vehicle-detection/runs/detect/v5_base_10/weights/best.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    23720 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.34099  mAP75=0.16356  mAP50-95=0.17548
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.37925  mAP75=0.17726  mAP50-95=0.19274
+  indoor           n= 2821 inst=   147  mAP50=0.07032  mAP75=0.05396  mAP50-95=0.04659
+  light_ambient    n= 2097 inst=   684  mAP50=0.27919  mAP75=0.14461  mAP50-95=0.15079
+  light_low        n=  241 inst=    25  mAP50=0.10364  mAP75=0.06241  mAP50-95=0.05642
+  light_object     n=  498 inst=   284  mAP50=0.27044  mAP75=0.16197  mAP50-95=0.15691
+  light_screen     n=  165 inst=     6  mAP50=0.00551  mAP75=0.00028  mAP50-95=0.00284
+  light_shadow     n=   56 inst=    60  mAP50=0.56238  mAP75=0.28371  mAP50-95=0.30337   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.34163  mAP75=0.18332  mAP50-95=0.19376
+  light_strong     n= 2059 inst=  3491  mAP50=0.38645  mAP75=0.17184  mAP50-95=0.19224
+  light_twilight   n=  416 inst=   269  mAP50=0.34072  mAP75=0.17333  mAP50-95=0.18099
+  light_weak       n=  705 inst=   643  mAP50=0.33568  mAP75=0.184  mAP50-95=0.18441
+  light_window     n=  363 inst=     9  mAP50=0.25278  mAP75=0.25248  mAP50-95=0.17681
+  official_test    n= 2563 inst=  1743  mAP50=0.3178  mAP75=0.16488  mAP50-95=0.16939
+  official_train   n= 3000 inst=  2524  mAP50=0.35303  mAP75=0.16827  mAP50-95=0.18144
+  official_val     n= 1799 inst=  1558  mAP50=0.34868  mAP75=0.16114  mAP50-95=0.17676
+  outdoor          n= 4541 inst=  5678  mAP50=0.3675  mAP75=0.17321  mAP50-95=0.18763
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.38406  mAP75=0.17822  mAP50-95=0.19464
+
+=== v5_t1b_10 (/home/st6622770442/vehicle-detection/runs/detect/v5_t1b_10/weights/best.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    21372 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.30275  mAP75=0.14964  mAP50-95=0.15764
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.33252  mAP75=0.15821  mAP50-95=0.16996
+  indoor           n= 2821 inst=   147  mAP50=0.15345  mAP75=0.13988  mAP50-95=0.11707
+  light_ambient    n= 2097 inst=   684  mAP50=0.25528  mAP75=0.12328  mAP50-95=0.13801
+  light_low        n=  241 inst=    25  mAP50=0.20195  mAP75=0.04331  mAP50-95=0.08671
+  light_object     n=  498 inst=   284  mAP50=0.28276  mAP75=0.18687  mAP50-95=0.1717
+  light_screen     n=  165 inst=     6  mAP50=0.00059  mAP75=2e-05  mAP50-95=0.0003
+  light_shadow     n=   56 inst=    60  mAP50=0.47168  mAP75=0.3276  mAP50-95=0.28791   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.33459  mAP75=0.21481  mAP50-95=0.19278
+  light_strong     n= 2059 inst=  3491  mAP50=0.33067  mAP75=0.15653  mAP50-95=0.16796
+  light_twilight   n=  416 inst=   269  mAP50=0.32119  mAP75=0.17379  mAP50-95=0.17765
+  light_weak       n=  705 inst=   643  mAP50=0.29755  mAP75=0.13696  mAP50-95=0.1522
+  light_window     n=  363 inst=     9  mAP50=0.25799  mAP75=0.25566  mAP50-95=0.17983
+  official_test    n= 2563 inst=  1743  mAP50=0.28332  mAP75=0.14885  mAP50-95=0.1534
+  official_train   n= 3000 inst=  2524  mAP50=0.31285  mAP75=0.15428  mAP50-95=0.1624
+  official_val     n= 1799 inst=  1558  mAP50=0.30604  mAP75=0.14638  mAP50-95=0.15714
+  outdoor          n= 4541 inst=  5678  mAP50=0.32129  mAP75=0.1545  mAP50-95=0.165
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.33582  mAP75=0.15848  mAP50-95=0.17089
+
+==============================================================================
+ExDark mAP50 all-class / car mAP50 / car mAP75
+==============================================================================
+all  (n=7362)
+    base_100           all 0.5100   car 0.7350 / 0.4616
+    t1_100             all 0.5003   car 0.7256 / 0.4520
+    base_10            all 0.3713   car 0.6507 / 0.3829
+    t1_10              all 0.2852   car 0.5851 / 0.3327
+    t1b_10             all 0.3110   car 0.6060 / 0.3429
+    v5_base_100        all 0.5092   car 0.7351 / 0.4462
+    v5_t1b_100         all 0.4961   car 0.7297 / 0.4400
+    v5_base_10         all 0.3410   car 0.6314 / 0.3533
+    v5_t1b_10          all 0.3028   car 0.6065 / 0.3312
+has_vehicle  (n=2587)
+    base_100           all 0.5287   car 0.7604 / 0.4707
+    t1_100             all 0.5204   car 0.7547 / 0.4630
+    base_10            all 0.4079   car 0.6886 / 0.3952
+    t1_10              all 0.3146   car 0.6239 / 0.3447
+    t1b_10             all 0.3426   car 0.6428 / 0.3550
+    v5_base_100        all 0.5274   car 0.7571 / 0.4537
+    v5_t1b_100         all 0.5144   car 0.7528 / 0.4477
+    v5_base_10         all 0.3792   car 0.6707 / 0.3655
+    v5_t1b_10          all 0.3325   car 0.6405 / 0.3419
+outdoor  (n=4541)
+    base_100           all 0.5239   car 0.7494 / 0.4672
+    t1_100             all 0.5142   car 0.7426 / 0.4587
+    base_10            all 0.3935   car 0.6686 / 0.3882
+    t1_10              all 0.3015   car 0.6084 / 0.3401
+    t1b_10             all 0.3305   car 0.6283 / 0.3506
+    v5_base_100        all 0.5234   car 0.7494 / 0.4508
+    v5_t1b_100         all 0.5096   car 0.7427 / 0.4441
+    v5_base_10         all 0.3675   car 0.6532 / 0.3606
+    v5_t1b_10          all 0.3213   car 0.6251 / 0.3372
+outdoor_vehicle  (n=2506)
+    base_100           all 0.5343   car 0.7650 / 0.4728
+    t1_100             all 0.5254   car 0.7590 / 0.4647
+    base_10            all 0.4109   car 0.6921 / 0.3956
+    t1_10              all 0.3179   car 0.6299 / 0.3463
+    t1b_10             all 0.3460   car 0.6474 / 0.3563
+    v5_base_100        all 0.5324   car 0.7624 / 0.4552
+    v5_t1b_100         all 0.5200   car 0.7571 / 0.4490
+    v5_base_10         all 0.3841   car 0.6763 / 0.3676
+    v5_t1b_10          all 0.3358   car 0.6465 / 0.3437
+indoor  (n=2821)
+    base_100           all 0.2701   car 0.3364 / 0.2856
+    t1_100             all 0.2827   car 0.2766 / 0.2365
+    base_10            all 0.1670   car 0.2768 / 0.2311
+    t1_10              all 0.0805   car 0.1497 / 0.1351
+    t1b_10             all 0.1237   car 0.1868 / 0.1639
+    v5_base_100        all 0.2901   car 0.3181 / 0.2862
+    v5_t1b_100         all 0.2698   car 0.3429 / 0.2838
+    v5_base_10         all 0.0703   car 0.2276 / 0.1960
+    v5_t1b_10          all 0.1535   car 0.2132 / 0.1774
+official_test  (n=2563)
+    base_100           all 0.4808   car 0.7268 / 0.4560
+    t1_100             all 0.4784   car 0.7124 / 0.4533
+    base_10            all 0.3305   car 0.6123 / 0.3646
+    t1_10              all 0.2645   car 0.5530 / 0.3288
+    t1b_10             all 0.2837   car 0.5789 / 0.3381
+    v5_base_100        all 0.4992   car 0.7190 / 0.4278
+    v5_t1b_100         all 0.4868   car 0.7171 / 0.4337
+    v5_base_10         all 0.3178   car 0.6097 / 0.3475
+    v5_t1b_10          all 0.2833   car 0.5849 / 0.3266
+light_low  (n=241)
+    base_100           all 0.3051   car 0.3568 / 0.3402
+    t1_100             all 0.2786   car 0.2427 / 0.1989
+    base_10            all 0.1890   car 0.1321 / 0.1012
+    t1_10              all 0.1152   car 0.1442 / 0.1316
+    t1b_10             all 0.0636   car 0.1889 / 0.1444
+    v5_base_100        all 0.3632   car 0.4110 / 0.2712
+    v5_t1b_100         all 0.3831   car 0.4512 / 0.3589
+    v5_base_10         all 0.1036   car 0.2241 / 0.1859
+    v5_t1b_10          all 0.2019   car 0.1828 / 0.1288
+light_ambient  (n=2097)
+    base_100           all 0.4272   car 0.7208 / 0.5084
+    t1_100             all 0.4302   car 0.7137 / 0.4890
+    base_10            all 0.2903   car 0.6191 / 0.4033
+    t1_10              all 0.2311   car 0.5087 / 0.3406
+    t1b_10             all 0.2445   car 0.5255 / 0.3382
+    v5_base_100        all 0.4164   car 0.7133 / 0.4722
+    v5_t1b_100         all 0.4092   car 0.7075 / 0.4727
+    v5_base_10         all 0.2792   car 0.5868 / 0.3486
+    v5_t1b_10          all 0.2553   car 0.5283 / 0.3108
+light_object  (n=498)
+    base_100           all 0.4870   car 0.7027 / 0.4890
+    t1_100             all 0.4824   car 0.6617 / 0.4846
+    base_10            all 0.3162   car 0.4885 / 0.3522
+    t1_10              all 0.2648   car 0.4576 / 0.3170
+    t1b_10             all 0.2645   car 0.4953 / 0.3554
+    v5_base_100        all 0.4838   car 0.6521 / 0.4460
+    v5_t1b_100         all 0.4584   car 0.6681 / 0.4255
+    v5_base_10         all 0.2704   car 0.4949 / 0.3238
+    v5_t1b_10          all 0.2828   car 0.5415 / 0.3412
+light_single  (n=762)
+    base_100           all 0.4863   car 0.7327 / 0.5178
+    t1_100             all 0.4436   car 0.6919 / 0.4808
+    base_10            all 0.3738   car 0.6361 / 0.4621
+    t1_10              all 0.2921   car 0.5437 / 0.3430
+    t1b_10             all 0.3331   car 0.5572 / 0.3700
+    v5_base_100        all 0.4662   car 0.7155 / 0.5049
+    v5_t1b_100         all 0.4472   car 0.7209 / 0.5112
+    v5_base_10         all 0.3416   car 0.6063 / 0.3885
+    v5_t1b_10          all 0.3346   car 0.5718 / 0.3874
+light_weak  (n=705)
+    base_100           all 0.4946   car 0.7441 / 0.4431
+    t1_100             all 0.5006   car 0.7498 / 0.4318
+    base_10            all 0.3747   car 0.6639 / 0.3677
+    t1_10              all 0.2719   car 0.6057 / 0.3034
+    t1b_10             all 0.3225   car 0.6287 / 0.3239
+    v5_base_100        all 0.5002   car 0.7547 / 0.4450
+    v5_t1b_100         all 0.4849   car 0.7614 / 0.4330
+    v5_base_10         all 0.3357   car 0.6348 / 0.3577
+    v5_t1b_10          all 0.2975   car 0.6173 / 0.3252
+light_strong  (n=2059)
+    base_100           all 0.5455   car 0.7433 / 0.4611
+    t1_100             all 0.5335   car 0.7422 / 0.4605
+    base_10            all 0.4169   car 0.6729 / 0.3883
+    t1_10              all 0.3133   car 0.6122 / 0.3466
+    t1b_10             all 0.3450   car 0.6340 / 0.3519
+    v5_base_100        all 0.5446   car 0.7457 / 0.4488
+    v5_t1b_100         all 0.5335   car 0.7370 / 0.4371
+    v5_base_10         all 0.3865   car 0.6581 / 0.3567
+    v5_t1b_10          all 0.3307   car 0.6300 / 0.3381
+light_twilight  (n=416)
+    base_100           all 0.5945   car 0.7681 / 0.4087
+    t1_100             all 0.5570   car 0.7267 / 0.3839
+    base_10            all 0.3569   car 0.6876 / 0.3263
+    t1_10              all 0.3118   car 0.6419 / 0.2971
+    t1b_10             all 0.3136   car 0.6643 / 0.3264
+    v5_base_100        all 0.5704   car 0.7699 / 0.3786
+    v5_t1b_100         all 0.5558   car 0.7583 / 0.4182
+    v5_base_10         all 0.3407   car 0.6558 / 0.3574
+    v5_t1b_10          all 0.3212   car 0.6580 / 0.3305
+
+==============================================================================
+pairs: ARM - CONTROL, points (all mAP50 | car mAP50 | car mAP75)
+==============================================================================
+  t1_100 - base_100       all              -0.96 | -0.93 | -0.96
+  t1_100 - base_100       outdoor_vehicle  -0.89 | -0.59 | -0.82
+  t1_100 - base_100       light_low        -2.66 | -11.42 | -14.12
+  t1_100 - base_100       light_twilight   -3.75 | -4.14 | -2.48
+  t1_10 - base_10        all              -8.60 | -6.56 | -5.02
+  t1_10 - base_10        outdoor_vehicle  -9.31 | -6.22 | -4.94
+  t1_10 - base_10        light_low        -7.38 | +1.21 | +3.04
+  t1_10 - base_10        light_twilight   -4.51 | -4.58 | -2.92
+  t1b_10 - base_10        all              -6.03 | -4.47 | -4.00
+  t1b_10 - base_10        outdoor_vehicle  -6.49 | -4.47 | -3.93
+  t1b_10 - base_10        light_low        -12.54 | +5.68 | +4.32
+  t1b_10 - base_10        light_twilight   -4.33 | -2.34 | +0.01
+  v5_t1b_100 - v5_base_100    all              -1.31 | -0.54 | -0.62
+  v5_t1b_100 - v5_base_100    outdoor_vehicle  -1.25 | -0.53 | -0.63
+  v5_t1b_100 - v5_base_100    light_low        +1.99 | +4.01 | +8.77
+  v5_t1b_100 - v5_base_100    light_twilight   -1.45 | -1.16 | +3.96
+  v5_t1b_10 - v5_base_10     all              -3.82 | -2.49 | -2.21
+  v5_t1b_10 - v5_base_10     outdoor_vehicle  -4.82 | -2.98 | -2.39
+  v5_t1b_10 - v5_base_10     light_low        +9.83 | -4.13 | -5.71
+  v5_t1b_10 - v5_base_10     light_twilight   -1.95 | +0.22 | -2.69
+
+wrote 2430 rows -> /home/st6622770442/vehicle-detection/results/exdark_scores.csv (+ .json)
