@@ -66,3 +66,6 @@ dataset/lowlight
 docs/*.diff
 
 domain_examples/
+# ExDark external night test set (2026-11-10) - regenerable via tools/exdark_to_coco.py.
+# Images are symlinks to the raw download; splits/exdark/ IS tracked.
+dataset/exdark/
