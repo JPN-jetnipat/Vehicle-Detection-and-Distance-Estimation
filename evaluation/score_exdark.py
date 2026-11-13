@@ -126,9 +126,13 @@ def main():
     class_names = [c["name"] for c in sorted(gt.dataset["categories"], key=lambda c: c["id"])]
     name_to_id = {im["file_name"]: im["id"] for im in gt.dataset["images"]}
     inst_by_img = defaultdict(lambda: [0] * len(class_names))
+    n_ignored = 0
     for a in gt.dataset["annotations"]:
+        if a.get("iscrowd"):          # e.g. RTTS "difficult": ignored by COCOeval, not counted
+            n_ignored += 1
+            continue
         inst_by_img[a["image_id"]][a["category_id"]] += 1
-    print(f"eval pool ({args.gt}): {len(name_to_id)} images, {len(gt.dataset['annotations'])} vehicle boxes, "
+    print(f"eval pool ({args.gt}): {len(name_to_id)} images, {len(gt.dataset['annotations']) - n_ignored} scored vehicle boxes (+{n_ignored} ignored), "
           f"truck_as_car={args.truck_as_car}")
 
     slices = {}
@@ -186,7 +190,7 @@ def main():
     out.with_suffix(".json").write_text(json.dumps(summaries, indent=2))
 
     fmt = lambda v: "n/a" if v is None else f"{v:.4f}"
-    print("\n" + "=" * 78 + "\nExDark mAP50 all-class / car mAP50 / car mAP75\n" + "=" * 78)
+    print("\n" + "=" * 78 + f"\n{Path(args.gt).parent.name} mAP50 all-class / car mAP50 / car mAP75\n" + "=" * 78)
     for s in HEADLINE:
         if s not in slices:
             continue
