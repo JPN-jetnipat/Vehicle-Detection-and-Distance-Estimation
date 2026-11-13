@@ -69,3 +69,6 @@ domain_examples/
 # ExDark external night test set (2026-11-10) - regenerable via tools/exdark_to_coco.py.
 # Images are symlinks to the raw download; splits/exdark/ IS tracked.
 dataset/exdark/
+
+# RTTS external fog test set (2026-11-13) - regenerable via tools/rtts_to_coco.py; splits/rtts/ IS tracked.
+dataset/rtts/

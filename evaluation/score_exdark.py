@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Score BDD-trained arms ZERO-SHOT on ExDark (external night test set).
+"""Score BDD-trained arms ZERO-SHOT on an external test set (ExDark, RTTS, ...).
+
+Dataset-agnostic: point --gt / --images-dir / --slices-dir / --out at any set built
+by tools/<name>_to_coco.py. Defaults are ExDark's.
 
 Same protocol as evaluation/score_slices.py - NMS constants, 6dp normalized
 round-trip, COCOeval defaults (maxDets 100), per-class COCOeval - and the
@@ -125,7 +128,7 @@ def main():
     inst_by_img = defaultdict(lambda: [0] * len(class_names))
     for a in gt.dataset["annotations"]:
         inst_by_img[a["image_id"]][a["category_id"]] += 1
-    print(f"ExDark eval pool: {len(name_to_id)} images, {len(gt.dataset['annotations'])} vehicle boxes, "
+    print(f"eval pool ({args.gt}): {len(name_to_id)} images, {len(gt.dataset['annotations'])} vehicle boxes, "
           f"truck_as_car={args.truck_as_car}")
 
     slices = {}
@@ -196,7 +199,7 @@ def main():
         print("\n" + "=" * 78 + "\npairs: ARM - CONTROL, points (all mAP50 | car mAP50 | car mAP75)\n" + "=" * 78)
         for p in args.pair:
             a, b = p.split(":")
-            for s in ("all", "outdoor_vehicle", "light_low", "light_twilight"):
+            for s in ("all", "has_vehicle", "outdoor_vehicle", "light_strong"):
                 if s not in slices:
                     continue
                 d = []
