@@ -4,6 +4,7 @@ Usage:
     python scripts/eval_arm.py --config configs/experiments/set1_night_aug.yaml
     python scripts/eval_arm.py --config configs/experiments/set1_night_aug.yaml --weights runs/detect/set1_night_aug/weights/best.pt
     python scripts/eval_arm.py --config configs/experiments/set1_night_aug.yaml --splits val_clear val_overcast val_snowy
+    python scripts/eval_arm.py --config configs/experiments/set3_combined.yaml --eval-data test_exdark=dataset/exdark_test.yaml
 
 Reuses train_arm.py's metrics_to_rows/append_metrics/export_excel, so results
 land in the same results/metrics_all_arms.csv|xlsx under the config's
@@ -24,6 +25,10 @@ cheap enough to run on the local laptop.
 
 --splits restricts scoring to the named eval_splits (e.g. only the weather
 splits an arm is missing). Other splits' existing rows are left untouched.
+
+--eval-data NAME=YAML scores the arm on datasets that are not in its config's
+eval_splits (e.g. an external test set like ExDark), replacing eval_splits for
+this run. Rows are written under the arm's name with dataset_split=NAME.
 
 Must be run with the repo root as the working directory (same as train_arm.py).
 """
@@ -93,11 +98,30 @@ def main() -> None:
         metavar="NAME",
         help="Only evaluate these eval_splits by name (e.g. val_clear val_snowy). Defaults to all.",
     )
+    parser.add_argument(
+        "--eval-data",
+        nargs="+",
+        default=None,
+        metavar="NAME=YAML",
+        help="Evaluate on these datasets instead of the config's eval_splits, e.g. test_exdark=dataset/exdark_test.yaml.",
+    )
     args = parser.parse_args()
 
     cfg = yaml.safe_load(args.config.read_text(encoding="utf-8"))
     arm_name = cfg["arm_name"]
     train_kwargs = cfg["train"]
+
+    if args.splits and args.eval_data:
+        raise ValueError("--splits and --eval-data can't be combined")
+    if args.eval_data:
+        cfg["eval_splits"] = []
+        for item in args.eval_data:
+            name, sep, data = item.partition("=")
+            if not sep or not name or not data:
+                raise ValueError(f"--eval-data expects NAME=YAML, got {item!r}")
+            if not (ROOT / data).exists():
+                raise FileNotFoundError(f"No dataset yaml at {ROOT / data}")
+            cfg["eval_splits"].append({"name": name, "data": data})
 
     if args.splits:
         known = {split["name"] for split in cfg["eval_splits"]}

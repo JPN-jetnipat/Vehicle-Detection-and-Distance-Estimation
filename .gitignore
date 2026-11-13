@@ -37,11 +37,13 @@ legacy_yolov5/dataset/*/
 .ipynb_checkpoints/
 
 yolov5.zip
-venv/dataset/raw/ExDark/
+venv/
 dataset/raw/
 runs/
 *.pt
 *.zip
-venv/
 __pycache__/
 *.pyc
+
+# ExDark converted by scripts/prepare_exdark.py - regenerate on the server, don't track
+dataset/exdark_yolo/
