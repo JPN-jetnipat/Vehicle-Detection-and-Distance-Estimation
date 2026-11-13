@@ -1,0 +1,73 @@
+eval pool (dataset/rtts/gt_vehicle5.json): 4322 images, 29835 vehicle boxes, truck_as_car=True
+
+=== base_100 (/home/st6622770442/vehicle-detection/weights/external/base_100_friend.pt) ===
+    inference 640/4322
+    inference 1280/4322
+    inference 1920/4322
+    inference 2560/4322
+    inference 3200/4322
+    inference 3840/4322
+    inference 4322/4322
+    10660 truck->car relabels
+  all              n= 4322 inst= 29835  mAP50=0.45774  mAP75=0.30658  mAP50-95=0.28391
+  has_vehicle      n= 3260 inst= 29673  mAP50=0.47028  mAP75=0.31158  mAP50-95=0.28987
+
+=== t1b_100 (/home/st6622770442/vehicle-detection/runs/detect/t1b_jepa_100/weights/best.pt) ===
+    inference 640/4322
+    inference 1280/4322
+    inference 1920/4322
+    inference 2560/4322
+    inference 3200/4322
+    inference 3840/4322
+    inference 4322/4322
+    9510 truck->car relabels
+  all              n= 4322 inst= 29835  mAP50=0.4405  mAP75=0.29462  mAP50-95=0.27452
+  has_vehicle      n= 3260 inst= 29673  mAP50=0.45354  mAP75=0.29922  mAP50-95=0.28052
+
+=== v5_base_100 (/home/st6622770442/vehicle-detection/weights/external/v5_base_100_friend.pt) ===
+    inference 640/4322
+    inference 1280/4322
+    inference 1920/4322
+    inference 2560/4322
+    inference 3200/4322
+    inference 3840/4322
+    inference 4322/4322
+    8935 truck->car relabels
+  all              n= 4322 inst= 29835  mAP50=0.44676  mAP75=0.29376  mAP50-95=0.27672
+  has_vehicle      n= 3260 inst= 29673  mAP50=0.45875  mAP75=0.29787  mAP50-95=0.28217
+
+=== v5_t1b_100 (/home/st6622770442/vehicle-detection/runs/detect/v5_t1b_100/weights/best.pt) ===
+    inference 640/4322
+    inference 1280/4322
+    inference 1920/4322
+    inference 2560/4322
+    inference 3200/4322
+    inference 3840/4322
+    inference 4322/4322
+    9114 truck->car relabels
+  all              n= 4322 inst= 29835  mAP50=0.44812  mAP75=0.29576  mAP50-95=0.27415
+  has_vehicle      n= 3260 inst= 29673  mAP50=0.45795  mAP75=0.29892  mAP50-95=0.27846
+
+==============================================================================
+ExDark mAP50 all-class / car mAP50 / car mAP75
+==============================================================================
+all  (n=4322)
+    base_100           all 0.4577   car 0.7756 / 0.5657
+    t1b_100            all 0.4405   car 0.7695 / 0.5582
+    v5_base_100        all 0.4468   car 0.7681 / 0.5618
+    v5_t1b_100         all 0.4481   car 0.7643 / 0.5551
+has_vehicle  (n=3260)
+    base_100           all 0.4703   car 0.7774 / 0.5664
+    t1b_100            all 0.4535   car 0.7713 / 0.5589
+    v5_base_100        all 0.4587   car 0.7703 / 0.5626
+    v5_t1b_100         all 0.4580   car 0.7664 / 0.5558
+
+==============================================================================
+pairs: ARM - CONTROL, points (all mAP50 | car mAP50 | car mAP75)
+==============================================================================
+  t1b_100 - base_100       all              -1.72 | -0.61 | -0.76
+  t1b_100 - base_100       has_vehicle      -1.67 | -0.61 | -0.75
+  v5_t1b_100 - v5_base_100    all              +0.14 | -0.38 | -0.66
+  v5_t1b_100 - v5_base_100    has_vehicle      -0.08 | -0.40 | -0.67
+
+wrote 120 rows -> /home/st6622770442/vehicle-detection/results/rtts_scores.csv (+ .json)
