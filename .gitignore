@@ -37,4 +37,11 @@ legacy_yolov5/dataset/*/
 .ipynb_checkpoints/
 
 yolov5.zip
+venv/dataset/raw/ExDark/
+dataset/raw/
+runs/
+*.pt
+*.zip
 venv/
+__pycache__/
+*.pyc
