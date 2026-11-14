@@ -11,12 +11,16 @@ Differences, all forced by ExDark:
 
   1. Real per-image width/height (ExDark sizes vary; BDD is always 1280x720).
      The detector's decoded size is checked against the GT size per image.
-  2. ExDark has no truck class. Default --truck-as-car: truck predictions are
-     relabelled car, then car boxes are re-NMS'd at IOU_THRES so a car+truck
-     double detection of one object does not become one TP + one FP.
-     --no-truck-as-car (strict): truck predictions are dropped instead.
-     Report the default; run strict once as a sensitivity check.
-  3. 4 scored classes (car, bus, motor, bike). truck AP is n/a, not 0.
+  2. Truck handling, --truck {car,drop,keep}:
+       car  (default) for sets WITHOUT a truck class (ExDark, RTTS): truck predictions
+            are relabelled car, then car boxes are re-NMS'd at IOU_THRES so a car+truck
+            double detection of one object does not become one TP + one FP.
+       drop sensitivity check for sets without truck: truck predictions are discarded.
+       keep for sets WITH real truck labels (DAWN): predictions are scored as-is.
+     The old --truck-as-car / --no-truck-as-car still work (= car / drop).
+     GUARD: if the GT has truck boxes, any mode other than keep is refused (added
+     2026-11-14 after a DAWN run with --no-truck-as-car scored truck 0.000 for every arm).
+  3. Sets without truck: 4 scored classes (car, bus, motor, bike); truck AP is n/a.
 
 Absolute ExDark numbers are NOT comparable to BDD numbers (different images,
 annotators and box conventions). Only between-arm deltas on ExDark mean anything,
@@ -55,7 +59,7 @@ HEADLINE = ["all", "has_vehicle", "outdoor", "outdoor_vehicle", "indoor", "offic
             "light_strong", "light_twilight"]
 
 
-def run_inference(model, gt, images_dir, n_classes, imgsz, device, batch, truck_as_car):
+def run_inference(model, gt, images_dir, n_classes, imgsz, device, batch, truck_mode):
     imgs = gt.dataset["images"]
     dets, size_mismatch, merged, dropped = [], 0, 0, 0
     for start in range(0, len(imgs), batch):
@@ -75,15 +79,15 @@ def run_inference(model, gt, images_dir, n_classes, imgsz, device, batch, truck_
                     k = int(k)
                     if k >= n_classes:
                         continue
-                    if k == TRUCK:
-                        if not truck_as_car:
-                            dropped += 1
-                            continue
+                    if k == TRUCK and truck_mode == "drop":
+                        dropped += 1
+                        continue
+                    if k == TRUCK and truck_mode == "car":
                         k, merged = CAR, merged + 1
                     cx, cy, w, h = (float(f"{v:.6f}") for v in (cx, cy, w, h))
                     per.append((k, [(cx - w / 2) * W, (cy - h / 2) * H, w * W, h * H],
                                 float(f"{c:.6f}")))
-            if truck_as_car and per:
+            if truck_mode == "car" and per:
                 cars = [p for p in per if p[0] == CAR]
                 if cars:
                     xyxy = torch.tensor([[b[0], b[1], b[0] + b[2], b[1] + b[3]] for _, b, _ in cars])
@@ -98,7 +102,8 @@ def run_inference(model, gt, images_dir, n_classes, imgsz, device, batch, truck_
     if size_mismatch:
         raise SystemExit(f"FLAG: {size_mismatch} images decoded at a size different from GT - "
                          "rerun tools/exdark_to_coco.py (EXIF filter) before scoring")
-    note = f"{merged} truck->car relabels" if truck_as_car else f"{dropped} truck predictions dropped"
+    note = {"car": f"{merged} truck->car relabels", "drop": f"{dropped} truck predictions dropped",
+            "keep": "truck predictions kept as truck"}[truck_mode]
     print(f"    {note}")
     return dets
 
@@ -112,7 +117,10 @@ def main():
     ap.add_argument("--gt", default="dataset/exdark/gt_vehicle5.json")
     ap.add_argument("--images-dir", default="dataset/exdark/images")
     ap.add_argument("--slices-dir", default="splits/exdark")
-    ap.add_argument("--truck-as-car", action=argparse.BooleanOptionalAction, default=True)
+    ap.add_argument("--truck", choices=["car", "drop", "keep"], default=None,
+                    help="car (default, sets without truck) | drop | keep (sets with truck labels)")
+    ap.add_argument("--truck-as-car", action=argparse.BooleanOptionalAction, default=True,
+                    help="legacy: same as --truck car / --truck drop")
     ap.add_argument("--imgsz", type=int, default=640)
     ap.add_argument("--device", default="0")
     ap.add_argument("--batch", type=int, default=16)
@@ -132,8 +140,15 @@ def main():
             n_ignored += 1
             continue
         inst_by_img[a["image_id"]][a["category_id"]] += 1
+    truck_mode = args.truck or ("car" if args.truck_as_car else "drop")
+    n_truck_gt = sum(1 for a in gt.dataset["annotations"]
+                     if a["category_id"] == TRUCK and not a.get("iscrowd"))
+    if n_truck_gt and truck_mode != "keep":
+        raise SystemExit(f"FLAG: GT has {n_truck_gt} truck boxes but --truck {truck_mode}: truck "
+                         "predictions would be relabelled/dropped and truck AP forced to 0. "
+                         "Use --truck keep for this dataset.")
     print(f"eval pool ({args.gt}): {len(name_to_id)} images, {len(gt.dataset['annotations']) - n_ignored} scored vehicle boxes (+{n_ignored} ignored), "
-          f"truck_as_car={args.truck_as_car}")
+          f"truck={truck_mode}")
 
     slices = {}
     for f in sorted((ROOT / args.slices_dir).glob("*.txt")):
@@ -152,7 +167,7 @@ def main():
             raise SystemExit(f"FLAG: no weights at {wpath}")
         print(f"\n=== {arm} ({wpath}) ===")
         dets = run_inference(YOLO(str(wpath)), gt, ROOT / args.images_dir, len(class_names),
-                             args.imgsz, args.device, args.batch, args.truck_as_car)
+                             args.imgsz, args.device, args.batch, truck_mode)
         if not dets:
             raise SystemExit(f"FLAG: no detections for {arm}")
         with contextlib.redirect_stdout(io.StringIO()):
@@ -166,7 +181,7 @@ def main():
             for m, v in ov.items():
                 rows.append({"arm": arm, "slice": sname, "class": "all", "metric": m, "value": v,
                              "n_images": len(ids), "n_instances": sum(inst),
-                             "reportable": reportable, "truck_as_car": args.truck_as_car,
+                             "reportable": reportable, "truck_mode": truck_mode,
                              "timestamp": timestamp})
             for ci, cname in enumerate(class_names):
                 if inst[ci] == 0 and cname == "truck":
@@ -177,7 +192,7 @@ def main():
                     rows.append({"arm": arm, "slice": sname, "class": cname, "metric": m,
                                  "value": v, "n_images": len(ids), "n_instances": inst[ci],
                                  "reportable": reportable and inst[ci] >= MIN_INSTANCES_PER_CLASS,
-                                 "truck_as_car": args.truck_as_car, "timestamp": timestamp})
+                                 "truck_mode": truck_mode, "timestamp": timestamp})
             flag = "" if reportable else "   <-- too few images, DO NOT REPORT"
             print(f"  {sname:<16} n={len(ids):>5} inst={sum(inst):>6}  mAP50={ov['mAP50']}  "
                   f"mAP75={ov['mAP75']}  mAP50-95={ov['mAP50-95']}{flag}")
