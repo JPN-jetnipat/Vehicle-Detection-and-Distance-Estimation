@@ -1,0 +1,69 @@
+eval pool (dataset/dawn/gt_vehicle5.json): 1027 images, 7368 scored vehicle boxes (+0 ignored), truck_as_car=False
+
+=== base_100 (/home/st6622770442/vehicle-detection/weights/external/base_100_friend.pt) ===
+    inference 640/1027
+    inference 1027/1027
+    3182 truck predictions dropped
+  all              n= 1027 inst=  7368  mAP50=0.32468  mAP75=0.23294  mAP50-95=0.2158
+  fog              n=  300 inst=  1834  mAP50=0.31983  mAP75=0.23084  mAP50-95=0.20969
+  has_vehicle      n= 1026 inst=  7368  mAP50=0.32468  mAP75=0.23294  mAP50-95=0.2158
+  rain             n=  200 inst=  1560  mAP50=0.33348  mAP75=0.24351  mAP50-95=0.22833
+  sand             n=  323 inst=  2061  mAP50=0.36727  mAP75=0.27125  mAP50-95=0.25015
+  snow             n=  204 inst=  1913  mAP50=0.32098  mAP75=0.27095  mAP50-95=0.21569
+
+=== t1b_100 (/home/st6622770442/vehicle-detection/runs/detect/t1b_jepa_100/weights/best.pt) ===
+    inference 640/1027
+    inference 1027/1027
+    2816 truck predictions dropped
+  all              n= 1027 inst=  7368  mAP50=0.3191  mAP75=0.22786  mAP50-95=0.21175
+  fog              n=  300 inst=  1834  mAP50=0.28082  mAP75=0.20312  mAP50-95=0.18587
+  has_vehicle      n= 1026 inst=  7368  mAP50=0.3191  mAP75=0.22786  mAP50-95=0.21175
+  rain             n=  200 inst=  1560  mAP50=0.25059  mAP75=0.17667  mAP50-95=0.16896
+  sand             n=  323 inst=  2061  mAP50=0.35623  mAP75=0.27413  mAP50-95=0.24546
+  snow             n=  204 inst=  1913  mAP50=0.43497  mAP75=0.18375  mAP50-95=0.2464
+
+=== v5_base_100 (/home/st6622770442/vehicle-detection/weights/external/v5_base_100_friend.pt) ===
+    inference 640/1027
+    inference 1027/1027
+    2735 truck predictions dropped
+  all              n= 1027 inst=  7368  mAP50=0.30585  mAP75=0.21677  mAP50-95=0.20026
+  fog              n=  300 inst=  1834  mAP50=0.27357  mAP75=0.19868  mAP50-95=0.18229
+  has_vehicle      n= 1026 inst=  7368  mAP50=0.30585  mAP75=0.21677  mAP50-95=0.20026
+  rain             n=  200 inst=  1560  mAP50=0.31154  mAP75=0.18898  mAP50-95=0.17796
+  sand             n=  323 inst=  2061  mAP50=0.35116  mAP75=0.25228  mAP50-95=0.23485
+  snow             n=  204 inst=  1913  mAP50=0.42597  mAP75=0.36326  mAP50-95=0.27643
+
+=== v5_t1b_100 (/home/st6622770442/vehicle-detection/runs/detect/v5_t1b_100/weights/best.pt) ===
+    inference 640/1027
+    inference 1027/1027
+    2661 truck predictions dropped
+  all              n= 1027 inst=  7368  mAP50=0.31931  mAP75=0.21189  mAP50-95=0.20605
+  fog              n=  300 inst=  1834  mAP50=0.2975  mAP75=0.22603  mAP50-95=0.20137
+  has_vehicle      n= 1026 inst=  7368  mAP50=0.31931  mAP75=0.21189  mAP50-95=0.20605
+  rain             n=  200 inst=  1560  mAP50=0.24471  mAP75=0.18118  mAP50-95=0.16519
+  sand             n=  323 inst=  2061  mAP50=0.35788  mAP75=0.25605  mAP50-95=0.24105
+  snow             n=  204 inst=  1913  mAP50=0.44082  mAP75=0.19171  mAP50-95=0.27049
+
+==============================================================================
+dawn mAP50 all-class / car mAP50 / car mAP75
+==============================================================================
+all  (n=1027)
+    base_100           all 0.3247   car 0.7826 / 0.5534
+    t1b_100            all 0.3191   car 0.7839 / 0.5508
+    v5_base_100        all 0.3059   car 0.7734 / 0.5436
+    v5_t1b_100         all 0.3193   car 0.7720 / 0.5453
+has_vehicle  (n=1026)
+    base_100           all 0.3247   car 0.7826 / 0.5534
+    t1b_100            all 0.3191   car 0.7839 / 0.5508
+    v5_base_100        all 0.3059   car 0.7734 / 0.5436
+    v5_t1b_100         all 0.3193   car 0.7720 / 0.5453
+
+==============================================================================
+pairs: ARM - CONTROL, points (all mAP50 | car mAP50 | car mAP75)
+==============================================================================
+  t1b_100 - base_100       all              -0.56 | +0.14 | -0.25
+  t1b_100 - base_100       has_vehicle      -0.56 | +0.14 | -0.25
+  v5_t1b_100 - v5_base_100    all              +1.35 | -0.14 | +0.16
+  v5_t1b_100 - v5_base_100    has_vehicle      +1.35 | -0.14 | +0.16
+
+wrote 432 rows -> /home/st6622770442/vehicle-detection/results/dawn_scores.csv (+ .json)
