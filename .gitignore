@@ -72,3 +72,6 @@ dataset/exdark/
 
 # RTTS external fog test set (2026-11-13) - regenerable via tools/rtts_to_coco.py; splits/rtts/ IS tracked.
 dataset/rtts/
+
+# DAWN external weather test set (2026-11-14) - regenerable via tools/dawn_to_coco.py; splits/dawn/ IS tracked.
+dataset/dawn/
