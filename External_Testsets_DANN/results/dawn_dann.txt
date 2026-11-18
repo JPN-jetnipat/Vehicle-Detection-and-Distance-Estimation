@@ -1,0 +1,61 @@
+eval pool (dataset/dawn/gt_vehicle5.json): 1027 images, 7368 scored vehicle boxes (+0 ignored), truck=keep
+
+=== dann_v3_v11 (/home/st6622771796/weights/dann_v3/weights/best.pt) ===
+    inference 640/1027
+    inference 1027/1027
+    truck predictions kept as truck
+  all              n= 1027 inst=  7368  mAP50=0.39839  mAP75=0.26158  mAP50-95=0.24339
+  fog              n=  300 inst=  1834  mAP50=0.4003  mAP75=0.26588  mAP50-95=0.24352
+  has_vehicle      n= 1026 inst=  7368  mAP50=0.39839  mAP75=0.26158  mAP50-95=0.24339
+  rain             n=  200 inst=  1560  mAP50=0.40501  mAP75=0.24203  mAP50-95=0.24495
+  sand             n=  323 inst=  2061  mAP50=0.42253  mAP75=0.27754  mAP50-95=0.26274
+  snow             n=  204 inst=  1913  mAP50=0.47465  mAP75=0.40264  mAP50-95=0.32732
+
+=== finetune_noadv_v11 (/home/st6622771796/weights/finetune_noadv/weights/best.pt) ===
+    inference 640/1027
+    inference 1027/1027
+    truck predictions kept as truck
+  all              n= 1027 inst=  7368  mAP50=0.40334  mAP75=0.27211  mAP50-95=0.25014
+  fog              n=  300 inst=  1834  mAP50=0.39633  mAP75=0.26962  mAP50-95=0.24733
+  has_vehicle      n= 1026 inst=  7368  mAP50=0.40334  mAP75=0.27211  mAP50-95=0.25014
+  rain             n=  200 inst=  1560  mAP50=0.37609  mAP75=0.24691  mAP50-95=0.23954
+  sand             n=  323 inst=  2061  mAP50=0.4349  mAP75=0.2942  mAP50-95=0.27237
+  snow             n=  204 inst=  1913  mAP50=0.47191  mAP75=0.40073  mAP50-95=0.32684
+
+=== dann_v3_v5su (/home/st6622771796/weights/dann_v3_v5su/weights/best.pt) ===
+    inference 640/1027
+    inference 1027/1027
+    truck predictions kept as truck
+  all              n= 1027 inst=  7368  mAP50=0.35789  mAP75=0.21425  mAP50-95=0.21765
+  fog              n=  300 inst=  1834  mAP50=0.37971  mAP75=0.23699  mAP50-95=0.23665
+  has_vehicle      n= 1026 inst=  7368  mAP50=0.35789  mAP75=0.21425  mAP50-95=0.21765
+  rain             n=  200 inst=  1560  mAP50=0.45902  mAP75=0.25455  mAP50-95=0.25385
+  sand             n=  323 inst=  2061  mAP50=0.35851  mAP75=0.2371  mAP50-95=0.23244
+  snow             n=  204 inst=  1913  mAP50=0.442  mAP75=0.16595  mAP50-95=0.21789
+
+=== finetune_noadv_v5su (/home/st6622771796/weights/finetune_noadv_v5su/weights/best.pt) ===
+    inference 640/1027
+    inference 1027/1027
+    truck predictions kept as truck
+  all              n= 1027 inst=  7368  mAP50=0.36486  mAP75=0.2227  mAP50-95=0.22391
+  fog              n=  300 inst=  1834  mAP50=0.36462  mAP75=0.25883  mAP50-95=0.23692
+  has_vehicle      n= 1026 inst=  7368  mAP50=0.36486  mAP75=0.2227  mAP50-95=0.22391
+  rain             n=  200 inst=  1560  mAP50=0.42356  mAP75=0.23752  mAP50-95=0.23294
+  sand             n=  323 inst=  2061  mAP50=0.39366  mAP75=0.25921  mAP50-95=0.25536
+  snow             n=  204 inst=  1913  mAP50=0.41958  mAP75=0.14909  mAP50-95=0.20465
+
+==============================================================================
+dawn mAP50 all-class / car mAP50 / car mAP75
+==============================================================================
+all  (n=1027)
+    dann_v3_v11        all 0.3984   car 0.7650 / 0.5393
+    finetune_noadv_v11 all 0.4033   car 0.7676 / 0.5395
+    dann_v3_v5su       all 0.3579   car 0.7787 / 0.5367
+    finetune_noadv_v5su all 0.3649   car 0.7664 / 0.5384
+has_vehicle  (n=1026)
+    dann_v3_v11        all 0.3984   car 0.7650 / 0.5393
+    finetune_noadv_v11 all 0.4033   car 0.7676 / 0.5395
+    dann_v3_v5su       all 0.3579   car 0.7787 / 0.5367
+    finetune_noadv_v5su all 0.3649   car 0.7664 / 0.5384
+
+wrote 432 rows -> /home/st6622771796/vd-ext/results/dawn_dann.csv (+ .json)

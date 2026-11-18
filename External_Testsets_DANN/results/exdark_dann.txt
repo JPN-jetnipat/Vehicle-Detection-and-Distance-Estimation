@@ -1,0 +1,204 @@
+eval pool (dataset/exdark/gt_vehicle5.json): 7362 images, 5825 scored vehicle boxes (+0 ignored), truck=car
+
+=== dann_v3_v11 (/home/st6622771796/weights/dann_v3/weights/best.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    28314 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.40941  mAP75=0.23597  mAP50-95=0.23303
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.43954  mAP75=0.24544  mAP50-95=0.24623
+  indoor           n= 2821 inst=   147  mAP50=0.20685  mAP75=0.14885  mAP50-95=0.14735
+  light_ambient    n= 2097 inst=   684  mAP50=0.33455  mAP75=0.22392  mAP50-95=0.21074
+  light_low        n=  241 inst=    25  mAP50=0.23102  mAP75=0.16107  mAP50-95=0.13105
+  light_object     n=  498 inst=   284  mAP50=0.34333  mAP75=0.21492  mAP50-95=0.20055
+  light_screen     n=  165 inst=     6  mAP50=0.02145  mAP75=0.02145  mAP50-95=0.0155
+  light_shadow     n=   56 inst=    60  mAP50=0.55067  mAP75=0.37576  mAP50-95=0.34779   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.36961  mAP75=0.24341  mAP50-95=0.2225
+  light_strong     n= 2059 inst=  3491  mAP50=0.44932  mAP75=0.24268  mAP50-95=0.2486
+  light_twilight   n=  416 inst=   269  mAP50=0.53897  mAP75=0.27094  mAP50-95=0.29891
+  light_weak       n=  705 inst=   643  mAP50=0.40481  mAP75=0.25317  mAP50-95=0.23468
+  light_window     n=  363 inst=     9  mAP50=0.19138  mAP75=0.19082  mAP50-95=0.13489
+  official_test    n= 2563 inst=  1743  mAP50=0.37495  mAP75=0.23881  mAP50-95=0.22277
+  official_train   n= 3000 inst=  2524  mAP50=0.42664  mAP75=0.24224  mAP50-95=0.24336
+  official_val     n= 1799 inst=  1558  mAP50=0.42477  mAP75=0.2277  mAP50-95=0.23307
+  outdoor          n= 4541 inst=  5678  mAP50=0.42989  mAP75=0.24229  mAP50-95=0.24188
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.44384  mAP75=0.24684  mAP50-95=0.24809
+
+=== finetune_noadv_v11 (/home/st6622771796/weights/finetune_noadv/weights/best.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    24186 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.43208  mAP75=0.2539  mAP50-95=0.24779
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.45838  mAP75=0.26227  mAP50-95=0.25942
+  indoor           n= 2821 inst=   147  mAP50=0.21078  mAP75=0.18322  mAP50-95=0.15192
+  light_ambient    n= 2097 inst=   684  mAP50=0.35028  mAP75=0.23858  mAP50-95=0.21952
+  light_low        n=  241 inst=    25  mAP50=0.39314  mAP75=0.23974  mAP50-95=0.18565
+  light_object     n=  498 inst=   284  mAP50=0.37144  mAP75=0.26766  mAP50-95=0.22756
+  light_screen     n=  165 inst=     6  mAP50=0.03245  mAP75=0.03245  mAP50-95=0.02134
+  light_shadow     n=   56 inst=    60  mAP50=0.53609  mAP75=0.31514  mAP50-95=0.32987   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.39374  mAP75=0.26066  mAP50-95=0.23229
+  light_strong     n= 2059 inst=  3491  mAP50=0.4667  mAP75=0.25664  mAP50-95=0.26107
+  light_twilight   n=  416 inst=   269  mAP50=0.54237  mAP75=0.30482  mAP50-95=0.30885
+  light_weak       n=  705 inst=   643  mAP50=0.43543  mAP75=0.27828  mAP50-95=0.25664
+  light_window     n=  363 inst=     9  mAP50=0.18162  mAP75=0.18022  mAP50-95=0.13858
+  official_test    n= 2563 inst=  1743  mAP50=0.39438  mAP75=0.24968  mAP50-95=0.2343
+  official_train   n= 3000 inst=  2524  mAP50=0.44849  mAP75=0.26151  mAP50-95=0.25755
+  official_val     n= 1799 inst=  1558  mAP50=0.44854  mAP75=0.25009  mAP50-95=0.25045
+  outdoor          n= 4541 inst=  5678  mAP50=0.44985  mAP75=0.25902  mAP50-95=0.25533
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.46268  mAP75=0.26327  mAP50-95=0.2611
+
+=== dann_v3_v5su (/home/st6622771796/weights/dann_v3_v5su/weights/best.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    29433 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.39206  mAP75=0.22042  mAP50-95=0.21718
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.41545  mAP75=0.22927  mAP50-95=0.22812
+  indoor           n= 2821 inst=   147  mAP50=0.20287  mAP75=0.14658  mAP50-95=0.13971
+  light_ambient    n= 2097 inst=   684  mAP50=0.31436  mAP75=0.20182  mAP50-95=0.18875
+  light_low        n=  241 inst=    25  mAP50=0.23154  mAP75=0.10427  mAP50-95=0.12973
+  light_object     n=  498 inst=   284  mAP50=0.36117  mAP75=0.21449  mAP50-95=0.20363
+  light_screen     n=  165 inst=     6  mAP50=0.0068  mAP75=0.0  mAP50-95=0.0034
+  light_shadow     n=   56 inst=    60  mAP50=0.55287  mAP75=0.34194  mAP50-95=0.34896   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.38301  mAP75=0.25304  mAP50-95=0.22258
+  light_strong     n= 2059 inst=  3491  mAP50=0.4277  mAP75=0.23345  mAP50-95=0.23326
+  light_twilight   n=  416 inst=   269  mAP50=0.44484  mAP75=0.23584  mAP50-95=0.24692
+  light_weak       n=  705 inst=   643  mAP50=0.36564  mAP75=0.19981  mAP50-95=0.20205
+  light_window     n=  363 inst=     9  mAP50=0.21851  mAP75=0.11033  mAP50-95=0.1239
+  official_test    n= 2563 inst=  1743  mAP50=0.38159  mAP75=0.211  mAP50-95=0.21281
+  official_train   n= 3000 inst=  2524  mAP50=0.40813  mAP75=0.23291  mAP50-95=0.22567
+  official_val     n= 1799 inst=  1558  mAP50=0.38415  mAP75=0.21374  mAP50-95=0.21213
+  outdoor          n= 4541 inst=  5678  mAP50=0.40825  mAP75=0.22609  mAP50-95=0.22442
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.42  mAP75=0.23065  mAP50-95=0.22996
+
+=== finetune_noadv_v5su (/home/st6622771796/weights/finetune_noadv_v5su/weights/best.pt) ===
+    inference 640/7362
+    inference 1280/7362
+    inference 1920/7362
+    inference 2560/7362
+    inference 3200/7362
+    inference 3840/7362
+    inference 4480/7362
+    inference 5120/7362
+    inference 5760/7362
+    inference 6400/7362
+    inference 7040/7362
+    inference 7362/7362
+    32211 truck->car relabels
+  all              n= 7362 inst=  5825  mAP50=0.40996  mAP75=0.23315  mAP50-95=0.22963
+  has_vehicle      n= 2587 inst=  5825  mAP50=0.43488  mAP75=0.24224  mAP50-95=0.24115
+  indoor           n= 2821 inst=   147  mAP50=0.18889  mAP75=0.16659  mAP50-95=0.148
+  light_ambient    n= 2097 inst=   684  mAP50=0.32599  mAP75=0.22299  mAP50-95=0.20381
+  light_low        n=  241 inst=    25  mAP50=0.27128  mAP75=0.2558  mAP50-95=0.17057
+  light_object     n=  498 inst=   284  mAP50=0.37045  mAP75=0.20614  mAP50-95=0.21571
+  light_screen     n=  165 inst=     6  mAP50=0.00077  mAP75=0.00077  mAP50-95=0.00061
+  light_shadow     n=   56 inst=    60  mAP50=0.60128  mAP75=0.39938  mAP50-95=0.38424   <-- too few images, DO NOT REPORT
+  light_single     n=  762 inst=   354  mAP50=0.40221  mAP75=0.27492  mAP50-95=0.2325
+  light_strong     n= 2059 inst=  3491  mAP50=0.43626  mAP75=0.23825  mAP50-95=0.23801
+  light_twilight   n=  416 inst=   269  mAP50=0.48289  mAP75=0.26844  mAP50-95=0.27464
+  light_weak       n=  705 inst=   643  mAP50=0.41684  mAP75=0.23675  mAP50-95=0.23897
+  light_window     n=  363 inst=     9  mAP50=0.4549  mAP75=0.25248  mAP50-95=0.27795
+  official_test    n= 2563 inst=  1743  mAP50=0.39255  mAP75=0.22428  mAP50-95=0.22326
+  official_train   n= 3000 inst=  2524  mAP50=0.42525  mAP75=0.24661  mAP50-95=0.23846
+  official_val     n= 1799 inst=  1558  mAP50=0.4078  mAP75=0.22358  mAP50-95=0.22458
+  outdoor          n= 4541 inst=  5678  mAP50=0.42803  mAP75=0.23893  mAP50-95=0.23735
+  outdoor_vehicle  n= 2506 inst=  5678  mAP50=0.44034  mAP75=0.24349  mAP50-95=0.24305
+
+==============================================================================
+exdark mAP50 all-class / car mAP50 / car mAP75
+==============================================================================
+all  (n=7362)
+    dann_v3_v11        all 0.4094   car 0.6243 / 0.3800
+    finetune_noadv_v11 all 0.4321   car 0.6418 / 0.3922
+    dann_v3_v5su       all 0.3921   car 0.6250 / 0.3632
+    finetune_noadv_v5su all 0.4100   car 0.6439 / 0.3795
+has_vehicle  (n=2587)
+    dann_v3_v11        all 0.4395   car 0.6682 / 0.3960
+    finetune_noadv_v11 all 0.4584   car 0.6796 / 0.4058
+    dann_v3_v5su       all 0.4154   car 0.6578 / 0.3744
+    finetune_noadv_v5su all 0.4349   car 0.6768 / 0.3907
+outdoor  (n=4541)
+    dann_v3_v11        all 0.4299   car 0.6496 / 0.3896
+    finetune_noadv_v11 all 0.4499   car 0.6621 / 0.3997
+    dann_v3_v5su       all 0.4083   car 0.6429 / 0.3693
+    finetune_noadv_v5su all 0.4280   car 0.6623 / 0.3859
+outdoor_vehicle  (n=2506)
+    dann_v3_v11        all 0.4438   car 0.6725 / 0.3983
+    finetune_noadv_v11 all 0.4627   car 0.6835 / 0.4078
+    dann_v3_v5su       all 0.4200   car 0.6623 / 0.3762
+    finetune_noadv_v5su all 0.4403   car 0.6815 / 0.3926
+indoor  (n=2821)
+    dann_v3_v11        all 0.2069   car 0.2190 / 0.1778
+    finetune_noadv_v11 all 0.2108   car 0.2591 / 0.2159
+    dann_v3_v5su       all 0.2029   car 0.2787 / 0.2190
+    finetune_noadv_v5su all 0.1889   car 0.2884 / 0.2305
+official_test  (n=2563)
+    dann_v3_v11        all 0.3750   car 0.6110 / 0.3796
+    finetune_noadv_v11 all 0.3944   car 0.6289 / 0.3895
+    dann_v3_v5su       all 0.3816   car 0.6094 / 0.3756
+    finetune_noadv_v5su all 0.3926   car 0.6341 / 0.3888
+light_low  (n=241)
+    dann_v3_v11        all 0.2310   car 0.1605 / 0.1455
+    finetune_noadv_v11 all 0.3931   car 0.2306 / 0.2176
+    dann_v3_v5su       all 0.2315   car 0.1897 / 0.1445
+    finetune_noadv_v5su all 0.2713   car 0.2633 / 0.2506
+light_ambient  (n=2097)
+    dann_v3_v11        all 0.3346   car 0.5924 / 0.3856
+    finetune_noadv_v11 all 0.3503   car 0.6152 / 0.3946
+    dann_v3_v5su       all 0.3144   car 0.6059 / 0.3780
+    finetune_noadv_v5su all 0.3260   car 0.6229 / 0.3888
+light_object  (n=498)
+    dann_v3_v11        all 0.3433   car 0.4260 / 0.2842
+    finetune_noadv_v11 all 0.3714   car 0.4588 / 0.3026
+    dann_v3_v5su       all 0.3612   car 0.5031 / 0.2970
+    finetune_noadv_v5su all 0.3705   car 0.4976 / 0.3214
+light_single  (n=762)
+    dann_v3_v11        all 0.3696   car 0.5409 / 0.4117
+    finetune_noadv_v11 all 0.3937   car 0.5708 / 0.4210
+    dann_v3_v5su       all 0.3830   car 0.5870 / 0.4262
+    finetune_noadv_v5su all 0.4022   car 0.6091 / 0.4528
+light_weak  (n=705)
+    dann_v3_v11        all 0.4048   car 0.6037 / 0.3696
+    finetune_noadv_v11 all 0.4354   car 0.6410 / 0.3943
+    dann_v3_v5su       all 0.3656   car 0.5652 / 0.3088
+    finetune_noadv_v5su all 0.4168   car 0.6398 / 0.3713
+light_strong  (n=2059)
+    dann_v3_v11        all 0.4493   car 0.6576 / 0.3918
+    finetune_noadv_v11 all 0.4667   car 0.6655 / 0.3995
+    dann_v3_v5su       all 0.4277   car 0.6504 / 0.3752
+    finetune_noadv_v5su all 0.4363   car 0.6595 / 0.3796
+light_twilight  (n=416)
+    dann_v3_v11        all 0.5390   car 0.7363 / 0.3574
+    finetune_noadv_v11 all 0.5424   car 0.7532 / 0.3746
+    dann_v3_v5su       all 0.4448   car 0.7418 / 0.3555
+    finetune_noadv_v5su all 0.4829   car 0.7516 / 0.3973
+
+wrote 1080 rows -> /home/st6622771796/vd-ext/results/exdark_dann.csv (+ .json)

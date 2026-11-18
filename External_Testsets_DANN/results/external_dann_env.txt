@@ -1,0 +1,8 @@
+date: 2026-11-18T12:02:43+07:00
+repo commit: 2742444
+torch 2.6.0+cu124 | torchvision 0.21.0+cu124 | ultralytics 8.4.120
+Version: 2.0.11
+3d71f395a05e35891f87fb99f5ac3c6f  /home/st6622771796/weights/dann_v3/weights/best.pt
+97f6f5221d9848ec7331d36a8bacb2f0  /home/st6622771796/weights/finetune_noadv/weights/best.pt
+69af9ff9fc47e8a8f960a85e34d9d5e4  /home/st6622771796/weights/dann_v3_v5su/weights/best.pt
+d85fcf632402a847c8e03b5461be3c31  /home/st6622771796/weights/finetune_noadv_v5su/weights/best.pt
