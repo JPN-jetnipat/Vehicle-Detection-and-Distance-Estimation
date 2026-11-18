@@ -228,7 +228,7 @@ def main():
                     d.append("n/a" if va is None or vb is None else f"{(va - vb) * 100:+.2f}")
                 print(f"  {a} - {b:<14} {s:<16} " + " | ".join(d))
     if "day" in slices and "night" in slices:
-        print("\n" + "=" * 78 + "\ncar night/day mAP75 ratio (same cameras day and night)\n" + "=" * 78)
+        print("\n" + "=" * 78 + "\ncar night/day mAP75 ratio (same camera type; day and night are DIFFERENT sequences/locations)\n" + "=" * 78)
         for a in summaries:
             d, n = (summaries[a].get(k + "::car", {}).get("mAP75") for k in ("day", "night"))
             r = "n/a" if not d or n is None else f"{n / d:.3f}"
