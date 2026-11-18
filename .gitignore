@@ -75,3 +75,6 @@ dataset/rtts/
 
 # DAWN external weather test set (2026-11-14) - regenerable via tools/dawn_to_coco.py; splits/dawn/ IS tracked.
 dataset/dawn/
+
+# UA-DETRAC external test set (2026-11-18) - regenerable via tools/detrac_to_coco.py; splits/detrac/ IS tracked.
+dataset/detrac/

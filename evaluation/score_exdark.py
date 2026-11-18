@@ -56,7 +56,8 @@ from score_slices import (CONF_THRES, IOU_THRES, MAX_DET,  # noqa: E402
 CAR, TRUCK = 0, 1
 HEADLINE = ["all", "has_vehicle", "outdoor", "outdoor_vehicle", "indoor", "official_test",
             "light_low", "light_ambient", "light_object", "light_single", "light_weak",
-            "light_strong", "light_twilight"]
+            "light_strong", "light_twilight",
+            "day", "night", "sunny", "cloudy", "rainy"]            # UA-DETRAC slices
 
 
 def run_inference(model, gt, images_dir, n_classes, imgsz, device, batch, truck_mode):
@@ -218,7 +219,7 @@ def main():
         print("\n" + "=" * 78 + "\npairs: ARM - CONTROL, points (all mAP50 | car mAP50 | car mAP75)\n" + "=" * 78)
         for p in args.pair:
             a, b = p.split(":")
-            for s in ("all", "has_vehicle", "outdoor_vehicle", "light_strong"):
+            for s in ("all", "has_vehicle", "outdoor_vehicle", "light_strong", "day", "night"):
                 if s not in slices:
                     continue
                 d = []
@@ -226,6 +227,12 @@ def main():
                     va, vb = summaries[a][key][m], summaries[b][key][m]
                     d.append("n/a" if va is None or vb is None else f"{(va - vb) * 100:+.2f}")
                 print(f"  {a} - {b:<14} {s:<16} " + " | ".join(d))
+    if "day" in slices and "night" in slices:
+        print("\n" + "=" * 78 + "\ncar night/day mAP75 ratio (same cameras day and night)\n" + "=" * 78)
+        for a in summaries:
+            d, n = (summaries[a].get(k + "::car", {}).get("mAP75") for k in ("day", "night"))
+            r = "n/a" if not d or n is None else f"{n / d:.3f}"
+            print(f"    {a:<18} day {fmt(d)} -> night {fmt(n)}   ratio {r}")
     print(f"\nwrote {len(rows)} rows -> {out} (+ .json)")
 
 

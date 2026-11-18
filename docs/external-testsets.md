@@ -1,4 +1,4 @@
-# External test sets (ExDark, RTTS, DAWN): how to reproduce our setup
+# External test sets (ExDark, RTTS, DAWN, UA-DETRAC): how to reproduce our setup
 
 Use this to score your own models on the same three external datasets with exactly the same
 images, labels and scoring rules as our results (`results/exdark*.txt`, `results/rtts.txt`,
@@ -147,6 +147,39 @@ python tools/dawn_to_coco.py --raw ~/datasets/DAWN/DAWN
   `slices: all 1027, has_vehicle 1026, fog 300, rain 200, sand 323, snow 204`.
 - Only car has 800+ boxes; read car, not the all-class mean (rain/snow have 0–4 motor/bike boxes).
 
+### 3.4 UA-DETRAC (fixed roadside traffic cameras: sunny, cloudy, rainy, night)
+Source: author page https://sites.google.com/view/daweidu/projects/ua-detrac (Google Drive).
+Cite Wen et al., CVIU 2020. We use the **40 test sequences, every 10th frame** (25 fps video,
+neighbouring frames are near-duplicates; also keeps COCOeval within the server's RAM).
+
+```bash
+mkdir -p ~/datasets/UA-DETRAC && cd ~/datasets/UA-DETRAC
+gdown 1fQC6CEWOeL9pnJ4ZdD7U2gromcnWDRgm      # DETRAC-Images.zip, 9.85 GB, all 100 sequences flat
+gdown --folder https://drive.google.com/drive/folders/1am_x3ywLJnABq4REtzbi0XTu5csFrp8v   # DETRAC-Annos/
+unzip -tq DETRAC-Images.zip | tail -1        # "No errors detected"
+cd DETRAC-Annos && unzip -q DETRAC-Test-Annotations-XML.zip && cd ..   # test XMLs only (40)
+python -I ~/scripts/detrac_extract.py DETRAC-Images.zip DETRAC-Annos test_every10 10
+#   expect: test seqs in XML: 40 | found in zip: 40 | images: 5640 | MISSING: none (416 MB)
+rm DETRAC-Images.zip
+
+cd ~/vehicle-detection && source .venv/bin/activate
+python tools/detrac_to_coco.py --images ~/datasets/UA-DETRAC/test_every10 \
+    --xml-dir ~/datasets/UA-DETRAC/DETRAC-Annos
+```
+`~/scripts/detrac_extract.py` keeps frames 1, 11, 21, … of the sequences that have a test XML
+(a 20-line zipfile script; copy in §6).
+
+- **Class mapping:** car + van → car, bus → bus. `others` (mostly trucks) and each sequence's
+  ignored regions become `iscrowd=1` boxes for car and bus, so detections there count neither as
+  TP nor FP. No truck/motor/bike labels: score with **`--truck car`**; motor/bike AP are n/a.
+- **Excluded:** frames the XML does not list (no labelled vehicles, or not annotated; cannot tell
+  which), status `no_annotation` in `meta.csv`.
+- **Slices:** `all`, `has_vehicle`, `sunny` (8 seq), `cloudy` (11), `rainy` (9), `night` (12),
+  `day` (= sunny + cloudy + rainy). Day and night come from the same kind of cameras, so the scorer
+  prints a **car night/day mAP75 ratio** (compare with BDD's 0.81).
+- Absolute numbers are not comparable with papers that train on UA-DETRAC (they use all frames,
+  their own class sets and often the DETRAC protocol, not COCOeval).
+
 ---
 
 ## 4. Score
@@ -192,7 +225,7 @@ The first output line shows the pool and the truck mode, for example
 
 **a) Same images.** After converting, the regenerated lists must be identical to the committed ones:
 ```bash
-git status splits/exdark splits/rtts splits/dawn     # must show no changes
+git status splits/exdark splits/rtts splits/dawn splits/detrac     # must show no changes
 ```
 
 **b) Same scores.** Scoring our BASE weights must reproduce these `all`-slice numbers exactly:
@@ -218,3 +251,27 @@ If (a) passes but (b) differs, check the library versions against `requirements.
 - **DAWN:** the zip contains 4 more zips (one per condition); unzip those too.
 - If a download is refused, download on a laptop and upload it (JupyterLab upload button), then
   continue from the unzip step.
+- **UA-DETRAC:** the 9.85 GB images zip has no Train/Test folders (all 100 sequences flat); the
+  test XML file names decide which 40 are test. If Drive says "too many users", put a browser
+  `cookies.txt` at `~/.cache/gdown/cookies.txt`. A full disk mid-download leaves a `.part` file;
+  `gdown -c <id>` resumes it. Extraction script used for the every-10th-frame subset:
+
+```python
+import re, sys, zipfile, pathlib
+zip_path, xml_dir, out_dir, step = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4])
+test_seqs = {p.stem for p in pathlib.Path(xml_dir).rglob('MVI_*.xml')}
+pat = re.compile(r'^DETRAC-Images/(MVI_\d+)/img(\d+)\.jpg$')
+out, per = pathlib.Path(out_dir), {}
+with zipfile.ZipFile(zip_path) as z:
+    for name in z.namelist():
+        m = pat.match(name)
+        if not m or m.group(1) not in test_seqs or (int(m.group(2)) - 1) % step:
+            continue
+        dst = out / m.group(1) / pathlib.PurePosixPath(name).name
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_bytes(z.read(name))
+        per[m.group(1)] = per.get(m.group(1), 0) + 1
+print(f'test seqs in XML: {len(test_seqs)} | found in zip: {len(per)} | images: {sum(per.values())}')
+miss = test_seqs - per.keys()
+print('MISSING:', sorted(miss) if miss else 'none')
+```
