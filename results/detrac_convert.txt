@@ -1,0 +1,16 @@
+XML sequences 40 · image sequences 40
+
+status: {'ok': 5625, 'no_annotation': 15}
+vehicle_type counts (raw): {'car': 55557, 'van': 3891, 'bus': 7252, 'others': 1701}
+UNKNOWN vehicle types (treated as ignored - check these): none
+scored boxes: car 59448 (car+van) · bus 7252 · ignored vehicles ('others') 1701
+boxes clipped to image bounds: 8511
+sequences per weather: sunny 8, cloudy 11, rainy 9, night 12
+  all         images  5625 · car  59448 · bus  7252
+  has_vehicle images  5625 · car  59448 · bus  7252
+  sunny       images  1199 · car   7338 · bus   902
+  cloudy      images  1283 · car  19091 · bus  1772
+  rainy       images  1292 · car  18452 · bus  2428
+  night       images  1851 · car  14567 · bus  2150
+  day         images  3774 · car  44881 · bus  5102
+-> /home/st6622770442/vehicle-detection/dataset/detrac/gt_vehicle5.json, /home/st6622770442/vehicle-detection/dataset/detrac/meta.csv, /home/st6622770442/vehicle-detection/splits/detrac/

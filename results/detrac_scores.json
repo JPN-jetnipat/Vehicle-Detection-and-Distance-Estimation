@@ -1,0 +1,710 @@
+{
+  "base_100": {
+    "all": {
+      "mAP50-95": 0.44487,
+      "mAP50": 0.70613,
+      "mAP75": 0.5122
+    },
+    "all::car": {
+      "mAP50-95": 0.51927,
+      "mAP50": 0.82426,
+      "mAP75": 0.60464
+    },
+    "all::bus": {
+      "mAP50-95": 0.37048,
+      "mAP50": 0.588,
+      "mAP75": 0.41976
+    },
+    "all::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "all::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "cloudy": {
+      "mAP50-95": 0.39628,
+      "mAP50": 0.64108,
+      "mAP75": 0.45152
+    },
+    "cloudy::car": {
+      "mAP50-95": 0.53636,
+      "mAP50": 0.8406,
+      "mAP75": 0.62431
+    },
+    "cloudy::bus": {
+      "mAP50-95": 0.2562,
+      "mAP50": 0.44156,
+      "mAP75": 0.27874
+    },
+    "cloudy::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "cloudy::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "day": {
+      "mAP50-95": 0.43349,
+      "mAP50": 0.69026,
+      "mAP75": 0.49676
+    },
+    "day::car": {
+      "mAP50-95": 0.50822,
+      "mAP50": 0.81424,
+      "mAP75": 0.58204
+    },
+    "day::bus": {
+      "mAP50-95": 0.35877,
+      "mAP50": 0.56628,
+      "mAP75": 0.41147
+    },
+    "day::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "day::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "has_vehicle": {
+      "mAP50-95": 0.44487,
+      "mAP50": 0.70613,
+      "mAP75": 0.5122
+    },
+    "has_vehicle::car": {
+      "mAP50-95": 0.51927,
+      "mAP50": 0.82426,
+      "mAP75": 0.60464
+    },
+    "has_vehicle::bus": {
+      "mAP50-95": 0.37048,
+      "mAP50": 0.588,
+      "mAP75": 0.41976
+    },
+    "has_vehicle::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "has_vehicle::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "night": {
+      "mAP50-95": 0.47637,
+      "mAP50": 0.74493,
+      "mAP75": 0.55393
+    },
+    "night::car": {
+      "mAP50-95": 0.55485,
+      "mAP50": 0.8519,
+      "mAP75": 0.66842
+    },
+    "night::bus": {
+      "mAP50-95": 0.39789,
+      "mAP50": 0.63797,
+      "mAP75": 0.43944
+    },
+    "night::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "night::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "rainy": {
+      "mAP50-95": 0.47313,
+      "mAP50": 0.74146,
+      "mAP75": 0.53301
+    },
+    "rainy::car": {
+      "mAP50-95": 0.47767,
+      "mAP50": 0.78209,
+      "mAP75": 0.52888
+    },
+    "rainy::bus": {
+      "mAP50-95": 0.4686,
+      "mAP50": 0.70083,
+      "mAP75": 0.53713
+    },
+    "rainy::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "rainy::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "sunny": {
+      "mAP50-95": 0.4036,
+      "mAP50": 0.64499,
+      "mAP75": 0.48815
+    },
+    "sunny::car": {
+      "mAP50-95": 0.5337,
+      "mAP50": 0.84368,
+      "mAP75": 0.64051
+    },
+    "sunny::bus": {
+      "mAP50-95": 0.2735,
+      "mAP50": 0.4463,
+      "mAP75": 0.33578
+    },
+    "sunny::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "sunny::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    }
+  },
+  "t1b_100": {
+    "all": {
+      "mAP50-95": 0.42208,
+      "mAP50": 0.68868,
+      "mAP75": 0.48171
+    },
+    "all::car": {
+      "mAP50-95": 0.52271,
+      "mAP50": 0.83417,
+      "mAP75": 0.60874
+    },
+    "all::bus": {
+      "mAP50-95": 0.32144,
+      "mAP50": 0.54319,
+      "mAP75": 0.35469
+    },
+    "all::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "all::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "cloudy": {
+      "mAP50-95": 0.38711,
+      "mAP50": 0.63813,
+      "mAP75": 0.43543
+    },
+    "cloudy::car": {
+      "mAP50-95": 0.53354,
+      "mAP50": 0.84601,
+      "mAP75": 0.61752
+    },
+    "cloudy::bus": {
+      "mAP50-95": 0.24068,
+      "mAP50": 0.43026,
+      "mAP75": 0.25334
+    },
+    "cloudy::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "cloudy::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "day": {
+      "mAP50-95": 0.41447,
+      "mAP50": 0.67765,
+      "mAP75": 0.47094
+    },
+    "day::car": {
+      "mAP50-95": 0.50987,
+      "mAP50": 0.82379,
+      "mAP75": 0.58668
+    },
+    "day::bus": {
+      "mAP50-95": 0.31906,
+      "mAP50": 0.53151,
+      "mAP75": 0.35519
+    },
+    "day::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "day::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "has_vehicle": {
+      "mAP50-95": 0.42208,
+      "mAP50": 0.68868,
+      "mAP75": 0.48171
+    },
+    "has_vehicle::car": {
+      "mAP50-95": 0.52271,
+      "mAP50": 0.83417,
+      "mAP75": 0.60874
+    },
+    "has_vehicle::bus": {
+      "mAP50-95": 0.32144,
+      "mAP50": 0.54319,
+      "mAP75": 0.35469
+    },
+    "has_vehicle::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "has_vehicle::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "night": {
+      "mAP50-95": 0.44372,
+      "mAP50": 0.71792,
+      "mAP75": 0.5123
+    },
+    "night::car": {
+      "mAP50-95": 0.5615,
+      "mAP50": 0.86693,
+      "mAP75": 0.67424
+    },
+    "night::bus": {
+      "mAP50-95": 0.32595,
+      "mAP50": 0.5689,
+      "mAP75": 0.35037
+    },
+    "night::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "night::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "rainy": {
+      "mAP50-95": 0.43712,
+      "mAP50": 0.71158,
+      "mAP75": 0.48452
+    },
+    "rainy::car": {
+      "mAP50-95": 0.48898,
+      "mAP50": 0.80044,
+      "mAP75": 0.54621
+    },
+    "rainy::bus": {
+      "mAP50-95": 0.38526,
+      "mAP50": 0.62273,
+      "mAP75": 0.42283
+    },
+    "rainy::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "rainy::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "sunny": {
+      "mAP50-95": 0.41109,
+      "mAP50": 0.66118,
+      "mAP75": 0.49482
+    },
+    "sunny::car": {
+      "mAP50-95": 0.52979,
+      "mAP50": 0.84845,
+      "mAP75": 0.63567
+    },
+    "sunny::bus": {
+      "mAP50-95": 0.29239,
+      "mAP50": 0.47392,
+      "mAP75": 0.35396
+    },
+    "sunny::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "sunny::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    }
+  },
+  "v5_base_100": {
+    "all": {
+      "mAP50-95": 0.43511,
+      "mAP50": 0.6882,
+      "mAP75": 0.50684
+    },
+    "all::car": {
+      "mAP50-95": 0.51697,
+      "mAP50": 0.81432,
+      "mAP75": 0.60611
+    },
+    "all::bus": {
+      "mAP50-95": 0.35326,
+      "mAP50": 0.56209,
+      "mAP75": 0.40757
+    },
+    "all::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "all::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "cloudy": {
+      "mAP50-95": 0.36704,
+      "mAP50": 0.59165,
+      "mAP75": 0.41913
+    },
+    "cloudy::car": {
+      "mAP50-95": 0.54031,
+      "mAP50": 0.83309,
+      "mAP75": 0.63511
+    },
+    "cloudy::bus": {
+      "mAP50-95": 0.19377,
+      "mAP50": 0.35021,
+      "mAP75": 0.20315
+    },
+    "cloudy::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "cloudy::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "day": {
+      "mAP50-95": 0.41822,
+      "mAP50": 0.6645,
+      "mAP75": 0.48537
+    },
+    "day::car": {
+      "mAP50-95": 0.51005,
+      "mAP50": 0.80841,
+      "mAP75": 0.59253
+    },
+    "day::bus": {
+      "mAP50-95": 0.32639,
+      "mAP50": 0.52059,
+      "mAP75": 0.3782
+    },
+    "day::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "day::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "has_vehicle": {
+      "mAP50-95": 0.43511,
+      "mAP50": 0.6882,
+      "mAP75": 0.50684
+    },
+    "has_vehicle::car": {
+      "mAP50-95": 0.51697,
+      "mAP50": 0.81432,
+      "mAP75": 0.60611
+    },
+    "has_vehicle::bus": {
+      "mAP50-95": 0.35326,
+      "mAP50": 0.56209,
+      "mAP75": 0.40757
+    },
+    "has_vehicle::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "has_vehicle::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "night": {
+      "mAP50-95": 0.48116,
+      "mAP50": 0.74571,
+      "mAP75": 0.56581
+    },
+    "night::car": {
+      "mAP50-95": 0.53942,
+      "mAP50": 0.8294,
+      "mAP75": 0.65208
+    },
+    "night::bus": {
+      "mAP50-95": 0.42291,
+      "mAP50": 0.66202,
+      "mAP75": 0.47953
+    },
+    "night::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "night::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "rainy": {
+      "mAP50-95": 0.46954,
+      "mAP50": 0.7357,
+      "mAP75": 0.54083
+    },
+    "rainy::car": {
+      "mAP50-95": 0.48667,
+      "mAP50": 0.784,
+      "mAP75": 0.5525
+    },
+    "rainy::bus": {
+      "mAP50-95": 0.45241,
+      "mAP50": 0.6874,
+      "mAP75": 0.52917
+    },
+    "rainy::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "rainy::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "sunny": {
+      "mAP50-95": 0.38539,
+      "mAP50": 0.61767,
+      "mAP75": 0.46341
+    },
+    "sunny::car": {
+      "mAP50-95": 0.5211,
+      "mAP50": 0.83332,
+      "mAP75": 0.61992
+    },
+    "sunny::bus": {
+      "mAP50-95": 0.24968,
+      "mAP50": 0.40203,
+      "mAP75": 0.3069
+    },
+    "sunny::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "sunny::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    }
+  },
+  "v5_t1b_100": {
+    "all": {
+      "mAP50-95": 0.44127,
+      "mAP50": 0.69952,
+      "mAP75": 0.51136
+    },
+    "all::car": {
+      "mAP50-95": 0.51334,
+      "mAP50": 0.81529,
+      "mAP75": 0.5968
+    },
+    "all::bus": {
+      "mAP50-95": 0.3692,
+      "mAP50": 0.58375,
+      "mAP75": 0.42593
+    },
+    "all::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "all::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "cloudy": {
+      "mAP50-95": 0.37677,
+      "mAP50": 0.60535,
+      "mAP75": 0.43457
+    },
+    "cloudy::car": {
+      "mAP50-95": 0.52351,
+      "mAP50": 0.82316,
+      "mAP75": 0.61196
+    },
+    "cloudy::bus": {
+      "mAP50-95": 0.23004,
+      "mAP50": 0.38753,
+      "mAP75": 0.25718
+    },
+    "cloudy::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "cloudy::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "day": {
+      "mAP50-95": 0.41905,
+      "mAP50": 0.67336,
+      "mAP75": 0.48168
+    },
+    "day::car": {
+      "mAP50-95": 0.50043,
+      "mAP50": 0.80609,
+      "mAP75": 0.57708
+    },
+    "day::bus": {
+      "mAP50-95": 0.33766,
+      "mAP50": 0.54063,
+      "mAP75": 0.38629
+    },
+    "day::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "day::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "has_vehicle": {
+      "mAP50-95": 0.44127,
+      "mAP50": 0.69952,
+      "mAP75": 0.51136
+    },
+    "has_vehicle::car": {
+      "mAP50-95": 0.51334,
+      "mAP50": 0.81529,
+      "mAP75": 0.5968
+    },
+    "has_vehicle::bus": {
+      "mAP50-95": 0.3692,
+      "mAP50": 0.58375,
+      "mAP75": 0.42593
+    },
+    "has_vehicle::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "has_vehicle::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "night": {
+      "mAP50-95": 0.49826,
+      "mAP50": 0.76929,
+      "mAP75": 0.58912
+    },
+    "night::car": {
+      "mAP50-95": 0.54939,
+      "mAP50": 0.84492,
+      "mAP75": 0.65743
+    },
+    "night::bus": {
+      "mAP50-95": 0.44713,
+      "mAP50": 0.69366,
+      "mAP75": 0.5208
+    },
+    "night::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "night::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "rainy": {
+      "mAP50-95": 0.46001,
+      "mAP50": 0.72919,
+      "mAP75": 0.51985
+    },
+    "rainy::car": {
+      "mAP50-95": 0.48226,
+      "mAP50": 0.78505,
+      "mAP75": 0.54285
+    },
+    "rainy::bus": {
+      "mAP50-95": 0.43776,
+      "mAP50": 0.67333,
+      "mAP75": 0.49685
+    },
+    "rainy::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "rainy::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "sunny": {
+      "mAP50-95": 0.39892,
+      "mAP50": 0.64946,
+      "mAP75": 0.46977
+    },
+    "sunny::car": {
+      "mAP50-95": 0.51044,
+      "mAP50": 0.8286,
+      "mAP75": 0.60328
+    },
+    "sunny::bus": {
+      "mAP50-95": 0.2874,
+      "mAP50": 0.47032,
+      "mAP75": 0.33626
+    },
+    "sunny::motor": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    },
+    "sunny::bike": {
+      "mAP50-95": null,
+      "mAP50": null,
+      "mAP75": null
+    }
+  }
+}
