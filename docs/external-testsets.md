@@ -1,8 +1,8 @@
 # External test sets (ExDark, RTTS, DAWN, UA-DETRAC): how to reproduce our setup
 
-Use this to score your own models on the same three external datasets with exactly the same
+Use this to score your own models on the same four external datasets with exactly the same
 images, labels and scoring rules as our results (`results/exdark*.txt`, `results/rtts.txt`,
-`results/dawn.txt`).
+`results/dawn.txt`, `results/detrac.txt`).
 
 **Role of these datasets: test only (zero-shot).** No image is used for training, fine-tuning,
 tuning or picking a checkpoint, so every usable image is test data. There is no
@@ -17,7 +17,7 @@ train/val/test split. Do not fine-tune on them, or the numbers stop being compar
 | repo / branch | `JPN-jetnipat/Vehicle-Detection-and-Distance-Estimation`, branch `field-yolov11`, at or after commit `2a9f1f3` |
 | Python env | `requirements.txt`: Python 3.11, torch 2.6.0, torchvision 0.21.0, ultralytics 8.4.120, pycocotools 2.0.11 |
 | extra (download only) | `pip install gdown` (for ExDark; not in `requirements.txt`) |
-| disk | about 3.5 GB free while unzipping (ExDark ~1.5 GB, RTTS ~1 GB, DAWN ~0.14 GB) |
+| disk | about 3.5 GB free while unzipping (ExDark ~1.5 GB, RTTS ~1 GB, DAWN ~0.14 GB); UA-DETRAC needs ~10.5 GB during download (9.85 GB zip), 0.4 GB after |
 | your models | Ultralytics `.pt` files trained on BDD100K with our 5 classes in this order: `0 car, 1 truck, 2 bus, 3 motor, 4 bike` |
 
 **Code to use (all in the repo):**
@@ -27,9 +27,10 @@ train/val/test split. Do not fine-tune on them, or the numbers stop being compar
 | `tools/exdark_to_coco.py` | ExDark raw → COCO ground truth + slice lists |
 | `tools/rtts_to_coco.py` | RTTS raw → COCO ground truth + slice lists |
 | `tools/dawn_to_coco.py` | DAWN raw → COCO ground truth + slice lists |
-| `evaluation/score_exdark.py` | scores any of the three (pass `--gt / --images-dir / --slices-dir`) |
+| `tools/detrac_to_coco.py` | UA-DETRAC test frames (every 10th) → COCO ground truth + slice lists |
+| `evaluation/score_exdark.py` | scores any of the four (pass `--gt / --images-dir / --slices-dir`) |
 | `evaluation/score_slices.py` | must be present: `score_exdark.py` imports its scoring constants from it |
-| `splits/exdark/`, `splits/rtts/`, `splits/dawn/` | our image lists (committed). Your converter output must match them exactly, see §5 |
+| `splits/exdark/`, `splits/rtts/`, `splits/dawn/`, `splits/detrac/` | our image lists (committed). Your converter output must match them exactly, see §5 |
 
 Raw datasets go **outside** the repo (we use `~/datasets/<NAME>/`). The converters write
 `dataset/<name>/` inside the repo (gitignored: symlinks to the raw images, `gt_vehicle5.json`,
@@ -37,7 +38,7 @@ Raw datasets go **outside** the repo (we use `~/datasets/<NAME>/`). The converte
 
 ---
 
-## 2. Scoring rules (same for all three, fixed, do not change)
+## 2. Scoring rules (same for all four, fixed, do not change)
 
 - Inference at `imgsz 640`, `conf 0.001`, NMS IoU `0.6`, `max_det 300` (constants imported from
   `evaluation/score_slices.py`, the same as our BDD test scoring).
@@ -46,7 +47,7 @@ Raw datasets go **outside** the repo (we use `~/datasets/<NAME>/`). The converte
 - Ground truth uses each image's **real width/height** (these datasets vary in size).
 - Classes are mapped to the BDD ids above; any other class (person, dog, train, …) is not scored.
 - **Truck handling** (`--truck`):
-  - `car` (default) for **ExDark and RTTS** (no truck class): truck predictions are relabelled
+  - `car` (default) for **ExDark, RTTS and UA-DETRAC** (no truck class): truck predictions are relabelled
     car, then car boxes are re-NMS'd at IoU 0.6.
   - `keep` for **DAWN** (has real truck labels): predictions are scored as-is.
   - The scorer refuses any mode except `keep` when the ground truth contains truck boxes.
@@ -172,6 +173,10 @@ python tools/detrac_to_coco.py --images ~/datasets/UA-DETRAC/test_every10 \
 - **Class mapping:** car + van → car, bus → bus. `others` (mostly trucks) and each sequence's
   ignored regions become `iscrowd=1` boxes for car and bus, so detections there count neither as
   TP nor FP. No truck/motor/bike labels: score with **`--truck car`**; motor/bike AP are n/a.
+- **Expected converter output:** `status: {'ok': 5625, 'no_annotation': 15}` ·
+  `vehicle_type counts (raw): {'car': 55557, 'van': 3891, 'bus': 7252, 'others': 1701}` ·
+  `scored boxes: car 59448 (car+van) · bus 7252` · `boxes clipped to image bounds: 8511` ·
+  slices (images): all 5625, has_vehicle 5625, sunny 1199, cloudy 1283, rainy 1292, night 1851, day 3774.
 - **Excluded:** frames the XML does not list (no labelled vehicles, or not annotated; cannot tell
   which), status `no_annotation` in `meta.csv`.
 - **Slices:** `all`, `has_vehicle`, `sunny` (8 seq), `cloudy` (11), `rainy` (9), `night` (12),
@@ -214,6 +219,15 @@ python evaluation/score_exdark.py \
   --arm my_model=path/to/my_model.pt \
   --pair my_model:base_100 \
   --device 0 --out results/dawn_mine.csv 2>&1 | tee results/dawn_mine.txt
+
+# UA-DETRAC (no truck class: truck -> car)
+python evaluation/score_exdark.py \
+  --gt dataset/detrac/gt_vehicle5.json --images-dir dataset/detrac/images --slices-dir splits/detrac \
+  --truck car \
+  --arm base_100=weights/external/base_100_friend.pt \
+  --arm my_model=path/to/my_model.pt \
+  --pair my_model:base_100 \
+  --device 0 --out results/detrac_mine.csv 2>&1 | tee results/detrac_mine.txt
 ```
 
 The first output line shows the pool and the truck mode, for example
@@ -238,6 +252,8 @@ git status splits/exdark splits/rtts splits/dawn splits/detrac     # must show n
 | RTTS | `v5_base_100_friend.pt` | 0.44676 | 0.29376 | 0.27672 | 0.76812 | 0.56177 |
 | DAWN | `base_100_friend.pt` (v11) | 0.40822 | 0.28702 | 0.26847 | 0.78256 | 0.55335 |
 | DAWN | `v5_base_100_friend.pt` | 0.38339 | 0.26748 | 0.24890 | 0.77343 | 0.54362 |
+| UA-DETRAC | `base_100_friend.pt` (v11) | 0.70613 | 0.51220 | 0.44487 | 0.82426 | 0.60464 |
+| UA-DETRAC | `v5_base_100_friend.pt` | 0.68820 | 0.50684 | 0.43511 | 0.81432 | 0.60611 |
 
 If (a) passes but (b) differs, check the library versions against `requirements.txt` first.
 
