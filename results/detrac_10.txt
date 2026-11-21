@@ -1,0 +1,165 @@
+eval pool (dataset/detrac/gt_vehicle5.json): 5625 images, 66700 scored vehicle boxes (+47522 ignored), truck=car
+
+=== base_100 (/home/st6622770442/vehicle-detection/weights/external/base_100_friend.pt) ===
+    inference 640/5625
+    inference 1280/5625
+    inference 1920/5625
+    inference 2560/5625
+    inference 3200/5625
+    inference 3840/5625
+    inference 4480/5625
+    inference 5120/5625
+    inference 5625/5625
+    22141 truck->car relabels
+  all              n= 5625 inst= 66700  mAP50=0.70613  mAP75=0.5122  mAP50-95=0.44487
+  cloudy           n= 1283 inst= 20863  mAP50=0.64108  mAP75=0.45152  mAP50-95=0.39628
+  day              n= 3774 inst= 49983  mAP50=0.69026  mAP75=0.49676  mAP50-95=0.43349
+  has_vehicle      n= 5625 inst= 66700  mAP50=0.70613  mAP75=0.5122  mAP50-95=0.44487
+  night            n= 1851 inst= 16717  mAP50=0.74493  mAP75=0.55393  mAP50-95=0.47637
+  rainy            n= 1292 inst= 20880  mAP50=0.74146  mAP75=0.53301  mAP50-95=0.47313
+  sunny            n= 1199 inst=  8240  mAP50=0.64499  mAP75=0.48815  mAP50-95=0.4036
+
+=== base_10 (/home/st6622770442/vehicle-detection/runs/detect/base_10/weights/best.pt) ===
+    inference 640/5625
+    inference 1280/5625
+    inference 1920/5625
+    inference 2560/5625
+    inference 3200/5625
+    inference 3840/5625
+    inference 4480/5625
+    inference 5120/5625
+    inference 5625/5625
+    47816 truck->car relabels
+  all              n= 5625 inst= 66700  mAP50=0.60136  mAP75=0.36092  mAP50-95=0.33876
+  cloudy           n= 1283 inst= 20863  mAP50=0.47992  mAP75=0.27946  mAP50-95=0.26628
+  day              n= 3774 inst= 49983  mAP50=0.56892  mAP75=0.34794  mAP50-95=0.32166
+  has_vehicle      n= 5625 inst= 66700  mAP50=0.60136  mAP75=0.36092  mAP50-95=0.33876
+  night            n= 1851 inst= 16717  mAP50=0.68628  mAP75=0.39917  mAP50-95=0.38574
+  rainy            n= 1292 inst= 20880  mAP50=0.64487  mAP75=0.40206  mAP50-95=0.36931
+  sunny            n= 1199 inst=  8240  mAP50=0.55205  mAP75=0.35295  mAP50-95=0.31698
+
+=== t1b_10 (/home/st6622770442/vehicle-detection/runs/detect/t1b_jepa_10/weights/best.pt) ===
+    inference 640/5625
+    inference 1280/5625
+    inference 1920/5625
+    inference 2560/5625
+    inference 3200/5625
+    inference 3840/5625
+    inference 4480/5625
+    inference 5120/5625
+    inference 5625/5625
+    32980 truck->car relabels
+  all              n= 5625 inst= 66700  mAP50=0.5548  mAP75=0.328  mAP50-95=0.3112
+  cloudy           n= 1283 inst= 20863  mAP50=0.43919  mAP75=0.27305  mAP50-95=0.25325
+  day              n= 3774 inst= 49983  mAP50=0.54195  mAP75=0.31351  mAP50-95=0.30062
+  has_vehicle      n= 5625 inst= 66700  mAP50=0.5548  mAP75=0.328  mAP50-95=0.3112
+  night            n= 1851 inst= 16717  mAP50=0.60298  mAP75=0.38107  mAP50-95=0.34922
+  rainy            n= 1292 inst= 20880  mAP50=0.61207  mAP75=0.31784  mAP50-95=0.3266
+  sunny            n= 1199 inst=  8240  mAP50=0.57047  mAP75=0.39745  mAP50-95=0.3382
+
+=== v5_base_10 (/home/st6622770442/vehicle-detection/runs/detect/v5_base_10/weights/best.pt) ===
+    inference 640/5625
+    inference 1280/5625
+    inference 1920/5625
+    inference 2560/5625
+    inference 3200/5625
+    inference 3840/5625
+    inference 4480/5625
+    inference 5120/5625
+    inference 5625/5625
+    50069 truck->car relabels
+  all              n= 5625 inst= 66700  mAP50=0.56819  mAP75=0.36024  mAP50-95=0.33148
+  cloudy           n= 1283 inst= 20863  mAP50=0.48629  mAP75=0.31955  mAP50-95=0.28702
+  day              n= 3774 inst= 49983  mAP50=0.54821  mAP75=0.34465  mAP50-95=0.31851
+  has_vehicle      n= 5625 inst= 66700  mAP50=0.56819  mAP75=0.36024  mAP50-95=0.33148
+  night            n= 1851 inst= 16717  mAP50=0.61789  mAP75=0.40425  mAP50-95=0.36656
+  rainy            n= 1292 inst= 20880  mAP50=0.58922  mAP75=0.35614  mAP50-95=0.33898
+  sunny            n= 1199 inst=  8240  mAP50=0.57352  mAP75=0.37569  mAP50-95=0.33418
+
+=== v5_t1b_10 (/home/st6622770442/vehicle-detection/runs/detect/v5_t1b_10/weights/best.pt) ===
+    inference 640/5625
+    inference 1280/5625
+    inference 1920/5625
+    inference 2560/5625
+    inference 3200/5625
+    inference 3840/5625
+    inference 4480/5625
+    inference 5120/5625
+    inference 5625/5625
+    88042 truck->car relabels
+  all              n= 5625 inst= 66700  mAP50=0.54199  mAP75=0.33855  mAP50-95=0.31205
+  cloudy           n= 1283 inst= 20863  mAP50=0.438  mAP75=0.27069  mAP50-95=0.25048
+  day              n= 3774 inst= 49983  mAP50=0.52139  mAP75=0.32273  mAP50-95=0.29716
+  has_vehicle      n= 5625 inst= 66700  mAP50=0.54199  mAP75=0.33855  mAP50-95=0.31205
+  night            n= 1851 inst= 16717  mAP50=0.59981  mAP75=0.38216  mAP50-95=0.35492
+  rainy            n= 1292 inst= 20880  mAP50=0.57651  mAP75=0.3469  mAP50-95=0.32572
+  sunny            n= 1199 inst=  8240  mAP50=0.55075  mAP75=0.36632  mAP50-95=0.32055
+
+==============================================================================
+detrac mAP50 all-class / car mAP50 / car mAP75
+==============================================================================
+all  (n=5625)
+    base_100           all 0.7061   car 0.8243 / 0.6046
+    base_10            all 0.6014   car 0.7263 / 0.4710
+    t1b_10             all 0.5548   car 0.7063 / 0.4663
+    v5_base_10         all 0.5682   car 0.7485 / 0.4864
+    v5_t1b_10          all 0.5420   car 0.7208 / 0.4711
+has_vehicle  (n=5625)
+    base_100           all 0.7061   car 0.8243 / 0.6046
+    base_10            all 0.6014   car 0.7263 / 0.4710
+    t1b_10             all 0.5548   car 0.7063 / 0.4663
+    v5_base_10         all 0.5682   car 0.7485 / 0.4864
+    v5_t1b_10          all 0.5420   car 0.7208 / 0.4711
+day  (n=3774)
+    base_100           all 0.6903   car 0.8142 / 0.5820
+    base_10            all 0.5689   car 0.7144 / 0.4556
+    t1b_10             all 0.5420   car 0.6893 / 0.4455
+    v5_base_10         all 0.5482   car 0.7320 / 0.4716
+    v5_t1b_10          all 0.5214   car 0.6986 / 0.4431
+night  (n=1851)
+    base_100           all 0.7449   car 0.8519 / 0.6684
+    base_10            all 0.6863   car 0.7664 / 0.5219
+    t1b_10             all 0.6030   car 0.7583 / 0.5344
+    v5_base_10         all 0.6179   car 0.7959 / 0.5301
+    v5_t1b_10          all 0.5998   car 0.7864 / 0.5498
+sunny  (n=1199)
+    base_100           all 0.6450   car 0.8437 / 0.6405
+    base_10            all 0.5521   car 0.7625 / 0.5115
+    t1b_10             all 0.5705   car 0.7790 / 0.5535
+    v5_base_10         all 0.5735   car 0.7877 / 0.5284
+    v5_t1b_10          all 0.5507   car 0.7328 / 0.4891
+cloudy  (n=1283)
+    base_100           all 0.6411   car 0.8406 / 0.6243
+    base_10            all 0.4799   car 0.7138 / 0.4524
+    t1b_10             all 0.4392   car 0.6842 / 0.4438
+    v5_base_10         all 0.4863   car 0.7345 / 0.4696
+    v5_t1b_10          all 0.4380   car 0.6912 / 0.4455
+rainy  (n=1292)
+    base_100           all 0.7415   car 0.7821 / 0.5289
+    base_10            all 0.6449   car 0.7071 / 0.4488
+    t1b_10             all 0.6121   car 0.6674 / 0.4121
+    v5_base_10         all 0.5892   car 0.7191 / 0.4644
+    v5_t1b_10          all 0.5765   car 0.6986 / 0.4304
+
+==============================================================================
+pairs: ARM - CONTROL, points (all mAP50 | car mAP50 | car mAP75)
+==============================================================================
+  t1b_10 - base_10        all              -4.66 | -2.00 | -0.47
+  t1b_10 - base_10        has_vehicle      -4.66 | -2.00 | -0.47
+  t1b_10 - base_10        day              -2.70 | -2.51 | -1.01
+  t1b_10 - base_10        night            -8.33 | -0.82 | +1.25
+  v5_t1b_10 - v5_base_10     all              -2.62 | -2.77 | -1.53
+  v5_t1b_10 - v5_base_10     has_vehicle      -2.62 | -2.77 | -1.53
+  v5_t1b_10 - v5_base_10     day              -2.68 | -3.33 | -2.85
+  v5_t1b_10 - v5_base_10     night            -1.81 | -0.95 | +1.97
+
+==============================================================================
+car night/day mAP75 ratio (same camera type; day and night are DIFFERENT sequences/locations)
+==============================================================================
+    base_100           day 0.5820 -> night 0.6684   ratio 1.148
+    base_10            day 0.4556 -> night 0.5219   ratio 1.146
+    t1b_10             day 0.4455 -> night 0.5344   ratio 1.200
+    v5_base_10         day 0.4716 -> night 0.5301   ratio 1.124
+    v5_t1b_10          day 0.4431 -> night 0.5498   ratio 1.241
+
+wrote 525 rows -> /home/st6622770442/vehicle-detection/results/detrac_10.csv (+ .json)
