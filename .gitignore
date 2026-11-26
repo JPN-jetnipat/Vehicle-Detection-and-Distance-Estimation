@@ -47,3 +47,14 @@ __pycache__/
 
 # ExDark converted by scripts/prepare_exdark.py - regenerate on the server, don't track
 dataset/exdark_yolo/
+
+# External zero-shot sets: converter output from tools/<name>_to_coco.py (image symlinks,
+# gt_vehicle5.json, meta.csv) - regenerate on the server; splits/<name>/ stays tracked
+dataset/exdark/
+dataset/rtts/
+dataset/dawn/
+dataset/detrac/
+
+# Raw prediction files from evaluation/score_exdark.py --save-preds (can be 100MB+ each);
+# share through the team folder, not git
+results/predictions/
