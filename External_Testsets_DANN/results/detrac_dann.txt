@@ -1,0 +1,126 @@
+eval pool (dataset/detrac/gt_vehicle5.json): 5625 images, 66700 scored vehicle boxes (+47522 ignored), truck=car
+
+=== dann_v3_v11 (/home/st6622771796/weights/dann_v3/weights/best.pt) ===
+    inference 640/5625
+    inference 1280/5625
+    inference 1920/5625
+    inference 2560/5625
+    inference 3200/5625
+    inference 3840/5625
+    inference 4480/5625
+    inference 5120/5625
+    inference 5625/5625
+    52950 truck->car relabels
+  all              n= 5625 inst= 66700  mAP50=0.65672  mAP75=0.46942  mAP50-95=0.40479
+  cloudy           n= 1283 inst= 20863  mAP50=0.62829  mAP75=0.43647  mAP50-95=0.38421
+  day              n= 3774 inst= 49983  mAP50=0.66372  mAP75=0.46169  mAP50-95=0.40326
+  has_vehicle      n= 5625 inst= 66700  mAP50=0.65672  mAP75=0.46942  mAP50-95=0.40479
+  night            n= 1851 inst= 16717  mAP50=0.63923  mAP75=0.49254  mAP50-95=0.41196
+  rainy            n= 1292 inst= 20880  mAP50=0.6969  mAP75=0.47646  mAP50-95=0.42055
+  sunny            n= 1199 inst=  8240  mAP50=0.63324  mAP75=0.47238  mAP50-95=0.39392
+
+=== finetune_noadv_v11 (/home/st6622771796/weights/finetune_noadv/weights/best.pt) ===
+    inference 640/5625
+    inference 1280/5625
+    inference 1920/5625
+    inference 2560/5625
+    inference 3200/5625
+    inference 3840/5625
+    inference 4480/5625
+    inference 5120/5625
+    inference 5625/5625
+    50135 truck->car relabels
+  all              n= 5625 inst= 66700  mAP50=0.65522  mAP75=0.46558  mAP50-95=0.40233
+  cloudy           n= 1283 inst= 20863  mAP50=0.62602  mAP75=0.4376  mAP50-95=0.38438
+  day              n= 3774 inst= 49983  mAP50=0.65989  mAP75=0.45849  mAP50-95=0.40029
+  has_vehicle      n= 5625 inst= 66700  mAP50=0.65522  mAP75=0.46558  mAP50-95=0.40233
+  night            n= 1851 inst= 16717  mAP50=0.64133  mAP75=0.48584  mAP50-95=0.40973
+  rainy            n= 1292 inst= 20880  mAP50=0.69216  mAP75=0.46733  mAP50-95=0.41432
+  sunny            n= 1199 inst=  8240  mAP50=0.62901  mAP75=0.47128  mAP50-95=0.39167
+
+=== dann_v3_v5su (/home/st6622771796/weights/dann_v3_v5su/weights/best.pt) ===
+    inference 640/5625
+    inference 1280/5625
+    inference 1920/5625
+    inference 2560/5625
+    inference 3200/5625
+    inference 3840/5625
+    inference 4480/5625
+    inference 5120/5625
+    inference 5625/5625
+    32557 truck->car relabels
+  all              n= 5625 inst= 66700  mAP50=0.62267  mAP75=0.41386  mAP50-95=0.36986
+  cloudy           n= 1283 inst= 20863  mAP50=0.53709  mAP75=0.36726  mAP50-95=0.32545
+  day              n= 3774 inst= 49983  mAP50=0.61849  mAP75=0.41008  mAP50-95=0.36604
+  has_vehicle      n= 5625 inst= 66700  mAP50=0.62267  mAP75=0.41386  mAP50-95=0.36986
+  night            n= 1851 inst= 16717  mAP50=0.63526  mAP75=0.42747  mAP50-95=0.38274
+  rainy            n= 1292 inst= 20880  mAP50=0.68957  mAP75=0.44262  mAP50-95=0.4037
+  sunny            n= 1199 inst=  8240  mAP50=0.59891  mAP75=0.42376  mAP50-95=0.36049
+
+=== finetune_noadv_v5su (/home/st6622771796/weights/finetune_noadv_v5su/weights/best.pt) ===
+    inference 640/5625
+    inference 1280/5625
+    inference 1920/5625
+    inference 2560/5625
+    inference 3200/5625
+    inference 3840/5625
+    inference 4480/5625
+    inference 5120/5625
+    inference 5625/5625
+    34766 truck->car relabels
+  all              n= 5625 inst= 66700  mAP50=0.62699  mAP75=0.42562  mAP50-95=0.37706
+  cloudy           n= 1283 inst= 20863  mAP50=0.53839  mAP75=0.36811  mAP50-95=0.32556
+  day              n= 3774 inst= 49983  mAP50=0.6178  mAP75=0.41461  mAP50-95=0.36782
+  has_vehicle      n= 5625 inst= 66700  mAP50=0.62699  mAP75=0.42562  mAP50-95=0.37706
+  night            n= 1851 inst= 16717  mAP50=0.65187  mAP75=0.45871  mAP50-95=0.40416
+  rainy            n= 1292 inst= 20880  mAP50=0.68513  mAP75=0.44704  mAP50-95=0.40365
+  sunny            n= 1199 inst=  8240  mAP50=0.59598  mAP75=0.42923  mAP50-95=0.36256
+
+==============================================================================
+detrac mAP50 all-class / car mAP50 / car mAP75
+==============================================================================
+all  (n=5625)
+    dann_v3_v11        all 0.6567   car 0.8152 / 0.6022
+    finetune_noadv_v11 all 0.6552   car 0.8134 / 0.5981
+    dann_v3_v5su       all 0.6227   car 0.7830 / 0.5537
+    finetune_noadv_v5su all 0.6270   car 0.7964 / 0.5672
+has_vehicle  (n=5625)
+    dann_v3_v11        all 0.6567   car 0.8152 / 0.6022
+    finetune_noadv_v11 all 0.6552   car 0.8134 / 0.5981
+    dann_v3_v5su       all 0.6227   car 0.7830 / 0.5537
+    finetune_noadv_v5su all 0.6270   car 0.7964 / 0.5672
+day  (n=3774)
+    dann_v3_v11        all 0.6637   car 0.8155 / 0.5962
+    finetune_noadv_v11 all 0.6599   car 0.8153 / 0.5943
+    dann_v3_v5su       all 0.6185   car 0.7841 / 0.5458
+    finetune_noadv_v5su all 0.6178   car 0.7986 / 0.5605
+night  (n=1851)
+    dann_v3_v11        all 0.6392   car 0.8096 / 0.6230
+    finetune_noadv_v11 all 0.6413   car 0.8034 / 0.6106
+    dann_v3_v5su       all 0.6353   car 0.7884 / 0.5811
+    finetune_noadv_v5su all 0.6519   car 0.7971 / 0.5920
+sunny  (n=1199)
+    dann_v3_v11        all 0.6332   car 0.8390 / 0.6253
+    finetune_noadv_v11 all 0.6290   car 0.8343 / 0.6170
+    dann_v3_v5su       all 0.5989   car 0.8180 / 0.5823
+    finetune_noadv_v5su all 0.5960   car 0.8226 / 0.5892
+cloudy  (n=1283)
+    dann_v3_v11        all 0.6283   car 0.8583 / 0.6527
+    finetune_noadv_v11 all 0.6260   car 0.8542 / 0.6536
+    dann_v3_v5su       all 0.5371   car 0.8064 / 0.5890
+    finetune_noadv_v5su all 0.5384   car 0.8242 / 0.6003
+rainy  (n=1292)
+    dann_v3_v11        all 0.6969   car 0.7796 / 0.5491
+    finetune_noadv_v11 all 0.6922   car 0.7805 / 0.5465
+    dann_v3_v5su       all 0.6896   car 0.7629 / 0.5132
+    finetune_noadv_v5su all 0.6851   car 0.7769 / 0.5305
+
+==============================================================================
+car night/day mAP75 ratio (same camera type; day and night are DIFFERENT sequences/locations)
+==============================================================================
+    dann_v3_v11        day 0.5962 -> night 0.6230   ratio 1.045
+    finetune_noadv_v11 day 0.5943 -> night 0.6106   ratio 1.027
+    dann_v3_v5su       day 0.5458 -> night 0.5811   ratio 1.065
+    finetune_noadv_v5su day 0.5605 -> night 0.5920   ratio 1.056
+
+wrote 420 rows -> /home/st6622771796/external_dann_results/detrac_dann.csv (+ .json)
