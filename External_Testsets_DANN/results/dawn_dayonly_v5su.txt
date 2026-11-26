@@ -1,0 +1,22 @@
+eval pool (dataset/dawn/gt_vehicle5.json): 1027 images, 7368 scored vehicle boxes (+0 ignored), truck=keep
+
+=== dayonly_v5su (/home/st6622771796/weights/set3_combined_v5_day/weights/best.pt) ===
+    inference 640/1027
+    inference 1027/1027
+    truck predictions kept as truck
+  all              n= 1027 inst=  7368  mAP50=0.37611  mAP75=0.23605  mAP50-95=0.23352
+  fog              n=  300 inst=  1834  mAP50=0.35424  mAP75=0.24395  mAP50-95=0.23154
+  has_vehicle      n= 1026 inst=  7368  mAP50=0.37611  mAP75=0.23605  mAP50-95=0.23352
+  rain             n=  200 inst=  1560  mAP50=0.44001  mAP75=0.25007  mAP50-95=0.24219
+  sand             n=  323 inst=  2061  mAP50=0.3801  mAP75=0.25762  mAP50-95=0.24793
+  snow             n=  204 inst=  1913  mAP50=0.46266  mAP75=0.18062  mAP50-95=0.25751
+
+==============================================================================
+dawn mAP50 all-class / car mAP50 / car mAP75
+==============================================================================
+all  (n=1027)
+    dayonly_v5su       all 0.3761   car 0.7614 / 0.5341
+has_vehicle  (n=1026)
+    dayonly_v5su       all 0.3761   car 0.7614 / 0.5341
+
+wrote 108 rows -> /home/st6622771796/vd-ext/results/dawn_dayonly_v5su.csv (+ .json)
